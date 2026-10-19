@@ -1,0 +1,97 @@
+@startuml cas_utilisation_global
+title Diagramme de cas d'utilisation global - Gestion du département
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #F5F9FF
+  BorderColor #2F5597
+}
+
+actor "Utilisateur" as U
+actor "Administrateur" as A
+actor "Enseignant" as E
+actor "Étudiant" as ET
+actor "Entreprise" as EN
+
+A -up-|> U
+E -up-|> U
+ET -up-|> U
+EN -up-|> U
+
+rectangle "Système de gestion du département" {
+
+  ' --- Commun ---
+  usecase "S'authentifier" as UC_AUTH
+  usecase "Gérer son profil" as UC_PROFIL
+  usecase "Consulter les annonces" as UC_ANN
+
+  ' --- Administrateur ---
+  usecase "Gérer les comptes utilisateurs" as UC_A1
+  usecase "Gérer les filières et les modules" as UC_A2
+  usecase "Affecter les enseignants aux modules" as UC_A3
+  usecase "Gérer les inscriptions des étudiants" as UC_A4
+  usecase "Valider les offres de stage" as UC_A5
+  usecase "Publier une annonce" as UC_A6
+  usecase "Consulter les statistiques" as UC_A7
+
+  ' --- Enseignant ---
+  usecase "Consulter ses modules" as UC_E1
+  usecase "Gérer les ressources pédagogiques" as UC_E2
+  usecase "Déposer une ressource" as UC_E2a
+  usecase "Saisir les notes" as UC_E3
+  usecase "Suivre les stages encadrés" as UC_E4
+  usecase "Évaluer un stage" as UC_E4a
+
+  ' --- Étudiant ---
+  usecase "Consulter les ressources pédagogiques" as UC_S1
+  usecase "Télécharger une ressource" as UC_S1a
+  usecase "Consulter ses notes" as UC_S2
+  usecase "Consulter les offres de stage" as UC_S3
+  usecase "Postuler à une offre" as UC_S4
+  usecase "Suivre ses candidatures" as UC_S5
+  usecase "Déposer le rapport de stage" as UC_S6
+
+  ' --- Entreprise ---
+  usecase "Gérer ses offres de stage" as UC_N1
+  usecase "Publier une offre de stage" as UC_N1a
+  usecase "Consulter les candidatures" as UC_N2
+  usecase "Accepter / refuser une candidature" as UC_N3
+}
+
+U --> UC_AUTH
+U --> UC_PROFIL
+U --> UC_ANN
+
+A --> UC_A1
+A --> UC_A2
+A --> UC_A3
+A --> UC_A4
+A --> UC_A5
+A --> UC_A6
+A --> UC_A7
+
+E --> UC_E1
+E --> UC_E2
+E --> UC_E3
+E --> UC_E4
+E --> UC_A6
+
+ET --> UC_S1
+ET --> UC_S2
+ET --> UC_S3
+ET --> UC_S5
+ET --> UC_S6
+
+EN --> UC_N1
+EN --> UC_N2
+
+UC_E2a .> UC_E2 : <<extend>>
+UC_E4a .> UC_E4 : <<extend>>
+UC_S1a .> UC_S1 : <<extend>>
+UC_S4 .> UC_S3 : <<extend>>
+UC_N1a .> UC_N1 : <<extend>>
+UC_N3 .> UC_N2 : <<extend>>
+
+note "Tous les cas d'utilisation\n(sauf S'authentifier)\nnécessitent une authentification." as N1
+@enduml

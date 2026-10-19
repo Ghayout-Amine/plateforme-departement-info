@@ -1,0 +1,342 @@
+Issue ID,Parent ID,Issue Type,Summary,Description,Priority,Story Points,Labels,Sprint prévu
+E0,,Epic,Mise en place technique du projet,"Initialisation du projet, outils communs, conventions d'équipe.",High,,commun,
+E1,,Epic,Authentification et sécurité,"Connexion, JWT, rôles, permissions, protection des API (Module 2 du cahier des charges).",High,,membre1-securite,
+E2,,Epic,Administration de la plateforme,"Gestion technique des utilisateurs, rôles et journaux d'activité.",High,,membre1-securite,
+E3,,Epic,Partie publique,Espace accessible sans authentification (Module 1).,High,,a-repartir,
+E4,,Epic,Gestion des étudiants,"Étudiants, profils, affectation formation/groupe, résultats, absences côté étudiant (Module 3).",High,,membre2-etudiants,
+E5,,Epic,Gestion des enseignants et ressources,"Enseignants, modules attribués, ressources pédagogiques, notes, absences (Module 4).",High,,membre3-enseignants,
+E6,,Epic,Gestion pédagogique,"Formations, filières, modules d'enseignement, groupes, salles, emplois du temps, examens (Module 5).",High,,membre4-pedagogie,
+E7,,Epic,"Stages, PFE et entreprises","Offres, candidatures, validation, encadrants, suivi PFE, soutenances (Module 6).",High,,membre5-pfe,
+E8,,Epic,Actualités et annonces,Publication et consultation des actualités et annonces (Module 7).,High,,a-repartir,
+E9,,Epic,Tableaux de bord et statistiques,Indicateurs pour le responsable et l'administrateur (Module 8).,High,,a-repartir,
+US01,E0,Story,Créer le projet backend Spring Boot,"En tant que développeur, je veux disposer d'un projet Spring Boot commun afin de que toute l'équipe travaille sur la même base.
+
+Critères d'acceptation :
+- Projet généré (Web, JPA, Validation, Security, Lombok, MySQL)
+- Structure de packages par module définie
+- Le projet démarre sans erreur",Highest,3,commun,Sprint 1
+US02,E0,Story,Créer le projet frontend Angular,"En tant que développeur, je veux disposer d'un projet Angular commun afin de que toute l'équipe partage la même structure front.
+
+Critères d'acceptation :
+- Projet Angular créé avec routing
+- Dossiers par module (core, shared, features)
+- Le projet se lance avec ng serve",Highest,3,commun,Sprint 1
+US03,E0,Story,Configurer le dépôt GitHub et les règles de branches,"En tant que membre de l'équipe, je veux travailler avec des branches et des Pull Requests afin de éviter les conflits et faire des revues de code.
+
+Critères d'acceptation :
+- Dépôt créé et partagé avec les 5 membres
+- Branche main protégée
+- Convention de nommage feature/xxx documentée dans le README",Highest,2,commun,Sprint 1
+US04,E0,Story,Configurer la base MySQL et Docker,"En tant que développeur, je veux lancer la base et l'application avec Docker afin de avoir le même environnement sur toutes les machines.
+
+Critères d'acceptation :
+- docker-compose avec MySQL
+- application.properties / profils dev configurés
+- Démarrage de l'environnement documenté",High,3,commun,Sprint 1
+US05,E0,Story,Mettre en place la gestion globale des erreurs,"En tant que développeur, je veux renvoyer des erreurs au même format sur toute l'API afin de que le frontend les affiche de façon uniforme.
+
+Critères d'acceptation :
+- @ControllerAdvice global
+- Format JSON commun (code, message, date)
+- Erreurs de validation renvoyées champ par champ",High,3,commun,Sprint 1
+US06,E1,Story,Connexion à la plateforme,"En tant que utilisateur, je veux me connecter avec mon email et mon mot de passe afin de accéder à mon espace personnel.
+
+Critères d'acceptation :
+- Identifiants valides : token JWT renvoyé
+- Identifiants invalides : message d'erreur
+- Redirection vers l'espace correspondant au rôle",Highest,5,membre1-securite,Sprint 1
+US07,E1,Story,Gestion des rôles,"En tant que administrateur, je veux que chaque utilisateur ait un rôle (Étudiant, Enseignant, Responsable, Admin, Entreprise) afin de qu'il n'accède qu'à ses fonctionnalités.
+
+Critères d'acceptation :
+- Entités User et Role créées
+- Un utilisateur possède au moins un rôle
+- Rôles initialisés au démarrage",Highest,3,membre1-securite,Sprint 1
+US08,E5,Story,Modélisation des entités Enseignant et Ressource pédagogique,"En tant que développeur, je veux créer les entités Enseignant et RessourcePedagogique afin de servir de base aux fonctionnalités enseignant.
+
+Critères d'acceptation :
+- Entités JPA, enums et repositories créés
+- Relation Enseignant 1..* Ressource
+- Tables générées en base",Highest,3,membre3-enseignants,Sprint 1
+US09,E6,Story,Gérer les formations et filières,"En tant que responsable du département, je veux créer, modifier et supprimer formations et filières afin de organiser l'offre de formation.
+
+Critères d'acceptation :
+- CRUD formation et filière
+- Une filière appartient à une formation
+- Suppression bloquée si des étudiants sont rattachés",Highest,5,membre4-pedagogie,Sprint 1
+US10,E6,Story,Gérer les modules d'enseignement,"En tant que responsable du département, je veux gérer les modules d'enseignement afin de définir le programme.
+
+Critères d'acceptation :
+- CRUD module (code, intitulé, semestre, volume horaire)
+- Rattachement à une filière",Highest,3,membre4-pedagogie,Sprint 1
+US11,E0,Story,Mettre en place Swagger / OpenAPI,"En tant que développeur, je veux consulter la documentation des API afin de tester et intégrer les endpoints facilement.
+
+Critères d'acceptation :
+- springdoc-openapi ajouté
+- Swagger UI accessible
+- Endpoints JWT testables depuis Swagger",Medium,2,commun,Sprint 2
+US12,E1,Story,Déconnexion,"En tant que utilisateur connecté, je veux me déconnecter afin de sécuriser mon compte sur un poste partagé.
+
+Critères d'acceptation :
+- Le token est supprimé côté client
+- Redirection vers la page d'accueil
+- Les pages privées ne sont plus accessibles",High,1,membre1-securite,Sprint 2
+US13,E1,Story,Protection des API par rôle,"En tant que responsable sécurité, je veux que chaque endpoint soit protégé selon le rôle afin de empêcher les accès non autorisés.
+
+Critères d'acceptation :
+- Filtre JWT en place
+- Accès refusé : 401 / 403
+- Routes publiques accessibles sans token",Highest,5,membre1-securite,Sprint 2
+US14,E1,Story,Protéger les routes Angular,"En tant que utilisateur, je veux ne voir que les pages autorisées pour mon rôle afin de avoir une interface adaptée.
+
+Critères d'acceptation :
+- Guards Angular par rôle
+- Intercepteur qui ajoute le token
+- Redirection vers login si token expiré",High,3,membre1-securite,Sprint 2
+US15,E2,Story,Créer un utilisateur,"En tant que administrateur, je veux créer un compte utilisateur afin de donner accès à la plateforme.
+
+Critères d'acceptation :
+- Formulaire avec rôle
+- Email unique vérifié
+- Mot de passe initial généré ou défini",High,3,membre1-securite,Sprint 2
+US16,E3,Story,Page d'accueil,"En tant que visiteur, je veux consulter une page d'accueil afin de découvrir le département.
+
+Critères d'acceptation :
+- Présentation rapide, dernières actualités, liens vers formations et stages
+- Accessible sans connexion
+- Responsive",High,3,a-repartir,Sprint 2
+US17,E4,Story,Créer un étudiant,"En tant que responsable du département, je veux ajouter un étudiant afin de l'inscrire dans la plateforme.
+
+Critères d'acceptation :
+- Formulaire avec champs obligatoires (CNE, nom, prénom, email)
+- CNE et email uniques
+- Compte utilisateur associé créé",Highest,5,membre2-etudiants,Sprint 2
+US18,E4,Story,Lister et rechercher les étudiants,"En tant que responsable du département, je veux lister et rechercher les étudiants afin de retrouver rapidement un étudiant.
+
+Critères d'acceptation :
+- Liste paginée
+- Recherche par nom, CNE, formation, groupe",High,3,membre2-etudiants,Sprint 2
+US19,E5,Story,Créer un enseignant,"En tant que responsable du département, je veux ajouter un enseignant afin de qu'il puisse utiliser la plateforme.
+
+Critères d'acceptation :
+- Matricule et email uniques
+- Grade et spécialité renseignés
+- Compte utilisateur associé créé",Highest,3,membre3-enseignants,Sprint 2
+US20,E5,Story,"Lister, rechercher et modifier les enseignants","En tant que responsable du département, je veux lister, rechercher et modifier les enseignants afin de gérer l'équipe pédagogique.
+
+Critères d'acceptation :
+- Liste paginée
+- Recherche par nom, grade, spécialité
+- Désactivation possible",High,3,membre3-enseignants,Sprint 2
+US21,E6,Story,Gérer les groupes,"En tant que responsable du département, je veux créer et gérer les groupes afin de répartir les étudiants.
+
+Critères d'acceptation :
+- CRUD groupe
+- Capacité maximale définie",High,3,membre4-pedagogie,Sprint 2
+US22,E6,Story,Gérer les salles,"En tant que responsable du département, je veux gérer les salles afin de les utiliser dans l'emploi du temps.
+
+Critères d'acceptation :
+- CRUD salle (nom, capacité, type)",Medium,2,membre4-pedagogie,Sprint 2
+US23,E7,Story,Créer et modifier son profil entreprise,"En tant que entreprise, je veux créer et modifier mon profil afin de publier des offres.
+
+Critères d'acceptation :
+- Inscription entreprise
+- Informations : nom, secteur, adresse, contact",High,3,membre5-pfe,Sprint 2
+US24,E2,Story,"Modifier, désactiver ou supprimer un compte","En tant que administrateur, je veux modifier, désactiver ou supprimer un compte afin de garder la liste des utilisateurs à jour.
+
+Critères d'acceptation :
+- Un compte désactivé ne peut plus se connecter
+- Confirmation avant suppression
+- Liste filtrable par rôle et statut",High,3,membre1-securite,Sprint 3
+US25,E4,Story,Modifier ou désactiver un étudiant,"En tant que responsable du département, je veux modifier ou désactiver un étudiant afin de garder les informations à jour.
+
+Critères d'acceptation :
+- Modification validée
+- Un étudiant désactivé ne peut plus se connecter",High,2,membre2-etudiants,Sprint 3
+US26,E4,Story,Affecter un étudiant à une formation et un groupe,"En tant que responsable du département, je veux affecter un étudiant à une formation et à un groupe afin de organiser les promotions.
+
+Critères d'acceptation :
+- Un étudiant appartient à un seul groupe à la fois
+- Le groupe doit appartenir à la formation choisie",High,3,membre2-etudiants,Sprint 3
+US27,E4,Story,"Consulter sa formation, ses modules et son groupe","En tant que étudiant, je veux consulter ma formation, mes modules et mon groupe afin de savoir ce que je dois suivre.
+
+Critères d'acceptation :
+- Affichage depuis l'espace étudiant
+- Modules liés à la formation/semestre",Medium,2,membre2-etudiants,Sprint 3
+US28,E5,Story,Consulter ses modules et ses groupes,"En tant que enseignant, je veux consulter les modules et groupes qui me sont attribués afin de préparer mes enseignements.
+
+Critères d'acceptation :
+- Liste des modules attribués
+- Liste des groupes et de leurs étudiants",High,3,membre3-enseignants,Sprint 3
+US29,E5,Story,Publier une ressource pédagogique,"En tant que enseignant, je veux publier un cours, TD, TP ou autre ressource afin de que mes étudiants y aient accès.
+
+Critères d'acceptation :
+- Upload de fichier (taille et formats limités)
+- Type, titre, module et visibilité obligatoires
+- Lien externe possible pour vidéo/lien",Highest,5,membre3-enseignants,Sprint 3
+US30,E6,Story,Affecter les enseignants aux modules,"En tant que responsable du département, je veux affecter un enseignant à un module et un groupe afin de organiser les enseignements.
+
+Critères d'acceptation :
+- Affectation module/groupe/enseignant
+- Un module peut avoir plusieurs enseignants",High,3,membre4-pedagogie,Sprint 3
+US31,E7,Story,Publier une offre de stage/PFE,"En tant que entreprise, je veux publier une offre afin de recevoir des candidatures.
+
+Critères d'acceptation :
+- Titre, description, durée, lieu, compétences
+- Offre modifiable et désactivable",Highest,5,membre5-pfe,Sprint 3
+US32,E7,Story,Consulter et rechercher les offres,"En tant que étudiant, je veux consulter et rechercher les offres afin de trouver un stage adapté.
+
+Critères d'acceptation :
+- Liste des offres actives
+- Recherche par mot-clé, ville, entreprise",High,3,membre5-pfe,Sprint 3
+US33,E4,Story,Consulter et modifier son profil,"En tant que étudiant, je veux consulter mon profil et modifier certaines informations afin de garder mes coordonnées à jour.
+
+Critères d'acceptation :
+- Champs modifiables limités (téléphone, adresse, photo)
+- Formation et groupe en lecture seule",Medium,3,membre2-etudiants,Sprint 4
+US34,E5,Story,Modifier ou supprimer ses ressources,"En tant que enseignant, je veux modifier ou supprimer mes ressources afin de garder des contenus à jour.
+
+Critères d'acceptation :
+- Un enseignant ne modifie que ses propres ressources
+- Le fichier est supprimé du stockage avec la ressource",High,3,membre3-enseignants,Sprint 4
+US35,E5,Story,Télécharger les ressources pédagogiques,"En tant que étudiant, je veux consulter et télécharger les ressources de mes modules afin de réviser mes cours.
+
+Critères d'acceptation :
+- Seules les ressources de mes modules sont visibles
+- Respect de la visibilité
+- Filtre par module et type",High,3,membre3-enseignants,Sprint 4
+US36,E6,Story,Gérer les emplois du temps,"En tant que responsable du département, je veux planifier les séances afin de fournir un emploi du temps à chaque groupe.
+
+Critères d'acceptation :
+- Séance : jour, heure, salle, module, enseignant, groupe
+- Détection des conflits (salle, enseignant, groupe)",High,8,membre4-pedagogie,Sprint 4
+US37,E6,Story,Consulter son emploi du temps,"En tant que étudiant ou enseignant, je veux consulter mon emploi du temps afin de organiser ma semaine.
+
+Critères d'acceptation :
+- Vue semaine
+- Filtré selon mon groupe ou mes séances",High,3,membre4-pedagogie,Sprint 4
+US38,E7,Story,Postuler à une offre,"En tant que étudiant, je veux postuler en déposant mes documents afin de candidater à un stage.
+
+Critères d'acceptation :
+- Upload CV et lettre
+- Une seule candidature par offre",Highest,5,membre5-pfe,Sprint 4
+US39,E7,Story,Accepter ou refuser une candidature,"En tant que entreprise, je veux examiner, accepter ou refuser les candidatures afin de choisir un stagiaire.
+
+Critères d'acceptation :
+- Accès aux informations nécessaires du candidat
+- Changement de statut visible par l'étudiant",High,3,membre5-pfe,Sprint 4
+US40,E8,Story,Créer et modifier une actualité,"En tant que responsable du département, je veux créer et modifier une actualité ou une annonce afin de informer étudiants et enseignants.
+
+Critères d'acceptation :
+- Titre, contenu, image facultative
+- Annonce publique ou interne",Medium,3,a-repartir,Sprint 4
+US41,E8,Story,Publier ou dépublier une actualité,"En tant que responsable du département, je veux publier ou dépublier une actualité afin de contrôler ce qui est visible.
+
+Critères d'acceptation :
+- Une actualité non publiée n'est pas visible",Medium,1,a-repartir,Sprint 4
+US42,E1,Story,Modifier son mot de passe,"En tant que utilisateur connecté, je veux changer mon mot de passe afin de garder mon compte sécurisé.
+
+Critères d'acceptation :
+- Ancien mot de passe vérifié
+- Nouveau mot de passe hashé (BCrypt)
+- Règles de complexité appliquées",Medium,2,membre1-securite,Sprint 5
+US43,E2,Story,Attribuer un rôle et des permissions,"En tant que administrateur, je veux modifier le rôle et les permissions d'un utilisateur afin de adapter ses droits.
+
+Critères d'acceptation :
+- Changement de rôle pris en compte à la prochaine connexion
+- Permissions affichées par rôle",Medium,3,membre1-securite,Sprint 5
+US44,E3,Story,Présentation du département et des formations,"En tant que visiteur, je veux consulter la présentation du département et ses formations afin de m'informer avant de candidater.
+
+Critères d'acceptation :
+- Page présentation
+- Liste des formations avec description
+- Données issues de la base",Medium,3,a-repartir,Sprint 5
+US45,E4,Story,Consulter ses résultats,"En tant que étudiant, je veux consulter mes notes afin de suivre ma progression.
+
+Critères d'acceptation :
+- Notes par module
+- Seules les notes publiées sont visibles",Medium,3,membre2-etudiants,Sprint 5
+US46,E4,Story,Consulter ses absences,"En tant que étudiant, je veux consulter mes absences afin de suivre mon assiduité.
+
+Critères d'acceptation :
+- Liste par module et date
+- Total des absences affiché",Medium,2,membre2-etudiants,Sprint 5
+US47,E5,Story,Saisir les notes,"En tant que enseignant, je veux saisir les notes de mes étudiants afin de publier les résultats.
+
+Critères d'acceptation :
+- Saisie par module et groupe
+- Note entre 0 et 20
+- Uniquement pour mes modules",High,5,membre3-enseignants,Sprint 5
+US48,E5,Story,Gérer les absences,"En tant que enseignant, je veux enregistrer les absences d'une séance afin de suivre l'assiduité.
+
+Critères d'acceptation :
+- Liste d'appel du groupe
+- Modification possible
+- Uniquement pour mes groupes",Medium,5,membre3-enseignants,Sprint 5
+US49,E6,Story,Gérer les examens,"En tant que responsable du département, je veux planifier les examens afin de organiser les sessions.
+
+Critères d'acceptation :
+- Examen : module, date, salle, durée
+- Vérification des conflits de salle",Medium,5,membre4-pedagogie,Sprint 5
+US50,E7,Story,Suivre ses candidatures,"En tant que étudiant, je veux suivre l'état de mes candidatures afin de savoir où j'en suis.
+
+Critères d'acceptation :
+- Statuts : en attente, acceptée, refusée, validée",Medium,2,membre5-pfe,Sprint 5
+US51,E7,Story,Valider un stage et affecter un encadrant,"En tant que responsable du département, je veux valider un stage accepté et affecter un encadrant afin de lancer le PFE.
+
+Critères d'acceptation :
+- Validation uniquement après acceptation entreprise
+- Encadrant choisi parmi les enseignants",High,3,membre5-pfe,Sprint 5
+US52,E8,Story,Consulter et rechercher les actualités,"En tant que utilisateur, je veux consulter et rechercher les actualités afin de rester informé.
+
+Critères d'acceptation :
+- Liste triée par date
+- Détail d'une actualité
+- Recherche par mot-clé",Medium,2,a-repartir,Sprint 5
+US53,E1,Story,Réinitialiser un mot de passe oublié,"En tant que utilisateur, je veux réinitialiser mon mot de passe afin de récupérer l'accès à mon compte.
+
+Critères d'acceptation :
+- Lien ou code de réinitialisation à durée limitée
+- Le lien ne fonctionne qu'une fois
+- Message de confirmation",Medium,5,membre1-securite,Sprint 6
+US54,E2,Story,Consulter les journaux d'activité,"En tant que administrateur, je veux consulter l'historique des actions importantes afin de suivre ce qui se passe sur la plateforme.
+
+Critères d'acceptation :
+- Actions sensibles enregistrées (connexion, création, suppression)
+- Filtre par date et utilisateur",Low,5,membre1-securite,Sprint 6
+US55,E3,Story,Contact,"En tant que visiteur, je veux consulter les coordonnées et envoyer un message afin de contacter le département.
+
+Critères d'acceptation :
+- Coordonnées affichées
+- Formulaire validé (nom, email, message)
+- Message enregistré ou envoyé par email",Low,2,a-repartir,Sprint 6
+US56,E3,Story,Informations publiques sur les stages/PFE,"En tant que visiteur, je veux consulter des informations générales sur les stages et PFE afin de comprendre le processus.
+
+Critères d'acceptation :
+- Page d'information
+- Lien vers les offres publiques si prévu",Low,1,a-repartir,Sprint 6
+US57,E5,Story,Consulter son profil enseignant,"En tant que enseignant, je veux consulter mon profil afin de vérifier mes informations.
+
+Critères d'acceptation :
+- Affichage des informations personnelles et du grade
+- Modification des coordonnées uniquement",Medium,2,membre3-enseignants,Sprint 6
+US58,E7,Story,Suivre l'avancement des PFE,"En tant que responsable du département, je veux suivre l'avancement des PFE afin de détecter les retards.
+
+Critères d'acceptation :
+- État d'avancement par PFE
+- Consultation par l'étudiant de son PFE",Medium,5,membre5-pfe,Sprint 6
+US59,E7,Story,Gérer les soutenances,"En tant que responsable du département, je veux planifier les soutenances afin de organiser la fin des PFE.
+
+Critères d'acceptation :
+- Date, salle, jury
+- Soutenance visible par l'étudiant",Low,3,membre5-pfe,Sprint 6
+US60,E9,Story,Tableau de bord du responsable,"En tant que responsable du département, je veux voir les chiffres clés du département afin de suivre son activité.
+
+Critères d'acceptation :
+- Nombre d'étudiants, enseignants, formations, groupes, stages, candidatures
+- Statistiques PFE",Medium,5,a-repartir,Sprint 6
+US61,E9,Story,Tableau de bord de l'administrateur,"En tant que administrateur, je veux voir l'état des comptes afin de surveiller la plateforme.
+
+Critères d'acceptation :
+- Utilisateurs actifs et désactivés
+- Répartition des rôles
+- Activités récentes",Medium,3,membre1-securite,Sprint 6
