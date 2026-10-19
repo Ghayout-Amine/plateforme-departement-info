@@ -1,0 +1,211 @@
+@startuml diagramme_classes_global
+title Diagramme de classes global - Gestion du département
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F5F9FF
+  BorderColor #2F5597
+}
+hide empty methods
+
+'les utilisateurs
+abstract class Utilisateur {
+  - id : Long
+  - nom : String
+  - prenom : String
+  - email : String
+  - motDePasse : String
+  - telephone : String
+  - role : Role
+  - actif : boolean
+  - dateCreation : LocalDateTime
+}
+
+class Administrateur {
+}
+
+class Enseignant {
+  - matricule : String
+  - grade : String
+  - specialite : String
+  - bureau : String
+}
+
+class Etudiant {
+  - cne : String
+  - dateNaissance : LocalDate
+}
+
+class Entreprise {
+  - raisonSociale : String
+  - secteurActivite : String
+  - adresse : String
+  - ville : String
+  - siteWeb : String
+}
+
+Utilisateur <|-- Administrateur
+Utilisateur <|-- Enseignant
+Utilisateur <|-- Etudiant
+Utilisateur <|-- Entreprise
+
+' Structure pédagogique 
+class Departement {
+  - id : Long
+  - code : String
+  - nom : String
+  - description : String
+}
+
+class Filiere {
+  - id : Long
+  - code : String
+  - nom : String
+  - cycle : Cycle
+  - dureeAnnees : int
+}
+
+class Module {
+  - id : Long
+  - code : String
+  - intitule : String
+  - semestre : int
+  - volumeHoraire : int
+  - coefficient : double
+}
+
+class Inscription {
+  - id : Long
+  - anneeUniversitaire : String
+  - niveau : int
+  - dateInscription : LocalDate
+}
+
+class RessourcePedagogique {
+  - id : Long
+  - titre : String
+  - description : String
+  - type : TypeRessource
+  - cheminFichier : String
+  - dateDepot : LocalDateTime
+  - visible : boolean
+}
+
+class Note {
+  - id : Long
+  - valeur : double
+  - session : Session
+  - anneeUniversitaire : String
+  - dateSaisie : LocalDate
+}
+
+class Annonce {
+  - id : Long
+  - titre : String
+  - contenu : String
+  - datePublication : LocalDateTime
+}
+
+'  Stages 
+class OffreStage {
+  - id : Long
+  - titre : String
+  - description : String
+  - typeStage : TypeStage
+  - dureeMois : int
+  - dateDebut : LocalDate
+  - lieu : String
+  - datePublication : LocalDate
+  - statut : StatutOffre
+}
+
+class Candidature {
+  - id : Long
+  - dateCandidature : LocalDateTime
+  - cv : String
+  - lettreMotivation : String
+  - statut : StatutCandidature
+}
+
+class Stage {
+  - id : Long
+  - sujet : String
+  - dateDebut : LocalDate
+  - dateFin : LocalDate
+  - rapport : String
+  - noteFinale : Double
+  - statut : StatutStage
+}
+
+'  Énumérations 
+enum Role {
+  ADMIN
+  ENSEIGNANT
+  ETUDIANT
+  ENTREPRISE
+}
+enum Cycle {
+  LICENCE
+  MASTER
+  INGENIEUR
+}
+enum TypeRessource {
+  COURS
+  TD
+  TP
+  EXAMEN
+  AUTRE
+}
+enum Session {
+  NORMALE
+  RATTRAPAGE
+}
+enum TypeStage {
+  INITIATION
+  PFA
+  PFE
+}
+enum StatutOffre {
+  EN_ATTENTE
+  VALIDEE
+  REFUSEE
+  CLOTUREE
+}
+enum StatutCandidature {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
+}
+enum StatutStage {
+  EN_COURS
+  TERMINE
+  VALIDE
+}
+
+' =Associations 
+Departement "1" *-- "1..*" Filiere : contient >
+Departement "1" o-- "0..*" Enseignant : rattache >
+Departement "0..1" -- "0..1" Enseignant : chef >
+
+Filiere "1" *-- "1..*" Module : comprend >
+Filiere "1" -- "0..*" Inscription
+Etudiant "1" -- "1..*" Inscription
+
+Enseignant "1" -- "0..*" Module : responsable de >
+Enseignant "1..*" -- "0..*" Module : enseigne >
+
+Module "1" *-- "0..*" RessourcePedagogique : regroupe >
+Enseignant "1" -- "0..*" RessourcePedagogique : dépose >
+
+Etudiant "1" -- "0..*" Note : obtient >
+Module "1" -- "0..*" Note : concerne >
+Enseignant "1" -- "0..*" Note : saisit >
+
+Utilisateur "1" -- "0..*" Annonce : publie >
+
+Entreprise "1" -- "0..*" OffreStage : publie >
+Administrateur "0..1" -- "0..*" OffreStage : valide >
+OffreStage "1" -- "0..*" Candidature : reçoit >
+Etudiant "1" -- "0..*" Candidature : dépose >
+Candidature "1" -- "0..1" Stage : donne lieu à >
+Enseignant "0..1" -- "0..*" Stage : encadre >
+@enduml
