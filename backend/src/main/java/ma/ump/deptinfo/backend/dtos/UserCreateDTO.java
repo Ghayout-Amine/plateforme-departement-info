@@ -3,6 +3,7 @@ package ma.ump.deptinfo.backend.dtos;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import ma.ump.deptinfo.backend.entities.Role;
 
 @Data
 public class UserCreateDTO {
@@ -21,4 +22,6 @@ public class UserCreateDTO {
     private String lastName;
 
     private String phone;
+
+    private Role role = Role.ENSEIGNANT;
 }

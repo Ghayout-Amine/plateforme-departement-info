@@ -1,4 +1,8 @@
 package ma.ump.deptinfo.backend.entities;
 
-public class Role {
+public enum Role {
+    ADMIN,
+    CHEF_DEPARTEMENT,
+    ENSEIGNANT,
+    ETUDIANT
 }

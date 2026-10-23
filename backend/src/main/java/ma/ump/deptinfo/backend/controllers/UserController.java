@@ -3,6 +3,7 @@ package ma.ump.deptinfo.backend.controllers;
 import jakarta.validation.Valid;
 import ma.ump.deptinfo.backend.dtos.UserCreateDTO;
 import ma.ump.deptinfo.backend.dtos.UserResponseDTO;
+import ma.ump.deptinfo.backend.dtos.UserUpdateDTO;
 import ma.ump.deptinfo.backend.services.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,13 @@ public class UserController {
     public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserCreateDTO dto) {
         UserResponseDTO created = userService.createUser(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    // PUT http://localhost:8080/api/users/{id} (Mettre à jour un utilisateur)
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO dto) {
+        UserResponseDTO updated = userService.updateUser(id, dto);
+        return ResponseEntity.ok(updated);
     }
 
     // DELETE http://localhost:8080/api/users/{id} (Supprimer un utilisateur)

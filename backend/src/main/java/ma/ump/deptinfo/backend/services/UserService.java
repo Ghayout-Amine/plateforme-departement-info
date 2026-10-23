@@ -2,6 +2,8 @@ package ma.ump.deptinfo.backend.services;
 
 import ma.ump.deptinfo.backend.dtos.UserCreateDTO;
 import ma.ump.deptinfo.backend.dtos.UserResponseDTO;
+import ma.ump.deptinfo.backend.dtos.UserUpdateDTO;
+import ma.ump.deptinfo.backend.entities.Role;
 import ma.ump.deptinfo.backend.entities.User;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,10 +49,31 @@ public class UserService {
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setPhone(dto.getPhone());
+        user.setRole(dto.getRole() != null ? dto.getRole() : Role.ENSEIGNANT);
         user.setEnabled(true);
 
         User saved = userRepository.save(user);
         return toResponseDTO(saved);
+    }
+
+    // Mettre à jour les informations d'un utilisateur
+    public UserResponseDTO updateUser(Long id, UserUpdateDTO dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable avec l'id : " + id));
+
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setPhone(dto.getPhone());
+
+        if (dto.getRole() != null) {
+            user.setRole(dto.getRole());
+        }
+        if (dto.getEnabled() != null) {
+            user.setEnabled(dto.getEnabled());
+        }
+
+        User updated = userRepository.save(user);
+        return toResponseDTO(updated);
     }
 
     // Supprimer un utilisateur
@@ -69,6 +92,7 @@ public class UserService {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getPhone(),
+                user.getRole(),
                 user.getEnabled(),
                 user.getCreatedAt()
         );
