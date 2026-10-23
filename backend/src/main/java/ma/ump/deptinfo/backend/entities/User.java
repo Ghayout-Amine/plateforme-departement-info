@@ -1,4 +1,3 @@
-
 package ma.ump.deptinfo.backend.entities;
 
 import jakarta.persistence.*;
@@ -27,6 +26,10 @@ public class User {
     @Column(length = 30)
     private String phone;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 30)
+    private Role role = Role.ENSEIGNANT;
+
     @Column(name = "avatar_url", length = 255)
     private String avatarUrl;
 
@@ -50,6 +53,10 @@ public class User {
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getEmail() {
@@ -90,6 +97,14 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public String getAvatarUrl() {
