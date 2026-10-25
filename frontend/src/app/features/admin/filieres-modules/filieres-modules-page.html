@@ -1,0 +1,246 @@
+<div class="page">
+ 
+  <header class="entete">
+    <div>
+      <h1>Filières et modules</h1>
+      <p class="entete__texte">
+        {{ filieres().length }} filière{{ filieres().length > 1 ? 's' : '' }},
+        {{ modules().length }} module{{ modules().length > 1 ? 's' : '' }},
+        {{ totalHeuresDepartement() }} h de cours
+      </p>
+    </div>
+  </header>
+
+  @if (chargement() && filieres().length === 0) {
+    <p class="etat">Chargement…</p>
+  } @else if (erreurChargement()) {
+    <div class="etat etat--erreur">
+      <p>{{ erreurChargement() }}</p>
+      <button type="button" class="btn btn--secondaire" (click)="charger()">Réessayer</button>
+    </div>
+  } @else if (filieres().length === 0) {
+    <div class="vide">
+      <p class="vide__titre">Créez votre première filière</p>
+      <p>Une filière regroupe les modules d’une formation, semestre par semestre.</p>
+      <button type="button" class="btn btn--principal" (click)="filiereEnEdition.set(null)">
+        Créer une filière
+      </button>
+    </div>
+  } @else {
+    <!-- Choix de la filiè-->
+    <div class="filieres">
+      <ul class="filieres__liste" aria-label="Filières">
+        @for (f of filieresFiltrees(); track f.id) {
+          <li>
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="f.id === selectionId()"
+              [attr.aria-pressed]="f.id === selectionId()"
+              (click)="selectionner(f.id)"
+            >
+              <strong>{{ f.code }}</strong>
+              @if (f.id === selectionId()) {
+                <span>{{ f.nom }}</span>
+              }
+            </button>
+          </li>
+        } @empty {
+          <li class="etat">Aucune filière ne correspond à « {{ recherche() }} ».</li>
+        }
+        <li>
+          <button type="button" class="chip chip--ajout" (click)="filiereEnEdition.set(null)">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Filière
+          </button>
+        </li>
+      </ul>
+      @if (filieres().length > 5) {
+        <input
+          class="filieres__recherche"
+          type="search"
+          placeholder="Rechercher une filière"
+          aria-label="Rechercher une filière"
+          [value]="recherche()"
+          (input)="recherche.set($any($event.target).value)"
+        />
+      }
+    </div>
+
+    @if (filiereSelectionnee(); as f) {
+      <!-- Fiche de la filière  -->
+      <section class="fiche" aria-live="polite">
+        <div class="fiche__entete">
+          <div>
+            <p class="fiche__surtitre">
+              <span class="badge">{{ libelleNiveau(f.niveau) }}</span>
+              {{ modulesSelection().length }} module{{ modulesSelection().length > 1 ? 's' : '' }},
+              {{ totalHeures() }} h
+            </p>
+            <h2 class="fiche__nom">{{ f.nom }}</h2>
+            @if (f.responsableNomComplet) {
+              <p class="fiche__meta">Responsable : {{ f.responsableNomComplet }}</p>
+            }
+            @if (f.description) {
+              <p class="fiche__description">{{ f.description }}</p>
+            }
+          </div>
+          <div class="fiche__actions">
+            <button
+              type="button"
+              class="icone-btn"
+              (click)="filiereEnEdition.set(f)"
+              aria-label="Modifier la filière"
+              title="Modifier la filière"
+            >
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="icone-btn icone-btn--danger"
+              (click)="demanderSuppressionFiliere(f)"
+              aria-label="Supprimer la filière"
+              title="Supprimer la filière"
+            >
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Frise des semestres  -->
+        <ol class="frise" aria-label="Semestres">
+          @for (g of groupes(); track g.semestre; let dernier = $last) {
+            <li class="frise__etape" [class.frise__etape--derniere]="dernier">
+              <button
+                type="button"
+                class="frise__point frise__point--{{ etatSemestre(g) }}"
+                [attr.aria-current]="etatSemestre(g) === 'actif' ? 'step' : null"
+                (click)="semestreActif.set(g.semestre)"
+              >
+                {{ g.semestre }}
+              </button>
+              <span class="frise__info">{{ g.modules.length }} mod.</span>
+              @if (!dernier) {
+                <span
+                  class="frise__trait"
+                  [class.frise__trait--plein]="g.modules.length > 0"
+                ></span>
+              }
+            </li>
+          }
+        </ol>
+
+        <!--  Modules du semestre -->
+        @if (groupeActif(); as g) {
+          <div class="semestre">
+            <div class="semestre__entete">
+              <h3>
+                Semestre {{ g.semestre.replace('S', '') }}
+                <span
+                  >{{ g.modules.length }} module{{ g.modules.length > 1 ? 's' : '' }},
+                  {{ g.totalHeures }} h</span
+                >
+              </h3>
+              <button
+                type="button"
+                class="btn btn--principal"
+                (click)="ouvrirNouveauModule(g.semestre)"
+              >
+                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Ajouter un module
+              </button>
+            </div>
+
+            @if (g.modules.length > 0) {
+              <ul class="modules">
+                @for (m of g.modules; track m.id) {
+                  <li class="module">
+                    <span class="module__code">{{ m.code }}</span>
+                    <span class="module__nom">{{ m.nom }}</span>
+                    <span class="module__ens" [class.module__ens--vide]="!m.enseignantNomComplet">
+                      {{ m.enseignantNomComplet ?? 'Non affecté' }}
+                    </span>
+                    <span class="module__vh">{{
+                      m.volumeHoraire !== null ? m.volumeHoraire + ' h' : '–'
+                    }}</span>
+                    <span class="module__actions">
+                      <button
+                        type="button"
+                        class="icone-btn"
+                        (click)="moduleEnEdition.set(m)"
+                        [attr.aria-label]="'Modifier ' + m.code"
+                        title="Modifier"
+                      >
+                        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="icone-btn icone-btn--danger"
+                        (click)="aSupprimer.set({ type: 'module', module: m })"
+                        [attr.aria-label]="'Supprimer ' + m.code"
+                        title="Supprimer"
+                      >
+                        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+                        </svg>
+                      </button>
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="semestre__vide">Aucun module en {{ g.semestre }} pour l’instant.</p>
+            }
+          </div>
+        }
+      </section>
+    }
+  }
+</div>
+
+<!-- ============ Dialogues ============ -->
+@if (filiereEnEdition() !== undefined) {
+  <app-filiere-form
+    [filiere]="filiereEnEdition() ?? null"
+    [codesExistants]="codesFilieres()"
+    (enregistree)="filiereEnregistree($event)"
+    (fermee)="filiereEnEdition.set(undefined)"
+  />
+}
+
+@if (moduleEnEdition() !== undefined && filiereSelectionnee(); as f) {
+  <app-module-form
+    [filiere]="f"
+    [module]="moduleEnEdition() ?? null"
+    [semestreParDefaut]="semestreNouveauModule()"
+    [codesExistants]="codesModules()"
+    (enregistre)="moduleEnregistre($event)"
+    (ferme)="moduleEnEdition.set(undefined)"
+  />
+}
+
+@if (aSupprimer(); as s) {
+  <app-confirm-dialog
+    [titre]="s.type === 'filiere' ? 'Supprimer la filière ?' : 'Supprimer le module ?'"
+    [message]="messageSuppression(s)"
+    [enCours]="suppressionEnCours()"
+    (confirmer)="confirmerSuppression()"
+    (annuler)="aSupprimer.set(null)"
+  />
+}
+
+@if (notification()) {
+  <div class="notification" [class.notification--erreur]="notificationErreur()" role="status">
+    {{ notification() }}
+  </div>
+}

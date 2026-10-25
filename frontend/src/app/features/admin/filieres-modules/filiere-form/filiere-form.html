@@ -1,0 +1,58 @@
+<dialog #dlg class="dialog" (cancel)="fermee.emit()">
+  <form [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+    <h2 class="dialog__titre">
+      {{ estModification ? 'Modifier la filière' : 'Nouvelle filière' }}
+    </h2>
+
+    @if (erreur()) {
+      <p class="alerte" role="alert">{{ erreur() }}</p>
+    }
+
+    <div class="champ-ligne">
+      <div class="champ">
+        <label for="f-code">Code</label>
+        <input id="f-code" formControlName="code" placeholder="Ex. GL" autocomplete="off" />
+        @if (invalide('code')) {
+          <small class="champ__erreur"
+            >Obligatoire, 30 caractères max (lettres, chiffres, - et _).</small
+          >
+        }
+      </div>
+
+      <div class="champ">
+        <label for="f-niveau">Niveau</label>
+        <select id="f-niveau" formControlName="niveau">
+          @for (n of niveaux; track n.value) {
+            <option [value]="n.value">{{ n.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="champ">
+      <label for="f-nom">Nom</label>
+      <input id="f-nom" formControlName="nom" placeholder="Ex. Génie logiciel" />
+      @if (invalide('nom')) {
+        <small class="champ__erreur">Le nom est obligatoire (150 caractères max).</small>
+      }
+    </div>
+
+    <div class="champ">
+      <label for="f-desc">Description <span class="champ__facultatif">(facultatif)</span></label>
+      <textarea id="f-desc" rows="3" formControlName="description"></textarea>
+    </div>
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--secondaire" (click)="fermee.emit()">Annuler</button>
+      <button type="submit" class="btn btn--principal" [disabled]="enCours()">
+        {{
+          enCours()
+            ? 'Enregistrement…'
+            : estModification
+              ? 'Enregistrer les modifications'
+              : 'Créer la filière'
+        }}
+      </button>
+    </div>
+  </form>
+</dialog>

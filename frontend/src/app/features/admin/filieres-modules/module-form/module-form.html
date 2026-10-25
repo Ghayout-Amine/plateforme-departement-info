@@ -1,0 +1,66 @@
+<dialog #dlg class="dialog" (cancel)="ferme.emit()">
+  <form [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+    <h2 class="dialog__titre">{{ estModification ? 'Modifier le module' : 'Nouveau module' }}</h2>
+    <p class="dialog__contexte">Filière {{ filiere().code }} ({{ filiere().nom }})</p>
+
+    @if (erreur()) {
+      <p class="alerte" role="alert">{{ erreur() }}</p>
+    }
+
+    <div class="champ-ligne">
+      <div class="champ">
+        <label for="m-code">Code</label>
+        <input id="m-code" formControlName="code" placeholder="Ex. GL-S1-03" autocomplete="off" />
+        @if (invalide('code')) {
+          <small class="champ__erreur"
+            >Obligatoire, 30 caractères max (lettres, chiffres, - et _).</small
+          >
+        }
+      </div>
+
+      <div class="champ">
+        <label for="m-semestre">Semestre</label>
+        <select id="m-semestre" formControlName="semestre">
+          @for (s of semestres(); track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="champ">
+      <label for="m-nom">Intitulé</label>
+      <input id="m-nom" formControlName="nom" placeholder="Ex. Programmation web" />
+      @if (invalide('nom')) {
+        <small class="champ__erreur">L’intitulé est obligatoire (150 caractères max).</small>
+      }
+    </div>
+
+    <div class="champ">
+      <label for="m-vh"
+        >Volume horaire en heures <span class="champ__facultatif">(facultatif)</span></label
+      >
+      <input id="m-vh" type="number" min="1" max="300" formControlName="volumeHoraire" />
+      @if (invalide('volumeHoraire')) {
+        <small class="champ__erreur">Entre 1 et 300 heures.</small>
+      }
+    </div>
+
+    @if (module()?.enseignantNomComplet; as ens) {
+      <p class="dialog__contexte">Enseignant affecté : {{ ens }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--secondaire" (click)="ferme.emit()">Annuler</button>
+      <button type="submit" class="btn btn--principal" [disabled]="enCours()">
+        {{
+          enCours()
+            ? 'Enregistrement…'
+            : estModification
+              ? 'Enregistrer les modifications'
+              : 'Ajouter le module'
+        }}
+      </button>
+    </div>
+  </form>
+</dialog>

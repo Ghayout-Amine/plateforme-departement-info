@@ -1,0 +1,173 @@
+/* Styles communs des écrans d'administration (boutons, champs, dialogues etcccc)
+   */
+:host {
+  --accent: #18181b; /* noir */
+  --accent-fonce: #000000;
+  --gris: #d4d4d8;
+  --gris-pale: #f4f4f5;
+  --encre: #18181b;
+  --texte-doux: #71717a;
+  --fond: #fafafa;
+  --surface: #ffffff;
+  --bordure: #e4e4e7;
+  --rouge: #dc2626;
+  --rouge-pale: #fef2f2;
+  --rayon: 10px;
+  color: var(--encre);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ----- boutons ----- */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 14px;
+  border-radius: var(--rayon);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.btn--principal {
+  background: var(--accent);
+  color: #fff;
+}
+.btn--principal:hover:not(:disabled) {
+  background: var(--accent-fonce);
+}
+.btn--secondaire {
+  background: var(--surface);
+  color: var(--encre);
+  border-color: var(--bordure);
+}
+.btn--secondaire:hover {
+  border-color: var(--texte-doux);
+}
+.btn--danger {
+  background: var(--rouge);
+  color: #fff;
+}
+
+/* ----- champs ----- */
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  flex: 1;
+}
+.champ label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.champ__facultatif {
+  font-weight: 400;
+  color: var(--texte-doux);
+}
+.champ input,
+.champ select,
+.champ textarea {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  color: var(--encre);
+}
+.champ textarea {
+  resize: vertical;
+}
+.champ input:focus,
+.champ select:focus,
+.champ textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--gris-pale);
+}
+.champ input.ng-invalid.ng-touched {
+  border-color: var(--rouge);
+}
+.champ__erreur {
+  color: var(--rouge);
+  font-size: 12.5px;
+}
+.champ-ligne {
+  display: flex;
+  gap: 14px;
+}
+@media (max-width: 520px) {
+  .champ-ligne {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.alerte {
+  background: var(--rouge-pale);
+  color: var(--rouge);
+  padding: 10px 12px;
+  border-radius: var(--rayon);
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+/* ----- dialogues (<dialog> natif) ----- */
+.dialog {
+  border: none;
+  border-radius: 18px;
+  padding: 26px;
+  width: min(520px, calc(100vw - 32px));
+  color: var(--encre);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+.dialog--petit {
+  width: min(420px, calc(100vw - 32px));
+}
+.dialog::backdrop {
+  background: rgba(24, 24, 27, 0.45);
+}
+.dialog__titre {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.dialog__contexte,
+.dialog__texte {
+  color: var(--texte-doux);
+  margin-bottom: 16px;
+}
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}

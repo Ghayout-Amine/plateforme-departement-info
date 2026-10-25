@@ -1,0 +1,399 @@
+:host {
+  display: block;
+  background: var(--fond);
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+}
+
+/* ----- icônes SVG ----- */
+.ico {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ----- en-tête ----- */
+.entete {
+  margin-bottom: 22px;
+}
+.entete h1 {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.entete__texte {
+  color: var(--texte-doux);
+  margin-top: 4px;
+}
+
+/* ----- choix de la filière ----- */
+.filieres {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.filieres__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.chip {
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: var(--surface);
+  color: var(--encre);
+  border: 1px solid var(--bordure);
+  display: inline-flex;
+  gap: 6px;
+}
+.chip:hover {
+  border-color: var(--gris);
+}
+.chip--ajout {
+  border-style: dashed;
+  color: var(--texte-doux);
+  align-items: center;
+}
+.chip--ajout .ico {
+  width: 15px;
+  height: 15px;
+}
+.chip--active,
+.chip--active:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.filieres__recherche {
+  font: inherit;
+  padding: 8px 14px;
+  border: 1px solid var(--bordure);
+  border-radius: 999px;
+  background: var(--surface);
+  min-width: 220px;
+}
+
+/* ----- fiche de la filière ----- */
+.fiche {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 20px;
+  padding: 24px 26px 26px;
+}
+.fiche__entete {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+.fiche__surtitre {
+  color: var(--texte-doux);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge {
+  background: var(--gris-pale);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.fiche__nom {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-top: 6px;
+}
+.fiche__meta {
+  color: var(--texte-doux);
+  margin-top: 2px;
+}
+.fiche__description {
+  margin-top: 8px;
+  max-width: 65ch;
+}
+.fiche__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icone-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--bordure);
+  background: var(--surface);
+  color: var(--texte-doux);
+  cursor: pointer;
+}
+.icone-btn:hover {
+  color: var(--accent);
+  border-color: var(--gris);
+  background: var(--gris-pale);
+}
+.icone-btn--danger:hover {
+  color: var(--rouge);
+  border-color: #fecaca;
+  background: var(--rouge-pale);
+}
+
+/* ----- frise des semestres ----- */
+.frise {
+  list-style: none;
+  margin: 28px 0 24px;
+  padding: 0;
+  display: flex;
+}
+.frise__etape {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.frise__etape--derniere {
+  flex: none;
+}
+.frise__point {
+  position: relative;
+  z-index: 1;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  border: 2px solid var(--bordure);
+  background: var(--surface);
+  color: var(--texte-doux);
+  transition: transform 0.15s ease;
+}
+.frise__point:hover {
+  transform: scale(1.06);
+}
+.frise__point--rempli {
+  background: var(--gris);
+  border-color: var(--gris);
+  color: var(--accent-fonce);
+}
+.frise__point--actif {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 5px var(--gris-pale);
+}
+.frise__info {
+  font-size: 12px;
+  color: var(--texte-doux);
+  margin-top: 6px;
+  width: 46px;
+  text-align: center;
+}
+.frise__trait {
+  position: absolute;
+  top: 22px;
+  left: 46px;
+  right: 0;
+  height: 3px;
+  background: var(--bordure);
+}
+.frise__trait--plein {
+  background: var(--gris);
+}
+
+/* ----- modules du semestre ----- */
+.semestre {
+  border-top: 1px solid var(--bordure);
+  padding-top: 20px;
+}
+.semestre__entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.semestre__entete h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.semestre__entete h3 span {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--texte-doux);
+  margin-left: 8px;
+}
+.semestre__vide {
+  color: var(--texte-doux);
+  background: var(--fond);
+  border: 1px dashed var(--gris);
+  border-radius: 14px;
+  padding: 22px;
+  text-align: center;
+}
+
+.modules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.module {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 170px 64px 84px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 6px;
+  border-top: 1px solid var(--gris-pale);
+}
+.module:first-child {
+  border-top: none;
+}
+.module:hover {
+  background: var(--fond);
+}
+.module__code {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 14px;
+}
+.module__nom {
+  font-weight: 600;
+}
+.module__ens {
+  color: var(--texte-doux);
+  font-size: 14px;
+}
+.module__ens--vide {
+  font-style: italic;
+  color: #a1a1aa;
+}
+.module__vh {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--texte-doux);
+}
+.module__actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.module .icone-btn {
+  width: 32px;
+  height: 32px;
+}
+
+/* ----- états ----- */
+.etat {
+  color: var(--texte-doux);
+  padding: 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+.etat--erreur p {
+  color: var(--rouge);
+}
+.vide {
+  background: var(--surface);
+  border: 1px dashed var(--gris);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  color: var(--texte-doux);
+}
+.vide__titre {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--encre);
+}
+
+.notification {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  padding: 11px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  z-index: 100;
+  max-width: calc(100vw - 32px);
+}
+.notification--erreur {
+  background: var(--rouge);
+}
+
+@media (max-width: 760px) {
+  .module {
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+  }
+  .module__code,
+  .module__nom,
+  .module__ens {
+    grid-column: 1;
+  }
+  .module__vh {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .module__actions {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+  }
+  .frise__point {
+    width: 38px;
+    height: 38px;
+    font-size: 12px;
+  }
+  .frise__trait {
+    top: 18px;
+    left: 38px;
+  }
+  .frise__info {
+    width: 38px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .frise__point {
+    transition: none;
+  }
+}
