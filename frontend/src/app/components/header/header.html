@@ -1,8 +1,12 @@
 <header class="header">
   <h1 class="logo">PGDI</h1>
   <nav>
-    <a href="/">Accueil</a>
-    <a href="/about">À propos</a>
-    <a href="/contact">Contact</a>
+    <a routerLink="/">Accueil</a>
+    @if (auth.isLoggedIn()) {
+      <a routerLink="/dashboard">Tableau de bord</a>
+      <a href="#" (click)="$event.preventDefault(); auth.logout()">Déconnexion</a>
+    } @else {
+      <a routerLink="/login">Connexion</a>
+    }
   </nav>
 </header>
