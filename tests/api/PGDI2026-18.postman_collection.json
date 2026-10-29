@@ -1,0 +1,2686 @@
+{
+  "info": {
+    "_postman_id": "7a4093ff-c2ed-5a83-923c-0c5607070b0d",
+    "name": "PGDI2026 - Tests d'intégration API (PGDI2026-18)",
+    "description": "Tests d'intégration du backend Spring Boot (branche develop, Sprint 1).\n\nPré-requis : backend lancé avec le profil test (charge db/testdata/data-test.sql).\n  cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=test\n\nDossiers 00 à 05 : doivent être 100 % verts. Ils sont rejouables sans redémarrer.\nDossier 99 : anomalies connues, rouge tant qu'elles ne sont pas corrigées.\n\nnewman run tests/api/PGDI2026-18.postman_collection.json -e tests/api/PGDI2026-local.postman_environment.json --folder \"00 - Disponibilité\" --folder \"01 - Authentification\" --folder \"02 - Protection des endpoints (JWT)\" --folder \"03 - Utilisateurs (/api/users)\" --folder \"04 - Filières (/api/filieres)\" --folder \"05 - Modules (/api/modules)\"",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Pas d\\'erreur serveur (5xx)', function () { pm.expect(pm.response.code).to.be.below(500); });",
+          "pm.test('Temps de réponse < 3 s', function () { pm.expect(pm.response.responseTime).to.be.below(3000); });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "helpers",
+      "value": "(function () {\n  function body() { try { return pm.response.json(); } catch (e) { return null; } }\n  function unwrap(b) { return (b && typeof b === 'object' && !Array.isArray(b) && b.data !== undefined) ? b.data : b; }\n  function list(b) {\n    b = unwrap(b === undefined ? body() : b);\n    if (Array.isArray(b)) return b;\n    if (b && Array.isArray(b.content)) return b.content;\n    if (b && Array.isArray(b.items)) return b.items;\n    return [];\n  }\n  function get(o, path) { return path.split('.').reduce(function (a, p) { return a == null ? undefined : a[p]; }, o); }\n  function pick(o, keys) { for (var i = 0; i < keys.length; i++) { var v = get(o, keys[i]); if (v !== undefined && v !== null) return v; } return undefined; }\n  function idOf(b) { b = unwrap(b === undefined ? body() : b); return b ? pick(b, ['id']) : undefined; }\n  function status(codes, label) {\n    codes = [].concat(codes);\n    pm.test(label || ('Statut HTTP ' + codes.join(' ou ')), function () { pm.expect(codes).to.include(pm.response.code); });\n    return codes.indexOf(pm.response.code) !== -1;\n  }\n  function noToken() {\n    pm.test('Aucun jeton renvoyé', function () {\n      var b = unwrap(body()) || {};\n      pm.expect(b.accessToken || b.token).to.be.undefined;\n    });\n  }\n  function save(name, value) { pm.collectionVariables.set(name, value); }\n  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }\n  function pad(n) { return (n < 10 ? '0' : '') + n; }\n  function randWeekday(fromIso, toIso) {\n    var from = Date.parse(fromIso + 'T00:00:00Z'), to = Date.parse(toIso + 'T00:00:00Z');\n    for (var k = 0; k < 50; k++) {\n      var d = new Date(from + randInt(0, Math.floor((to - from) / 86400000)) * 86400000);\n      var w = d.getUTCDay();\n      if (w !== 0 && w !== 6) return d.toISOString().substring(0, 10);\n    }\n    return fromIso;\n  }\n  function randSlot(minH, maxH, minutes) {\n    var start = randInt(minH * 12, maxH * 12) * 5, end = start + minutes;\n    return { start: pad(Math.floor(start / 60)) + ':' + pad(start % 60) + ':00', end: pad(Math.floor(end / 60)) + ':' + pad(end % 60) + ':00' };\n  }\n  function allHave(items, field, allowed, label) {\n    allowed = [].concat(allowed);\n    pm.test(label || ('Tous les éléments ont ' + field + ' ∈ ' + allowed.join('/')), function () {\n      items.forEach(function (it) { var v = get(it, field); if (v !== undefined) pm.expect(allowed).to.include(v); });\n    });\n  }\n  function jwtPayload(t) {\n    var p = String(t || '').split('.')[1] || ''; p = p.replace(/-/g, '+').replace(/_/g, '/'); while (p.length % 4) p += '=';\n    try { return JSON.parse(CryptoJS.enc.Base64.parse(p).toString(CryptoJS.enc.Utf8)); } catch (e) { return null; }\n  }\n  return { jwtPayload: jwtPayload, body: body, unwrap: unwrap, list: list, get: get, pick: pick, idOf: idOf, status: status, noToken: noToken,\n           save: save, randInt: randInt, pad: pad, randWeekday: randWeekday, randSlot: randSlot, allHave: allHave };\n})()",
+      "type": "string",
+      "description": "Fonctions utilitaires partagées (chargées par eval dans chaque script)."
+    },
+    {
+      "key": "forgedToken",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBwZ2RpLnRlc3QiLCJpYXQiOjE3OTMwMDAwMDAsImV4cCI6NDEwMjQ0NDgwMH0.ZmF1c3NlLXNpZ25hdHVyZS1wb3VyLWxlcy10ZXN0cw",
+      "type": "string"
+    },
+    {
+      "key": "malformedToken",
+      "value": "pas-un-jwt",
+      "type": "string"
+    },
+    {
+      "key": "expiredToken",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBwZ2RpLnRlc3QiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MTcwMDAwMzYwMH0.c2lnbmF0dXJlLWV4cGlyZWUtcG91ci1sZXMtdGVzdHM",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Disponibilité",
+      "description": "Vérifie que l'API répond.",
+      "item": [
+        {
+          "name": "API d'authentification disponible",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/test",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Message attendu', function () { pm.expect(pm.response.text()).to.eql('Auth API is working!'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Authentification",
+      "description": "POST /api/auth/login avec les comptes du jeu de données (mot de passe {{password}}).",
+      "item": [
+        {
+          "name": "Connexion administrateur",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Le jeton est mémorisé dans {{tokenAdmin}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const b = u.body() || {};",
+                  "pm.test('Jeton JWT présent (3 segments)', function () { pm.expect(b.token).to.be.a('string'); pm.expect(b.token.split('.').length).to.eql(3); });",
+                  "pm.test('tokenType = Bearer', function () { pm.expect(b.tokenType).to.eql('Bearer'); });",
+                  "const p = u.jwtPayload(b.token) || {};",
+                  "pm.test('sub du JWT = email du compte', function () { pm.expect(p.sub).to.eql(pm.variables.get('adminEmail')); });",
+                  "pm.test('Expiration du JWT ≈ 1 h', function () { pm.expect(p.exp - p.iat).to.be.within(3500, 3700); });",
+                  "u.save('tokenAdmin', b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion chef de département",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Le jeton est mémorisé dans {{tokenChef}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{chefEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const b = u.body() || {};",
+                  "pm.test('Jeton JWT présent (3 segments)', function () { pm.expect(b.token).to.be.a('string'); pm.expect(b.token.split('.').length).to.eql(3); });",
+                  "pm.test('tokenType = Bearer', function () { pm.expect(b.tokenType).to.eql('Bearer'); });",
+                  "const p = u.jwtPayload(b.token) || {};",
+                  "pm.test('sub du JWT = email du compte', function () { pm.expect(p.sub).to.eql(pm.variables.get('chefEmail')); });",
+                  "pm.test('Expiration du JWT ≈ 1 h', function () { pm.expect(p.exp - p.iat).to.be.within(3500, 3700); });",
+                  "u.save('tokenChef', b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion enseignante (Nadia Alami)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Le jeton est mémorisé dans {{tokenTeacher}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{teacherEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const b = u.body() || {};",
+                  "pm.test('Jeton JWT présent (3 segments)', function () { pm.expect(b.token).to.be.a('string'); pm.expect(b.token.split('.').length).to.eql(3); });",
+                  "pm.test('tokenType = Bearer', function () { pm.expect(b.tokenType).to.eql('Bearer'); });",
+                  "const p = u.jwtPayload(b.token) || {};",
+                  "pm.test('sub du JWT = email du compte', function () { pm.expect(p.sub).to.eql(pm.variables.get('teacherEmail')); });",
+                  "pm.test('Expiration du JWT ≈ 1 h', function () { pm.expect(p.exp - p.iat).to.be.within(3500, 3700); });",
+                  "u.save('tokenTeacher', b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion étudiant (Omar Tazi)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Le jeton est mémorisé dans {{tokenStudent}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const b = u.body() || {};",
+                  "pm.test('Jeton JWT présent (3 segments)', function () { pm.expect(b.token).to.be.a('string'); pm.expect(b.token.split('.').length).to.eql(3); });",
+                  "pm.test('tokenType = Bearer', function () { pm.expect(b.tokenType).to.eql('Bearer'); });",
+                  "const p = u.jwtPayload(b.token) || {};",
+                  "pm.test('sub du JWT = email du compte', function () { pm.expect(p.sub).to.eql(pm.variables.get('studentEmail')); });",
+                  "pm.test('Expiration du JWT ≈ 1 h', function () { pm.expect(p.exp - p.iat).to.be.within(3500, 3700); });",
+                  "u.save('tokenStudent', b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion étudiante (Salma Berrada)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Le jeton est mémorisé dans {{tokenStudent2}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{student2Email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const b = u.body() || {};",
+                  "pm.test('Jeton JWT présent (3 segments)', function () { pm.expect(b.token).to.be.a('string'); pm.expect(b.token.split('.').length).to.eql(3); });",
+                  "pm.test('tokenType = Bearer', function () { pm.expect(b.tokenType).to.eql('Bearer'); });",
+                  "const p = u.jwtPayload(b.token) || {};",
+                  "pm.test('sub du JWT = email du compte', function () { pm.expect(p.sub).to.eql(pm.variables.get('student2Email')); });",
+                  "pm.test('Expiration du JWT ≈ 1 h', function () { pm.expect(p.exp - p.iat).to.be.within(3500, 3700); });",
+                  "u.save('tokenStudent2', b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Connexion compte de démo DataInitializer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Le jeton est mémorisé dans {{tokenDemo}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{demoEmail}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const b = u.body() || {};",
+                  "pm.test('Jeton JWT présent (3 segments)', function () { pm.expect(b.token).to.be.a('string'); pm.expect(b.token.split('.').length).to.eql(3); });",
+                  "pm.test('tokenType = Bearer', function () { pm.expect(b.tokenType).to.eql('Bearer'); });",
+                  "const p = u.jwtPayload(b.token) || {};",
+                  "pm.test('sub du JWT = email du compte', function () { pm.expect(p.sub).to.eql(pm.variables.get('demoEmail')); });",
+                  "pm.test('Expiration du JWT ≈ 1 h', function () { pm.expect(p.exp - p.iat).to.be.within(3500, 3700); });",
+                  "u.save('tokenDemo', b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - mot de passe incorrect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "401 + message générique.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"MauvaisMotDePasse!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);",
+                  "pm.test('Message générique', function () { pm.expect(pm.response.text()).to.eql('Email ou mot de passe incorrect.'); });",
+                  "pm.test('Aucun jeton renvoyé', function () { pm.expect(pm.response.text()).to.not.include('token'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - email inconnu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Même réponse que pour un mauvais mot de passe (pas d'énumération des comptes).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"inconnu@pgdi.test\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);",
+                  "pm.test('Message générique', function () { pm.expect(pm.response.text()).to.eql('Email ou mot de passe incorrect.'); });",
+                  "pm.test('Aucun jeton renvoyé', function () { pm.expect(pm.response.text()).to.not.include('token'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - compte désactivé (Sara Mansouri)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "users.enabled = 0.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{disabledEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);",
+                  "pm.test('Message générique', function () { pm.expect(pm.response.text()).to.eql('Email ou mot de passe incorrect.'); });",
+                  "pm.test('Aucun jeton renvoyé', function () { pm.expect(pm.response.text()).to.not.include('token'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - compte supprimé logiquement (Hamza Naciri)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "users.deleted_at renseigné.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{deletedEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);",
+                  "pm.test('Message générique', function () { pm.expect(pm.response.text()).to.eql('Email ou mot de passe incorrect.'); });",
+                  "pm.test('Aucun jeton renvoyé', function () { pm.expect(pm.response.text()).to.not.include('token'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - corps vide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([400, 401]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - JSON mal formé",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"email\": ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Protection des endpoints (JWT)",
+      "description": "JwtAuthenticationFilter + SecurityConfig : toute route hors /api/auth/** exige un jeton valide.",
+      "item": [
+        {
+          "name": "Avec jeton valide → 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/test/protected",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Message attendu', function () { pm.expect(pm.response.text()).to.include('JWT valide'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sans jeton → refusé",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/test/protected",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([401, 403], 'Accès refusé (401 ou 403)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jeton falsifié (signature invalide) → refusé",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/test/protected",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{forgedToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([401, 403], 'Accès refusé (401 ou 403)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jeton mal formé → refusé",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/test/protected",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{malformedToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([401, 403], 'Accès refusé (401 ou 403)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jeton expiré → refusé",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/test/protected",
+            "description": "JWT signé avec un autre secret et expiré : refusé quel que soit le motif.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{expiredToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([401, 403], 'Accès refusé (401 ou 403)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Routes métier protégées : /api/users sans jeton",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([401, 403], 'Accès refusé (401 ou 403)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Routes métier protégées : /api/filieres sans jeton",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/filieres",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([401, 403], 'Accès refusé (401 ou 403)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Routes métier protégées : /api/modules sans jeton",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/modules",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([401, 403], 'Accès refusé (401 ou 403)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin désactive Salma Berrada",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{student2Id}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Salma\",\n  \"lastName\": \"Berrada\",\n  \"phone\": \"0611000008\",\n  \"role\": \"ETUDIANT\",\n  \"enabled\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('enabled = false', function () { pm.expect(u.body().enabled).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jeton d'un compte désactivé → refusé",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/test/protected",
+            "description": "Le filtre vérifie userDetails.isEnabled() à chaque requête : un jeton émis avant la désactivation ne passe plus.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent2}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([401, 403], 'Accès refusé (401 ou 403)');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin réactive Salma Berrada",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{student2Id}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Salma\",\n  \"lastName\": \"Berrada\",\n  \"phone\": \"0611000008\",\n  \"role\": \"ETUDIANT\",\n  \"enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('enabled = true', function () { pm.expect(u.body().enabled).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jeton à nouveau accepté après réactivation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/test/protected",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent2}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Utilisateurs (/api/users)",
+      "description": "CRUD UserController. Les créations utilisent un email aléatoire : dossier rejouable.",
+      "item": [
+        {
+          "name": "Lister les utilisateurs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('Les 11 comptes du jeu de données sont présents', function () { pm.expect(l.map(function (x) { return x.id; })).to.include.members([1,2,3,4,5,6,7,8,9,10,11]); });",
+                  "pm.test('Rôles du jeu de données', function () { const r = {}; l.forEach(function (x) { if (x.id <= 11) r[x.role] = (r[x.role] || 0) + 1; }); pm.expect(r).to.eql({ ADMIN: 1, CHEF_DEPARTEMENT: 1, ENSEIGNANT: 4, ETUDIANT: 5 }); });",
+                  "pm.test('Aucun mot de passe ni hash exposé', function () { const t = pm.response.text(); pm.expect(t).to.not.include('password'); pm.expect(t).to.not.include('$2a$'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consulter un utilisateur (id 3)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/3",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const b = u.body();",
+                  "pm.test('Nadia Alami, ENSEIGNANT, active', function () { pm.expect(b).to.include({ id: 3, email: 'n.alami@pgdi.test', firstName: 'Nadia', lastName: 'Alami', role: 'ENSEIGNANT', enabled: true }); });",
+                  "pm.test('Aucun mot de passe ni hash exposé', function () { const t = pm.response.text(); pm.expect(t).to.not.include('password'); pm.expect(t).to.not.include('$2a$'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consulter le compte désactivé (id 10)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/10",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('enabled = false', function () { pm.expect(u.body().enabled).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer un étudiant → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"Nouveau@2026\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Postman\",\n  \"phone\": \"0699999999\",\n  \"role\": \"ETUDIANT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.save('newUserEmail', 'etudiant.' + Date.now() + '@etu.pgdi.test');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(201);",
+                  "const b = u.body();",
+                  "pm.test('Données renvoyées', function () { pm.expect(b).to.include({ email: pm.collectionVariables.get('newUserEmail'), firstName: 'Test', lastName: 'Postman', role: 'ETUDIANT', enabled: true }); pm.expect(b.id).to.be.a('number'); });",
+                  "pm.test('Aucun mot de passe ni hash exposé', function () { const t = pm.response.text(); pm.expect(t).to.not.include('password'); pm.expect(t).to.not.include('$2a$'); });",
+                  "u.save('newUserId', b.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Le nouvel utilisateur peut se connecter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Vérifie que le mot de passe est bien haché avec BCrypt à la création.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"Nouveau@2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Jeton reçu', function () { pm.expect(u.body().token).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer sans rôle → ENSEIGNANT par défaut",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{defaultRoleEmail}}\",\n  \"password\": \"Nouveau@2026\",\n  \"firstName\": \"Sans\",\n  \"lastName\": \"Role\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.save('defaultRoleEmail', 'enseignant.' + Date.now() + '@pgdi.test');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(201);",
+                  "pm.test('role = ENSEIGNANT', function () { pm.expect(u.body().role).to.eql('ENSEIGNANT'); });",
+                  "u.save('defaultRoleUserId', u.body().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation - email invalide et champs manquants → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pas-un-email\",\n  \"firstName\": \"\",\n  \"lastName\": \"Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation - rôle inconnu → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"role.inconnu@pgdi.test\",\n  \"password\": \"x\",\n  \"firstName\": \"A\",\n  \"lastName\": \"B\",\n  \"role\": \"SUPERADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier l'utilisateur créé",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{newUserId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"Modifié\",\n  \"phone\": \"0688888888\",\n  \"role\": \"ENSEIGNANT\",\n  \"enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Modifications appliquées', function () { pm.expect(u.body()).to.include({ lastName: 'Modifié', phone: '0688888888', role: 'ENSEIGNANT' }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation modification - prénom vide → 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{newUserId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"X\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer l'utilisateur créé → 204",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{newUserId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer le 2e utilisateur créé → 204",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{defaultRoleUserId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "L'utilisateur supprimé ne peut plus se connecter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"Nouveau@2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Filières (/api/filieres)",
+      "description": "CRUD FiliereController. La filière créée ici est réutilisée en 05 puis supprimée.",
+      "item": [
+        {
+          "name": "Lister les filières",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/filieres",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('Filières du jeu de données présentes', function () { pm.expect(l.map(function (f) { return f.code; })).to.include.members(['M2I-ISI', 'M2I-IA', 'LSI-GL']); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consulter une filière (id 1) avec son responsable",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/filieres/1",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('M2I-ISI, MASTER, responsable Karim El Fassi', function () { pm.expect(u.body()).to.include({ id: 1, code: 'M2I-ISI', niveau: 'MASTER', responsableId: 2, responsableNomComplet: 'Karim El Fassi' }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filière sans responsable (id 3)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/filieres/3",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('responsableId = null', function () { pm.expect(u.body().responsableId).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer une filière → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/filieres",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newFiliereCode}}\",\n  \"nom\": \"Filière de test\",\n  \"description\": \"Filière créée par la collection Postman PGDI2026-18\",\n  \"niveau\": \"MASTER\",\n  \"responsableId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.save('newFiliereCode', 'TST-' + Date.now().toString(36).toUpperCase());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(201);",
+                  "const b = u.body();",
+                  "pm.test('Code et id renvoyés', function () { pm.expect(b.code).to.eql(pm.collectionVariables.get('newFiliereCode')); pm.expect(b.id).to.be.a('number'); });",
+                  "u.save('newFiliereId', b.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation - nom et niveau manquants → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/filieres",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"X-400\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier la filière (ajout du responsable)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/filieres/{{newFiliereId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newFiliereCode}}\",\n  \"nom\": \"Filière de test modifiée\",\n  \"description\": \"Filière créée par la collection Postman PGDI2026-18\",\n  \"niveau\": \"MASTER\",\n  \"responsableId\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Nom et responsable mis à jour', function () { pm.expect(u.body()).to.include({ nom: 'Filière de test modifiée', responsableId: 2, responsableNomComplet: 'Karim El Fassi' }); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Modules (/api/modules)",
+      "description": "CRUD ModuleCoursController.",
+      "item": [
+        {
+          "name": "Lister les modules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/modules",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Au moins les 8 modules du jeu de données', function () { pm.expect(u.list().map(function (m) { return m.id; })).to.include.members([1,2,3,4,5,6,7,8]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modules de la filière M2I-ISI (id 1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/modules/filiere/1",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('4 modules : GL501, BDA502, JEE503, SEC506', function () { pm.expect(l.map(function (m) { return m.code; })).to.have.members(['GL501', 'BDA502', 'JEE503', 'SEC506']); });",
+                  "u.allHave(l, 'filiereId', 1);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consulter un module (id 1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/modules/1",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('GL501 / M2I-ISI / Nadia Alami', function () { pm.expect(u.body()).to.include({ code: 'GL501', semestre: 'S3', volumeHoraire: 48, filiereId: 1, filiereCode: 'M2I-ISI', enseignantId: 3, enseignantNomComplet: 'Nadia Alami' }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Module sans enseignant (id 8)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/modules/8",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('enseignantId = null', function () { pm.expect(u.body().enseignantId).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer un module dans la nouvelle filière → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/modules",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newModuleCode}}\",\n  \"nom\": \"Module de test\",\n  \"semestre\": \"S3\",\n  \"volumeHoraire\": 30,\n  \"filiereId\": {{newFiliereId}},\n  \"enseignantId\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.save('newModuleCode', 'MOD-' + Date.now().toString(36).toUpperCase());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(201);",
+                  "const b = u.body();",
+                  "pm.test('Rattaché à la filière et à l\\'enseignante', function () { pm.expect(String(b.filiereId)).to.eql(String(pm.collectionVariables.get('newFiliereId'))); pm.expect(b.enseignantNomComplet).to.eql('Nadia Alami'); });",
+                  "u.save('newModuleId', b.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation - filière et semestre manquants → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/modules",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"X-400\",\n  \"nom\": \"Sans filière\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier le module (volume horaire, sans enseignant)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/modules/{{newModuleId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newModuleCode}}\",\n  \"nom\": \"Module de test\",\n  \"semestre\": \"S3\",\n  \"volumeHoraire\": 42,\n  \"filiereId\": {{newFiliereId}},\n  \"enseignantId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('volumeHoraire = 42 et enseignant retiré', function () { pm.expect(u.body()).to.include({ volumeHoraire: 42, enseignantId: null }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modules de la nouvelle filière",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/modules/filiere/{{newFiliereId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Exactement 1 module', function () { pm.expect(u.list().length).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer le module → 204",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/modules/{{newModuleId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer la filière (vide) → 204",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/filieres/{{newFiliereId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "99 - Anomalies à corriger",
+      "description": "Comportements ATTENDUS par le cahier des charges / backlog mais NON conformes sur develop au 28/10/2026. Ces requêtes échouent tant que le correctif n'est pas livré : lancer ce dossier à part (newman --folder \"99 - Anomalies à corriger\"). Chaque requête correspond à une anomalie à créer dans Jira.",
+      "item": [
+        {
+          "name": "A1 - Sans jeton → 401 Unauthorized (pas 403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/test/protected",
+            "description": "Spring Security renvoie 403 par défaut (aucun AuthenticationEntryPoint). CDC §14 / SQ3 : jeton absent ou invalide = 401. Correctif : .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A2 - /api/auth/me doit exiger un jeton",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "/api/auth/** est en permitAll : /api/auth/me répond 200 sans jeton. Correctif : permitAll limité à /api/auth/login (et /test).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A3 - La connexion doit renvoyer le rôle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Story « Redirection vers l'espace correspondant au rôle » : le frontend ne peut pas rediriger sans le rôle. LoginResponse ne contient que token/tokenType.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const b = u.body() || {}; const p = u.jwtPayload(b.token) || {};",
+                  "pm.test('Rôle ETUDIANT présent dans la réponse ou dans le JWT', function () { pm.expect(JSON.stringify([b.role, b.roles, p.role, p.roles])).to.include('ETUDIANT'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A4 - Un étudiant ne doit pas créer d'utilisateur → 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "description": "Aucun contrôle de rôle (@PreAuthorize / hasRole) : tout utilisateur authentifié peut créer un ADMIN. Le compte créé est supprimé automatiquement.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{anomalyEmail}}\",\n  \"password\": \"Intrus@2026\",\n  \"firstName\": \"Intrus\",\n  \"lastName\": \"Test\",\n  \"role\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.save('anomalyEmail', 'intrus.' + Date.now() + '@pgdi.test');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(403);",
+                  "if (pm.response.code === 201) { pm.sendRequest({ url: pm.variables.get('baseUrl') + '/api/users/' + u.body().id, method: 'DELETE', header: { Authorization: 'Bearer ' + pm.collectionVariables.get('tokenAdmin') } }, function () {}); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A5 - Un enseignant ne doit pas lister les comptes → 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users",
+            "description": "Gestion des utilisateurs réservée à ROLE_ADMIN (CDC §4.5). CustomUserDetailsService donne ROLE_USER à tout le monde.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(403);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A6 - Préparation : filière jetable",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/filieres",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{tmpFiliereCode}}\",\n  \"nom\": \"Filière jetable\",\n  \"description\": \"Filière créée par la collection Postman PGDI2026-18\",\n  \"niveau\": \"MASTER\",\n  \"responsableId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.save('tmpFiliereCode', 'TMP-' + Date.now().toString(36).toUpperCase());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(201);",
+                  "u.save('tmpFiliereId', u.body().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A6 - Un étudiant ne doit pas supprimer une filière → 403",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/filieres/{{tmpFiliereId}}",
+            "description": "Gestion des filières réservée au responsable (CDC §4.4).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(403);",
+                  "if (pm.response.code !== 204) { pm.sendRequest({ url: pm.variables.get('baseUrl') + '/api/filieres/' + pm.collectionVariables.get('tmpFiliereId'), method: 'DELETE', header: { Authorization: 'Bearer ' + pm.collectionVariables.get('tokenChef') } }, function () {}); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A7 - Email déjà utilisé → 409 Conflict",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "description": "RuntimeException non gérée → 500. Correctif : exception métier + @RestControllerAdvice (story « Gestion des erreurs globales »).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"x\",\n  \"firstName\": \"Doublon\",\n  \"lastName\": \"Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A8 - Code filière déjà utilisé → 409 Conflict",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/filieres",
+            "description": "Actuellement 500.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"M2I-ISI\",\n  \"nom\": \"Doublon\",\n  \"description\": \"Filière créée par la collection Postman PGDI2026-18\",\n  \"niveau\": \"MASTER\",\n  \"responsableId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A9 - Utilisateur inexistant → 404 Not Found",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/999999",
+            "description": "Actuellement 500.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A10 - Filière inexistante → 404 Not Found",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/filieres/999999",
+            "description": "Actuellement 500.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A11 - Module rattaché à une filière inexistante → 404/422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/modules",
+            "description": "Actuellement 500.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"X-404\",\n  \"nom\": \"Module de test\",\n  \"semestre\": \"S3\",\n  \"volumeHoraire\": 10,\n  \"filiereId\": 999999,\n  \"enseignantId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status([404, 422]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A12 - Supprimer une filière qui a des modules → 409 Conflict",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/filieres/3",
+            "description": "Story « Suppression bloquée si des éléments sont rattachés ». Actuellement violation de clé étrangère → 500.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A13 - Erreurs de validation champ par champ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users",
+            "description": "Story commune Sprint 1 « Erreurs de validation renvoyées champ par champ » : la réponse 400 par défaut de Spring ne contient pas les messages @NotBlank.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Le corps de la réponse détaille les champs en erreur', function () { const t = pm.response.text(); ['email', 'password', 'firstName', 'lastName'].forEach(function (f) { pm.expect(t).to.include(f); }); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
