@@ -1,0 +1,62 @@
+@startuml
+title Cas d'utilisation — Espace enseignant
+skinparam dpi 120
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam ArrowColor #455A64
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam rectangleBackgroundColor #FAFAFA
+skinparam rectangleBorderColor #607D8B
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+left to right direction
+
+actor "Enseignant" as T
+rectangle "Plateforme de Gestion du Département Informatique" {
+  package "Profil et enseignement" {
+    usecase "Consulter son profil" as E1
+    usecase "Consulter les modules d'enseignement\nqui lui sont attribués" as E2
+    usecase "Consulter ses groupes" as E3
+    usecase "Consulter son emploi du temps" as E4
+    usecase "Consulter les étudiants de ses groupes" as E5
+    usecase "Consulter les annonces du département" as E6
+  }
+  package "Ressources pédagogiques" {
+    usecase "Publier une ressource pédagogique" as R1
+    usecase "Modifier une ressource" as R2
+    usecase "Supprimer une ressource" as R3
+    usecase "Téléverser un document" as R4
+  }
+  package "Évaluation et présence" {
+    usecase "Saisir les notes" as N1
+    usecase "Publier les notes" as N2
+    usecase "Gérer les absences" as N3
+    usecase "Enregistrer une absence ou un retard" as N4
+    usecase "Justifier une absence" as N5
+  }
+}
+T --> E1
+T --> E2
+T --> E3
+T --> E4
+T --> E5
+T --> E6
+T --> R1
+T --> R2
+T --> R3
+T --> N1
+T --> N3
+R1 ..> R4 : <<include>>
+N1 ..> E5 : <<include>>
+N2 .> N1 : <<extend>>
+N3 ..> N4 : <<include>>
+N5 .> N3 : <<extend>>
+note bottom of T
+  L'enseignant n'agit que sur les modules
+  et les groupes qui lui sont affectés.
+end note
+@enduml

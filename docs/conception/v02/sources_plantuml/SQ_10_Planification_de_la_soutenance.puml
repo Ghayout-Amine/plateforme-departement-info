@@ -1,0 +1,69 @@
+@startuml
+title Séquence — Planification d'une soutenance et enregistrement du résultat (v02)
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ArrowColor #37474F
+skinparam sequenceArrowThickness 1.1
+skinparam participantBackgroundColor #E3F2FD
+skinparam participantBorderColor #1565C0
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam boundaryBackgroundColor #E8F5E9
+skinparam controlBackgroundColor #FFF8E1
+skinparam databaseBackgroundColor #FFF3E0
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceDividerBackgroundColor #ECEFF1
+skinparam noteBackgroundColor #FFF8E1
+skinparam maxMessageSize 220
+autonumber
+
+actor "Responsable\ndu département" as R
+boundary "Angular" as FE
+control "DefenseController" as DC
+control "DefenseService" as DS
+participant "InternshipRepository" as IR
+participant "DefenseRepository" as DR
+participant "NotificationService" as NS
+database "MySQL" as DB
+
+R -> FE : choisit le stage, la date, l'heure, la salle (ou le lien visio) et le jury
+FE -> DC : POST /api/defenses {internshipId, date, startTime, mode, salleId, jury[{teacherId, role}]}
+DC -> DS : schedule(request)
+DS -> IR : findById(internshipId)
+IR -> DB : SELECT internships
+alt le stage n'est pas validé
+  DS --> DC : InvalidStateException
+  DC --> FE : 422 Unprocessable Entity
+else stage validé
+  DS -> DR : existsByInternship(internshipId)
+  DR -> DB : SELECT defenses
+  alt soutenance déjà planifiée
+    DS --> DC : DuplicateDefenseException
+    DC --> FE : 409 Conflict
+  else aucune soutenance
+    DS -> DS : vérifie le jury (au moins un membre, un président)
+    DS -> DR : findOverlaps(date, horaires, salle, membres du jury)
+    DR -> DB : SELECT defenses + defense_jury_members
+    alt salle ou membre du jury indisponible
+      DS --> DC : ConflictException
+      DC --> FE : 409 Conflict + détails
+    else créneau libre
+      DS -> DR : save(soutenance PLANNED + jury)
+      DR -> DB : INSERT defenses, defense_jury_members
+      DS -> NS : notify(étudiant, membres du jury, tuteur entreprise par email)
+      DC --> FE : 201 Created
+    end
+  end
+end
+
+== Après la soutenance ==
+R -> FE : saisit la note finale et la mention
+FE -> DC : PUT /api/defenses/{id}/result {finalScore, mention}
+DC -> DS : recordResult(id, score, mention)
+DS -> DR : save(statut DONE, finalScore, mention)
+DR -> DB : UPDATE defenses
+DS -> IR : updateStatus(internshipId, COMPLETED)
+IR -> DB : UPDATE internships
+DC --> FE : 200 OK
+@enduml

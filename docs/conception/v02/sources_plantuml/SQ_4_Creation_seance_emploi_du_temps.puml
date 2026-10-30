@@ -1,0 +1,57 @@
+@startuml
+title Séquence — Création d'une séance d'emploi du temps avec détection de conflits
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ArrowColor #37474F
+skinparam sequenceArrowThickness 1.1
+skinparam participantBackgroundColor #E3F2FD
+skinparam participantBorderColor #1565C0
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam boundaryBackgroundColor #E8F5E9
+skinparam controlBackgroundColor #FFF8E1
+skinparam databaseBackgroundColor #FFF3E0
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceDividerBackgroundColor #ECEFF1
+skinparam noteBackgroundColor #FFF8E1
+skinparam maxMessageSize 220
+autonumber
+
+actor "Responsable\ndu département" as R
+boundary "Angular" as FE
+control "PlanningController" as PC
+control "PlanningService" as PS
+participant "TeachingAssignment\nRepository" as TAR
+participant "FiliereModule\nRepository" as FMR
+participant "PlanningRepository" as PR
+participant "AuditService" as AU
+database "MySQL" as DB
+
+R -> FE : choisit l'affectation, la salle, la date et les horaires
+FE -> PC : POST /api/plannings {assignmentId, salleId, date, startTime, endTime}
+PC -> PS : create(request)
+PS -> TAR : findById(assignmentId)
+TAR -> DB : SELECT teaching_assignments (enseignant, module, groupe)
+PS -> FMR : existsByFiliereAndModule(filière du groupe, module)
+FMR -> DB : SELECT filiere_modules
+alt le module ne figure pas au programme de la filière du groupe
+  PS --> PC : InvalidAssignmentException
+  PC --> FE : 422 Unprocessable Entity
+else programme cohérent
+  PS -> PR : findOverlaps(date, début, fin, salle, enseignant, groupe)
+  PR -> DB : SELECT plannings WHERE date = ? AND début < ? AND fin > ? AND (salle OU enseignant OU groupe)
+  DB --> PR : séances en conflit
+  alt au moins un conflit
+    PS --> PC : ConflictException (salle / enseignant / groupe)
+    PC --> FE : 409 Conflict + détail des conflits
+    FE --> R : affiche les conflits à corriger
+  else aucun conflit
+    PS -> PR : save(séance PLANNED)
+    PR -> DB : INSERT plannings (unicité salle + date + début)
+    PS -> AU : log(CREATE_PLANNING)
+    PC --> FE : 201 Created
+    FE --> R : séance ajoutée à l'emploi du temps
+  end
+end
+@enduml

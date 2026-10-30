@@ -1,0 +1,547 @@
+Issue ID,Parent ID,Issue Type,Summary,Description,Priority,Story Points,Labels,Sprint prévu
+E0,,Epic,Mise en place technique du projet,"Initialisation du projet, outils communs, conventions d'équipe.",High,,commun,
+E1,,Epic,Authentification et sécurité,"Connexion, JWT, rôles, permissions, protection des API (Module 2 du cahier des charges).",High,,membre1-securite,
+E2,,Epic,Administration de la plateforme,"Gestion technique des utilisateurs, rôles et journaux d'activité.",High,,membre1-securite,
+E3,,Epic,Partie publique,Espace accessible sans authentification (Module 1).,High,,a-repartir,
+E4,,Epic,Gestion des étudiants,"Étudiants, profils, affectation formation/groupe, résultats, absences côté étudiant (Module 3).",High,,membre2-etudiants,
+E5,,Epic,Gestion des enseignants et ressources,"Enseignants, modules attribués, ressources pédagogiques, notes, absences (Module 4).",High,,membre3-enseignants,
+E6,,Epic,Gestion pédagogique,"Formations, filières, modules d'enseignement, groupes, salles, emplois du temps, examens (Module 5).",High,,membre4-pedagogie,
+E7,,Epic,"Stages, PFE et offres externes (API)","Offres agrégées depuis des API externes (Jooble, Careerjet, JSearch, France Travail…), favoris, alertes, suivi des candidatures, déclaration et validation des stages, encadrants, suivi PFE, soutenances (Module 6 v2).",High,,membre5-pfe,
+E8,,Epic,"Actualités, annonces et veille externe",Annonces internes et veille automatique via flux RSS/Atom et API d'actualités (Module 7 v2).,High,,membre5-pfe,
+E9,,Epic,Tableaux de bord et statistiques,Indicateurs pour le responsable et l'administrateur (Module 8).,High,,a-repartir,
+US01,E0,Story,Créer le projet backend Spring Boot,"En tant que développeur, je veux disposer d'un projet Spring Boot commun afin de que toute l'équipe travaille sur la même base.
+
+Critères d'acceptation :
+- Projet généré (Web, JPA, Validation, Security, Lombok, MySQL)
+- Structure de packages par module définie
+- Le projet démarre sans erreur",Highest,3,commun,Sprint 1
+US02,E0,Story,Créer le projet frontend Angular,"En tant que développeur, je veux disposer d'un projet Angular commun afin de que toute l'équipe partage la même structure front.
+
+Critères d'acceptation :
+- Projet Angular créé avec routing
+- Dossiers par module (core, shared, features)
+- Le projet se lance avec ng serve",Highest,3,commun,Sprint 1
+US03,E0,Story,Configurer le dépôt GitHub et les règles de branches,"En tant que membre de l'équipe, je veux travailler avec des branches et des Pull Requests afin de éviter les conflits et faire des revues de code.
+
+Critères d'acceptation :
+- Dépôt créé et partagé avec les 5 membres
+- Branche main protégée
+- Convention de nommage feature/xxx documentée dans le README",Highest,2,commun,Sprint 1
+US04,E0,Story,Configurer la base MySQL et Docker,"En tant que développeur, je veux lancer la base et l'application avec Docker afin de avoir le même environnement sur toutes les machines.
+
+Critères d'acceptation :
+- docker-compose avec MySQL
+- application.properties / profils dev configurés
+- Démarrage de l'environnement documenté",High,3,commun,Sprint 1
+US05,E0,Story,Mettre en place la gestion globale des erreurs,"En tant que développeur, je veux renvoyer des erreurs au même format sur toute l'API afin de que le frontend les affiche de façon uniforme.
+
+Critères d'acceptation :
+- @ControllerAdvice global
+- Format JSON commun (code, message, date)
+- Erreurs de validation renvoyées champ par champ",High,3,commun,Sprint 1
+US06,E1,Story,Connexion à la plateforme,"En tant que utilisateur, je veux me connecter avec mon email et mon mot de passe afin de accéder à mon espace personnel.
+
+Critères d'acceptation :
+- Identifiants valides : token JWT renvoyé
+- Identifiants invalides : message d'erreur
+- Redirection vers l'espace correspondant au rôle",Highest,5,membre1-securite,Sprint 1
+US07,E1,Story,Gestion des rôles,"En tant que administrateur, je veux que chaque utilisateur ait un rôle (Étudiant, Enseignant, Responsable, Admin, Entreprise) afin de qu'il n'accède qu'à ses fonctionnalités.
+
+Critères d'acceptation :
+- Entités User et Role créées
+- Un utilisateur possède au moins un rôle
+- Rôles initialisés au démarrage",Highest,3,membre1-securite,Sprint 1
+US08,E5,Story,Modélisation des entités Enseignant et Ressource pédagogique,"En tant que développeur, je veux créer les entités Enseignant et RessourcePedagogique afin de servir de base aux fonctionnalités enseignant.
+
+Critères d'acceptation :
+- Entités JPA, enums et repositories créés
+- Relation Enseignant 1..* Ressource
+- Tables générées en base",Highest,3,membre3-enseignants,Sprint 1
+US09,E6,Story,Gérer les formations et filières,"En tant que responsable du département, je veux créer, modifier et supprimer formations et filières afin de organiser l'offre de formation.
+
+Critères d'acceptation :
+- CRUD formation et filière
+- Une filière appartient à une formation
+- Suppression bloquée si des étudiants sont rattachés",Highest,5,membre4-pedagogie,Sprint 1
+US10,E6,Story,Gérer les modules d'enseignement,"En tant que responsable du département, je veux gérer les modules d'enseignement afin de définir le programme.
+
+Critères d'acceptation :
+- CRUD module (code, intitulé, semestre, volume horaire)
+- Rattachement à une filière",Highest,3,membre4-pedagogie,Sprint 1
+US11,E0,Story,Mettre en place Swagger / OpenAPI,"En tant que développeur, je veux consulter la documentation des API afin de tester et intégrer les endpoints facilement.
+
+Critères d'acceptation :
+- springdoc-openapi ajouté
+- Swagger UI accessible
+- Endpoints JWT testables depuis Swagger",Medium,2,commun,Sprint 2
+US12,E1,Story,Déconnexion,"En tant que utilisateur connecté, je veux me déconnecter afin de sécuriser mon compte sur un poste partagé.
+
+Critères d'acceptation :
+- Le token est supprimé côté client
+- Redirection vers la page d'accueil
+- Les pages privées ne sont plus accessibles",High,1,membre1-securite,Sprint 2
+US13,E1,Story,Protection des API par rôle,"En tant que responsable sécurité, je veux que chaque endpoint soit protégé selon le rôle afin de empêcher les accès non autorisés.
+
+Critères d'acceptation :
+- Filtre JWT en place
+- Accès refusé : 401 / 403
+- Routes publiques accessibles sans token",Highest,5,membre1-securite,Sprint 2
+US14,E1,Story,Protéger les routes Angular,"En tant que utilisateur, je veux ne voir que les pages autorisées pour mon rôle afin de avoir une interface adaptée.
+
+Critères d'acceptation :
+- Guards Angular par rôle
+- Intercepteur qui ajoute le token
+- Redirection vers login si token expiré",High,3,membre1-securite,Sprint 2
+US15,E2,Story,Créer un utilisateur,"En tant que administrateur, je veux créer un compte utilisateur afin de donner accès à la plateforme.
+
+Critères d'acceptation :
+- Formulaire avec rôle
+- Email unique vérifié
+- Mot de passe initial généré ou défini",High,3,membre1-securite,Sprint 2
+US16,E3,Story,Page d'accueil,"En tant que visiteur, je veux consulter une page d'accueil afin de découvrir le département.
+
+Critères d'acceptation :
+- Présentation rapide, dernières actualités, liens vers formations et stages
+- Accessible sans connexion
+- Responsive",High,3,a-repartir,Sprint 2
+US17,E4,Story,Créer un étudiant,"En tant que responsable du département, je veux ajouter un étudiant afin de l'inscrire dans la plateforme.
+
+Critères d'acceptation :
+- Formulaire avec champs obligatoires (CNE, nom, prénom, email)
+- CNE et email uniques
+- Compte utilisateur associé créé",Highest,5,membre2-etudiants,Sprint 2
+US18,E4,Story,Lister et rechercher les étudiants,"En tant que responsable du département, je veux lister et rechercher les étudiants afin de retrouver rapidement un étudiant.
+
+Critères d'acceptation :
+- Liste paginée
+- Recherche par nom, CNE, formation, groupe",High,3,membre2-etudiants,Sprint 2
+US19,E5,Story,Créer un enseignant,"En tant que responsable du département, je veux ajouter un enseignant afin de qu'il puisse utiliser la plateforme.
+
+Critères d'acceptation :
+- Matricule et email uniques
+- Grade et spécialité renseignés
+- Compte utilisateur associé créé",Highest,3,membre3-enseignants,Sprint 2
+US20,E5,Story,"Lister, rechercher et modifier les enseignants","En tant que responsable du département, je veux lister, rechercher et modifier les enseignants afin de gérer l'équipe pédagogique.
+
+Critères d'acceptation :
+- Liste paginée
+- Recherche par nom, grade, spécialité
+- Désactivation possible",High,3,membre3-enseignants,Sprint 2
+US21,E6,Story,Gérer les groupes,"En tant que responsable du département, je veux créer et gérer les groupes afin de répartir les étudiants.
+
+Critères d'acceptation :
+- CRUD groupe
+- Capacité maximale définie",High,3,membre4-pedagogie,Sprint 2
+US22,E6,Story,Gérer les salles,"En tant que responsable du département, je veux gérer les salles afin de les utiliser dans l'emploi du temps.
+
+Critères d'acceptation :
+- CRUD salle (nom, capacité, type)",Medium,2,membre4-pedagogie,Sprint 2
+US24,E2,Story,"Modifier, désactiver ou supprimer un compte","En tant que administrateur, je veux modifier, désactiver ou supprimer un compte afin de garder la liste des utilisateurs à jour.
+
+Critères d'acceptation :
+- Un compte désactivé ne peut plus se connecter
+- Confirmation avant suppression
+- Liste filtrable par rôle et statut",High,3,membre1-securite,Sprint 3
+US25,E4,Story,Modifier ou désactiver un étudiant,"En tant que responsable du département, je veux modifier ou désactiver un étudiant afin de garder les informations à jour.
+
+Critères d'acceptation :
+- Modification validée
+- Un étudiant désactivé ne peut plus se connecter",High,2,membre2-etudiants,Sprint 3
+US26,E4,Story,Affecter un étudiant à une formation et un groupe,"En tant que responsable du département, je veux affecter un étudiant à une formation et à un groupe afin de organiser les promotions.
+
+Critères d'acceptation :
+- Un étudiant appartient à un seul groupe à la fois
+- Le groupe doit appartenir à la formation choisie",High,3,membre2-etudiants,Sprint 3
+US27,E4,Story,"Consulter sa formation, ses modules et son groupe","En tant que étudiant, je veux consulter ma formation, mes modules et mon groupe afin de savoir ce que je dois suivre.
+
+Critères d'acceptation :
+- Affichage depuis l'espace étudiant
+- Modules liés à la formation/semestre",Medium,2,membre2-etudiants,Sprint 3
+US28,E5,Story,Consulter ses modules et ses groupes,"En tant que enseignant, je veux consulter les modules et groupes qui me sont attribués afin de préparer mes enseignements.
+
+Critères d'acceptation :
+- Liste des modules attribués
+- Liste des groupes et de leurs étudiants",High,3,membre3-enseignants,Sprint 3
+US29,E5,Story,Publier une ressource pédagogique,"En tant que enseignant, je veux publier un cours, TD, TP ou autre ressource afin de que mes étudiants y aient accès.
+
+Critères d'acceptation :
+- Upload de fichier (taille et formats limités)
+- Type, titre, module et visibilité obligatoires
+- Lien externe possible pour vidéo/lien",Highest,5,membre3-enseignants,Sprint 3
+US30,E6,Story,Affecter les enseignants aux modules,"En tant que responsable du département, je veux affecter un enseignant à un module et un groupe afin de organiser les enseignements.
+
+Critères d'acceptation :
+- Affectation module/groupe/enseignant
+- Un module peut avoir plusieurs enseignants",High,3,membre4-pedagogie,Sprint 3
+US32,E7,Story,Consulter et rechercher les offres,"En tant que étudiant, je veux consulter et rechercher les offres agrégées afin de trouver un stage ou un emploi adapté.
+
+Critères d'acceptation :
+- Liste des offres ACTIVE, toutes sources confondues (cache + sources LIVE)
+- Recherche par mot-clé (plein texte titre, entreprise, extrait)
+- Filtres : type de contrat, ville, pays, télétravail, date de publication, source
+- Source affichée sur chaque offre + mentions obligatoires (logos Adzuna / France Travail)
+- Offres mises en avant en premier, pagination",High,3,membre5-pfe,Sprint 3
+US33,E4,Story,Consulter et modifier son profil,"En tant que étudiant, je veux consulter mon profil et modifier certaines informations afin de garder mes coordonnées à jour.
+
+Critères d'acceptation :
+- Champs modifiables limités (téléphone, adresse, photo)
+- Formation et groupe en lecture seule",Medium,3,membre2-etudiants,Sprint 4
+US34,E5,Story,Modifier ou supprimer ses ressources,"En tant que enseignant, je veux modifier ou supprimer mes ressources afin de garder des contenus à jour.
+
+Critères d'acceptation :
+- Un enseignant ne modifie que ses propres ressources
+- Le fichier est supprimé du stockage avec la ressource",High,3,membre3-enseignants,Sprint 4
+US35,E5,Story,Télécharger les ressources pédagogiques,"En tant que étudiant, je veux consulter et télécharger les ressources de mes modules afin de réviser mes cours.
+
+Critères d'acceptation :
+- Seules les ressources de mes modules sont visibles
+- Respect de la visibilité
+- Filtre par module et type",High,3,membre3-enseignants,Sprint 4
+US36,E6,Story,Gérer les emplois du temps,"En tant que responsable du département, je veux planifier les séances afin de fournir un emploi du temps à chaque groupe.
+
+Critères d'acceptation :
+- Séance : jour, heure, salle, module, enseignant, groupe
+- Détection des conflits (salle, enseignant, groupe)",High,8,membre4-pedagogie,Sprint 4
+US37,E6,Story,Consulter son emploi du temps,"En tant que étudiant ou enseignant, je veux consulter mon emploi du temps afin de organiser ma semaine.
+
+Critères d'acceptation :
+- Vue semaine
+- Filtré selon mon groupe ou mes séances",High,3,membre4-pedagogie,Sprint 4
+US40,E8,Story,Créer et modifier une actualité,"En tant que responsable du département, je veux créer et modifier une actualité ou une annonce afin de informer étudiants et enseignants.
+
+Critères d'acceptation :
+- Titre, contenu, image facultative
+- Annonce publique ou interne",Medium,3,a-repartir,Sprint 4
+US41,E8,Story,"Publier, dépublier ou épingler une actualité","En tant que responsable du département, je veux publier ou dépublier une actualité afin de contrôler ce qui est visible.
+
+Critères d'acceptation :
+- Une actualité non publiée n'est pas visible",Medium,1,a-repartir,Sprint 4
+US42,E1,Story,Modifier son mot de passe,"En tant que utilisateur connecté, je veux changer mon mot de passe afin de garder mon compte sécurisé.
+
+Critères d'acceptation :
+- Ancien mot de passe vérifié
+- Nouveau mot de passe hashé (BCrypt)
+- Règles de complexité appliquées",Medium,2,membre1-securite,Sprint 5
+US43,E2,Story,Attribuer un rôle et des permissions,"En tant que administrateur, je veux modifier le rôle et les permissions d'un utilisateur afin de adapter ses droits.
+
+Critères d'acceptation :
+- Changement de rôle pris en compte à la prochaine connexion
+- Permissions affichées par rôle",Medium,3,membre1-securite,Sprint 5
+US44,E3,Story,Présentation du département et des formations,"En tant que visiteur, je veux consulter la présentation du département et ses formations afin de m'informer avant de candidater.
+
+Critères d'acceptation :
+- Page présentation
+- Liste des formations avec description
+- Données issues de la base",Medium,3,a-repartir,Sprint 5
+US45,E4,Story,Consulter ses résultats,"En tant que étudiant, je veux consulter mes notes afin de suivre ma progression.
+
+Critères d'acceptation :
+- Notes par module
+- Seules les notes publiées sont visibles",Medium,3,membre2-etudiants,Sprint 5
+US46,E4,Story,Consulter ses absences,"En tant que étudiant, je veux consulter mes absences afin de suivre mon assiduité.
+
+Critères d'acceptation :
+- Liste par module et date
+- Total des absences affiché",Medium,2,membre2-etudiants,Sprint 5
+US47,E5,Story,Saisir les notes,"En tant que enseignant, je veux saisir les notes de mes étudiants afin de publier les résultats.
+
+Critères d'acceptation :
+- Saisie par module et groupe
+- Note entre 0 et 20
+- Uniquement pour mes modules",High,5,membre3-enseignants,Sprint 5
+US48,E5,Story,Gérer les absences,"En tant que enseignant, je veux enregistrer les absences d'une séance afin de suivre l'assiduité.
+
+Critères d'acceptation :
+- Liste d'appel du groupe
+- Modification possible
+- Uniquement pour mes groupes",Medium,5,membre3-enseignants,Sprint 5
+US49,E6,Story,Gérer les examens,"En tant que responsable du département, je veux planifier les examens afin de organiser les sessions.
+
+Critères d'acceptation :
+- Examen : module, date, salle, durée
+- Vérification des conflits de salle",Medium,5,membre4-pedagogie,Sprint 5
+US50,E7,Story,Suivre ses candidatures,"En tant que étudiant, je veux suivre l'état de mes candidatures et de mon stage afin de savoir où j'en suis.
+
+Critères d'acceptation :
+- Candidatures : SENT, INTERVIEW, OFFER_RECEIVED, ACCEPTED, REJECTED, WITHDRAWN (voir US65)
+- Stage déclaré : PENDING_VALIDATION, VALIDATED, REJECTED, IN_PROGRESS, COMPLETED",Medium,2,membre5-pfe,Sprint 5
+US51,E7,Story,Valider un stage et affecter un encadrant,"En tant que responsable du département, je veux valider un stage déclaré et affecter un encadrant afin de lancer le PFE.
+
+Critères d'acceptation :
+- Validation uniquement d'un stage déclaré par l'étudiant avec convention (US66)
+- Validation ou refus avec commentaire, notification à l'étudiant
+- Encadrant choisi parmi les enseignants (principal / co-encadrant), seulement si VALIDATED",High,3,membre5-pfe,Sprint 5
+US52,E8,Story,Consulter et rechercher les actualités,"En tant que utilisateur, je veux consulter et rechercher les actualités afin de rester informé.
+
+Critères d'acceptation :
+- Liste triée par date
+- Détail d'une actualité
+- Recherche par mot-clé",Medium,2,a-repartir,Sprint 5
+US53,E1,Story,Réinitialiser un mot de passe oublié,"En tant que utilisateur, je veux réinitialiser mon mot de passe afin de récupérer l'accès à mon compte.
+
+Critères d'acceptation :
+- Lien ou code de réinitialisation à durée limitée
+- Le lien ne fonctionne qu'une fois
+- Message de confirmation",Medium,5,membre1-securite,Sprint 6
+US54,E2,Story,Consulter les journaux d'activité,"En tant que administrateur, je veux consulter l'historique des actions importantes afin de suivre ce qui se passe sur la plateforme.
+
+Critères d'acceptation :
+- Actions sensibles enregistrées (connexion, création, suppression)
+- Filtre par date et utilisateur",Low,5,membre1-securite,Sprint 6
+US55,E3,Story,Contact,"En tant que visiteur, je veux consulter les coordonnées et envoyer un message afin de contacter le département.
+
+Critères d'acceptation :
+- Coordonnées affichées
+- Formulaire validé (nom, email, message)
+- Message enregistré ou envoyé par email",Low,2,a-repartir,Sprint 6
+US56,E3,Story,Aperçu public des dernières offres de stage et d'emploi,"En tant que visiteur, je veux voir un aperçu des dernières offres agrégées afin de découvrir les opportunités proposées.
+
+Critères d'acceptation :
+- Les 6 offres ACTIVE les plus récentes (mises en avant en premier)
+- Lien vers l'annonce d'origine",Low,1,a-repartir,Sprint 6
+US57,E5,Story,Consulter son profil enseignant,"En tant que enseignant, je veux consulter mon profil afin de vérifier mes informations.
+
+Critères d'acceptation :
+- Affichage des informations personnelles et du grade
+- Modification des coordonnées uniquement",Medium,2,membre3-enseignants,Sprint 6
+US58,E7,Story,Suivre l'avancement des PFE,"En tant que responsable du département, je veux suivre l'avancement des PFE afin de détecter les retards.
+
+Critères d'acceptation :
+- État d'avancement par PFE
+- Consultation par l'étudiant de son PFE",Medium,5,membre5-pfe,Sprint 6
+US59,E7,Story,Gérer les soutenances,"En tant que responsable du département, je veux planifier les soutenances afin de organiser la fin des PFE.
+
+Critères d'acceptation :
+- Date, salle (ou lien visio), jury avec un président
+- Détection des conflits de salle et de jury
+- Soutenance visible par l'étudiant ; tuteur entreprise prévenu par email",Low,3,membre5-pfe,Sprint 6
+US60,E9,Story,Tableau de bord du responsable,"En tant que responsable du département, je veux voir les chiffres clés du département afin de suivre son activité.
+
+Critères d'acceptation :
+- Nombre d'étudiants, enseignants, formations, groupes, stages, candidatures
+- Statistiques PFE",Medium,5,a-repartir,Sprint 6
+US61,E9,Story,Tableau de bord de l'administrateur,"En tant que administrateur, je veux voir l'état des comptes afin de surveiller la plateforme.
+
+Critères d'acceptation :
+- Utilisateurs actifs et désactivés
+- Répartition des rôles
+- Activités récentes",Medium,3,membre1-securite,Sprint 6
+US62,E7,Story,Configurer les sources d'offres externes,"En tant que responsable du département, je veux activer ou désactiver les sources d'offres (Jooble, Careerjet, JSearch, France Travail, Adzuna) et régler leurs mots-clés, zones et fréquence afin de contrôler les offres proposées aux étudiants.
+
+Critères d'acceptation :
+- Liste des sources avec statut, mode (CACHED/LIVE/MANUAL) et dernière synchronisation
+- Activer / désactiver une source
+- Mots-clés, localisations et fréquence modifiables (min. 15 min)
+- La clé d'API n'est jamais affichée ni stockée en base (seul le nom de la variable d'environnement)
+- Réservé à ROLE_DEPARTMENT_HEAD
+- Remplace US23 (profil entreprise)",High,3,membre5-pfe,Sprint 2
+US63,E7,Story,Synchroniser automatiquement les offres depuis les API externes,"En tant que étudiant, je veux voir des offres de stage, PFE et emploi à jour publiées sur les sites de recrutement afin de trouver un stage sans dépendre des entreprises inscrites.
+
+Critères d'acceptation :
+- Tâche planifiée par source selon son intervalle (diagramme SQ7)
+- Au minimum Jooble et JSearch synchronisés
+- Type de contrat normalisé : INTERNSHIP, PFE, CDI, CDD, ALTERNANCE, FREELANCE, OTHER
+- Dédoublonnage par empreinte (titre + entreprise + ville)
+- Offre non revue depuis 45 jours → EXPIRED
+- Chaque exécution écrite dans sync_logs (compteurs, erreurs, quota)
+- Une API en panne n'efface pas les offres en cache
+- Remplace US31 (publier une offre)",Highest,8,membre5-pfe,Sprint 3
+US64,E7,Story,"Saisir, mettre en avant ou masquer une offre (département)","En tant que responsable du département, je veux saisir une offre reçue directement et mettre en avant ou masquer une offre afin de valoriser les offres des partenaires et retirer les offres inadaptées.
+
+Critères d'acceptation :
+- Saisie manuelle (source DEPARTEMENT) : titre, entreprise, ville, contrat, lien, résumé
+- Une offre mise en avant apparaît en tête des résultats
+- Une offre masquée (HIDDEN) n'est plus visible par les étudiants",Medium,2,membre5-pfe,Sprint 3
+US65,E7,Story,Postuler sur le site d'origine et suivre ses candidatures,"En tant que étudiant, je veux postuler via le lien de l'offre puis suivre l'avancement de mes candidatures afin de savoir où j'en suis dans ma recherche.
+
+Critères d'acceptation :
+- Le bouton « Postuler » ouvre l'annonce d'origine dans un nouvel onglet
+- Une fiche de suivi est créée (statut SENT, poste et entreprise copiés)
+- Une seule fiche par offre (409 sinon)
+- Ajout manuel d'une candidature trouvée ailleurs (sans offre liée)
+- Statuts : SENT, INTERVIEW, OFFER_RECEIVED, ACCEPTED, REJECTED, WITHDRAWN
+- Notes personnelles et date de prochaine étape
+- La plateforme ne transmet aucun CV
+- Remplace US38 (postuler à une offre)",Highest,5,membre5-pfe,Sprint 4
+US66,E7,Story,Déclarer son stage/PFE avec la convention,"En tant que étudiant, je veux déclarer le stage ou PFE obtenu et déposer ma convention afin de le faire valider par le département.
+
+Critères d'acceptation :
+- Champs : sujet, type, entreprise, ville, pays, dates, tuteur (nom, email, téléphone)
+- Convention PDF obligatoire (taille maximale contrôlée)
+- Lien facultatif vers une candidature suivie
+- Statut initial PENDING_VALIDATION, notification au département
+- Un seul stage actif du même type par étudiant (409 sinon)
+- Remplace US39 (accepter / refuser une candidature)",High,3,membre5-pfe,Sprint 4
+US67,E7,Story,Gérer ses favoris et ses alertes d'offres,"En tant que étudiant, je veux enregistrer des offres en favoris et créer des alertes afin de être prévenu des nouvelles offres qui m'intéressent.
+
+Critères d'acceptation :
+- Ajouter / retirer une offre des favoris
+- Créer une alerte à partir d'une recherche (mots-clés, contrats, ville, pays, télétravail)
+- Fréquence quotidienne ou hebdomadaire
+- Email récapitulatif des nouvelles offres correspondantes
+- Activer / désactiver / supprimer une alerte",Medium,5,membre5-pfe,Sprint 4
+US68,E2,Story,Superviser les intégrations externes,"En tant que administrateur, je veux consulter les journaux de synchronisation et les quotas des API afin de détecter rapidement une source en panne.
+
+Critères d'acceptation :
+- Journal par source : date, statut, offres reçues / créées / expirées, erreur
+- Quota restant et alerte à 80 %
+- Relancer manuellement une synchronisation
+- Réservé à ROLE_ADMIN",Medium,3,membre1-securite,Sprint 5
+US69,E8,Story,"Gérer les flux de veille (RSS/Atom, API)","En tant que responsable du département, je veux ajouter et configurer des flux d'actualités externes afin de alimenter automatiquement le fil d'actualités.
+
+Critères d'acceptation :
+- Ajouter un flux : nom, URL, type (RSS, ATOM, API), catégorie
+- Activer / désactiver un flux
+- URL unique (409 si déjà présente)
+- Affichage du dernier statut et de la dernière erreur",Medium,3,membre5-pfe,Sprint 4
+US70,E8,Story,Synchroniser la veille externe,"En tant que visiteur, je veux voir des actualités externes récentes (technologie, université, événements) afin de rester informé sans saisie manuelle du département.
+
+Critères d'acceptation :
+- Synchronisation toutes les heures (diagramme SQ11)
+- Dédoublonnage par URL (empreinte SHA-256)
+- Résumé nettoyé (jsoup) : aucune balise script
+- Seuls titre, résumé, image, date et lien sont stockés
+- Purge des articles de plus de 30 jours non promus
+- Un flux en erreur est signalé sans bloquer les autres",Medium,5,membre5-pfe,Sprint 5
+US71,E8,Story,Consulter le fil d'actualités unifié,"En tant que visiteur ou étudiant, je veux consulter un fil unique avec les annonces du département et la veille externe afin de trouver toute l'information au même endroit.
+
+Critères d'acceptation :
+- Badge INTERNE / EXTERNE sur chaque élément
+- Filtre par catégorie et par source, pagination
+- Annonces épinglées en tête
+- Un article externe s'ouvre sur son site d'origine
+- Visibilité des annonces internes respectée selon le rôle",Medium,3,a-repartir,Sprint 5
+US72,E8,Story,Masquer ou promouvoir un article externe,"En tant que responsable du département, je veux masquer un article externe ou le promouvoir en annonce afin de garder un fil pertinent.
+
+Critères d'acceptation :
+- Masquer → statut HIDDEN, invisible pour tous
+- Promouvoir → crée une annonce liée à l'article (source_article_id)
+- Un article promu n'est pas purgé",Low,2,membre5-pfe,Sprint 6
+US73,E8,Story,S'abonner à des catégories d'actualités,"En tant que utilisateur authentifié, je veux m'abonner à des catégories d'actualités afin de recevoir une notification quand un nouvel élément est publié.
+
+Critères d'acceptation :
+- Catégories : DEPARTEMENT, UNIVERSITE, TECHNOLOGIE, EMPLOI, EVENEMENTS
+- Canal email ou dans l'application
+- Un seul abonnement par catégorie
+- Désabonnement en un clic",Low,2,a-repartir,Sprint 6
+T01,E7,Task,Demander les clés d'API des sources d'offres,"Demander dès maintenant (délais de réponse) :
+- Jooble : formulaire sur jooble.org/api/about
+- Careerjet : compte éditeur (une clé par site)
+- JSearch : compte RapidAPI / OpenWeb Ninja (plan gratuit 200 requêtes/mois)
+- France Travail : application sur francetravail.io (OAuth2)
+
+Ranger les clés dans des variables d'environnement (JOOBLE_API_KEY, CAREERJET_API_KEY, JSEARCH_RAPIDAPI_KEY, FRANCE_TRAVAIL_CLIENT…), jamais dans le dépôt Git.",Highest,1,membre5-pfe,Sprint 2
+T02,E7,Task,Créer l'interface JobProvider et le connecteur Jooble,"Interface JobProvider (code(), accessMode(), search(criteria)) + JoobleProvider + OfferNormalizer, selon le diagramme de classes CL6 v02 et la séquence SQ7.
+Entités JobSource, SyncLog, ExternalOffer ; repositories ; tâche @Scheduled.",Highest,5,membre5-pfe,Sprint 3
+T03,E7,Task,Connecteurs JSearch et France Travail,"JSearchProvider (RapidAPI, quota 200/mois → synchronisation quotidienne) et FranceTravailProvider (OAuth2 client credentials, mention de source obligatoire).",High,5,membre5-pfe,Sprint 4
+T04,E7,Task,Connecteur Careerjet en temps réel,"CareerjetProvider en mode LIVE : appel à chaque recherche avec l'IP et le user-agent de l'utilisateur, résultats fusionnés mais non stockés, délai maximal 5 s (diagramme SQ8).",Medium,3,membre5-pfe,Sprint 4
+T05,E7,Task,"Résilience, cache et quotas des connecteurs","Resilience4j (timeout, retry, circuit breaker) sur chaque connecteur ; cache Caffeine ; contrôle du quota avant appel et alerte à 80 % (paramètre offers.quota.alert.percent).",High,3,membre5-pfe,Sprint 4
+T06,E7,Task,Tests des connecteurs avec WireMock,"Simuler chaque API externe avec WireMock : réponse normale, réponse vide, erreur 500, timeout, quota dépassé. Vérifier normalisation et dédoublonnage.",Medium,3,membre5-pfe,Sprint 4
+T07,E0,Task,Choisir la source de vérité du schéma de base de données,"Le script db/migration/V1 n'est pas exécuté (pas de Flyway dans le pom.xml, Hibernate ddl-auto=update) et diffère des entités (users.role vs roles/user_roles, filieres.nom vs name, modules vs course_modules).
+Décider : (a) ajouter Flyway et appliquer V1/V2 v02 en alignant les entités, ou (b) garder les entités et mettre à jour le MLD.
+Décision à documenter dans le README.",Highest,1,commun,Sprint 2
+T08,E0,Task,Intégrer les documents de conception v02 dans le dépôt,"Ajouter le cahier des charges v2, le PDF + images + sources UML v02, les MCD 1 et 6 v02 et les prompts 1/6 et 6/6 ; déplacer les versions v01 dans un dossier v01/. Pull request docs/v02-modules-6-7.",High,1,membre5-pfe,Sprint 2
+BUG01,E1,Bug,A1 - Requête sans jeton : 403 au lieu de 401,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A1 - Sans jeton → 401 Unauthorized (pas 403) ».
+
+Étapes : GET /api/test/protected sans en-tête Authorization
+Résultat actuel : 403 Forbidden
+Résultat attendu : 401 Unauthorized
+Piste de correction : SecurityConfig : .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+
+Critère de fermeture : la requête « A1 - Sans jeton → 401 Unauthorized (pas 403) » passe au vert.",Medium,1,membre1-securite,Sprint 2
+BUG02,E1,Bug,A2 - /api/auth/me accessible sans jeton,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A2 - /api/auth/me doit exiger un jeton ».
+
+Étapes : GET /api/auth/me sans jeton
+Résultat actuel : 200 OK (permitAll sur /api/auth/**)
+Résultat attendu : 401
+Piste de correction : Limiter permitAll à /api/auth/login (et /api/auth/test)
+
+Critère de fermeture : la requête « A2 - /api/auth/me doit exiger un jeton » passe au vert.",High,1,membre1-securite,Sprint 2
+BUG03,E1,Bug,A3 - La connexion ne renvoie pas le rôle,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A3 - La connexion doit renvoyer le rôle ».
+
+Étapes : POST /api/auth/login avec un compte étudiant
+Résultat actuel : Réponse {token, tokenType} sans rôle
+Résultat attendu : Rôle présent dans la réponse ou dans le JWT (claim roles)
+Piste de correction : Ajouter role à LoginResponse et un claim dans JwtService ; bloque la story « Redirection selon le rôle »
+
+Critère de fermeture : la requête « A3 - La connexion doit renvoyer le rôle » passe au vert.",High,2,membre1-securite,Sprint 2
+BUG04,E1,Bug,A4 - Un étudiant peut créer un compte ADMIN,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A4 - Un étudiant ne doit pas créer d'utilisateur → 403 ».
+
+Étapes : POST /api/users avec le jeton d'un étudiant, role ADMIN
+Résultat actuel : 201 Created
+Résultat attendu : 403 Forbidden
+Piste de correction : CustomUserDetailsService : authorities = ROLE_ + user.getRole() ; @PreAuthorize(""hasRole('ADMIN')"") sur UserController (@EnableMethodSecurity)
+
+Critère de fermeture : la requête « A4 - Un étudiant ne doit pas créer d'utilisateur → 403 » passe au vert.",Highest,3,membre1-securite,Sprint 2
+BUG05,E1,Bug,A5 - Un enseignant peut lister tous les comptes,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A5 - Un enseignant ne doit pas lister les comptes → 403 ».
+
+Étapes : GET /api/users avec le jeton d'un enseignant
+Résultat actuel : 200 OK
+Résultat attendu : 403 Forbidden
+Piste de correction : Même correctif que A4
+
+Critère de fermeture : la requête « A5 - Un enseignant ne doit pas lister les comptes → 403 » passe au vert.",High,1,membre1-securite,Sprint 2
+BUG06,E6,Bug,A6 - Un étudiant peut supprimer une filière,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A6 - Un étudiant ne doit pas supprimer une filière → 403 ».
+
+Étapes : DELETE /api/filieres/{id} avec le jeton d'un étudiant
+Résultat actuel : 204 No Content
+Résultat attendu : 403 Forbidden
+Piste de correction : @PreAuthorize(""hasRole('CHEF_DEPARTEMENT')"") sur les écritures de FiliereController et ModuleCoursController (après A4)
+
+Critère de fermeture : la requête « A6 - Un étudiant ne doit pas supprimer une filière → 403 » passe au vert.",High,1,membre4-pedagogie,Sprint 2
+BUG07,E0,Bug,A7 - Email déjà utilisé : erreur 500,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A7 - Email déjà utilisé → 409 Conflict ».
+
+Étapes : POST /api/users avec admin@pgdi.test
+Résultat actuel : 500 (RuntimeException non gérée)
+Résultat attendu : 409 Conflict
+Piste de correction : Exception métier ConflictException + @RestControllerAdvice global (story US05)
+
+Critère de fermeture : la requête « A7 - Email déjà utilisé → 409 Conflict » passe au vert.",Medium,2,membre1-securite,Sprint 2
+BUG08,E6,Bug,A8 - Code de filière déjà utilisé : erreur 500,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A8 - Code filière déjà utilisé → 409 Conflict ».
+
+Étapes : POST /api/filieres avec le code M2I-ISI
+Résultat actuel : 500
+Résultat attendu : 409 Conflict
+Piste de correction : Lever ConflictException dans FiliereService (après A7)
+
+Critère de fermeture : la requête « A8 - Code filière déjà utilisé → 409 Conflict » passe au vert.",Medium,1,membre4-pedagogie,Sprint 2
+BUG09,E0,Bug,A9 - Utilisateur inexistant : erreur 500,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A9 - Utilisateur inexistant → 404 Not Found ».
+
+Étapes : GET /api/users/999999
+Résultat actuel : 500
+Résultat attendu : 404 Not Found
+Piste de correction : NotFoundException + @RestControllerAdvice
+
+Critère de fermeture : la requête « A9 - Utilisateur inexistant → 404 Not Found » passe au vert.",Medium,1,membre1-securite,Sprint 2
+BUG10,E6,Bug,A10 - Filière inexistante : erreur 500,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A10 - Filière inexistante → 404 Not Found ».
+
+Étapes : GET /api/filieres/999999
+Résultat actuel : 500
+Résultat attendu : 404 Not Found
+Piste de correction : Lever NotFoundException dans FiliereService
+
+Critère de fermeture : la requête « A10 - Filière inexistante → 404 Not Found » passe au vert.",Medium,1,membre4-pedagogie,Sprint 2
+BUG11,E6,Bug,A11 - Module avec filière inexistante : erreur 500,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A11 - Module rattaché à une filière inexistante → 404/422 ».
+
+Étapes : POST /api/modules avec filiereId = 999999
+Résultat actuel : 500
+Résultat attendu : 404 ou 422
+Piste de correction : Lever NotFoundException dans ModuleCoursService
+
+Critère de fermeture : la requête « A11 - Module rattaché à une filière inexistante → 404/422 » passe au vert.",Medium,1,membre4-pedagogie,Sprint 2
+BUG12,E6,Bug,A12 - Suppression d'une filière qui a des modules : erreur 500,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A12 - Supprimer une filière qui a des modules → 409 Conflict ».
+
+Étapes : DELETE /api/filieres/3 (2 modules rattachés)
+Résultat actuel : 500 (violation de clé étrangère)
+Résultat attendu : 409 Conflict avec message explicite
+Piste de correction : Vérifier moduleCoursRepository.existsByFiliereId avant suppression
+
+Critère de fermeture : la requête « A12 - Supprimer une filière qui a des modules → 409 Conflict » passe au vert.",Medium,2,membre4-pedagogie,Sprint 2
+BUG13,E0,Bug,A13 - Erreurs de validation non détaillées par champ,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A13 - Erreurs de validation champ par champ ».
+
+Étapes : POST /api/users avec un corps vide {}
+Résultat actuel : 400 sans le détail des champs
+Résultat attendu : 400 avec la liste des champs en erreur et leurs messages
+Piste de correction : Handler MethodArgumentNotValidException dans le @RestControllerAdvice (story commune Sprint 1)
+
+Critère de fermeture : la requête « A13 - Erreurs de validation champ par champ » passe au vert.",Medium,2,membre1-securite,Sprint 2

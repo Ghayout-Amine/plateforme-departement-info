@@ -1,0 +1,78 @@
+@startuml
+title Diagramme de classes 2/6 — Structure pédagogique
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classBackgroundColor #FFFFE0
+skinparam classBorderColor #5D4037
+skinparam ArrowColor #455A64
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+skinparam class {
+  BackgroundColor<<réf>> #ECEFF1
+  BorderColor<<réf>> #90A4AE
+}
+hide empty members
+
+class AcademicYear {
+  - id : Long
+  - label : String
+  - startDate : LocalDate
+  - endDate : LocalDate
+  - isCurrent : boolean
+}
+class Formation {
+  - id : Long
+  - code : String
+  - name : String
+  - degreeLevel : DegreeLevel
+  - durationSemesters : Integer
+  - description : String
+  - isActive : boolean
+}
+class Filiere {
+  - id : Long
+  - code : String
+  - name : String
+  - description : String
+  - isActive : boolean
+}
+class CourseModule {
+  - id : Long
+  - code : String
+  - name : String
+  - description : String
+  - hoursLecture : Integer
+  - hoursTutorial : Integer
+  - hoursPractical : Integer
+}
+class FiliereModule {
+  - semester : Integer
+  - credits : Integer
+  - coefficient : BigDecimal
+}
+class Groupe {
+  - id : Long
+  - name : String
+  - capacity : Integer
+}
+class Salle {
+  - id : Long
+  - code : String
+  - name : String
+  - building : String
+  - capacity : Integer
+  - roomType : RoomType
+  - isActive : boolean
+}
+Formation "1" -- "0..*" Filiere : contient
+Filiere "0..*" -- "0..*" CourseModule : comprend
+(Filiere, CourseModule) .. FiliereModule
+Filiere "1" -- "0..*" Groupe : se divise en
+AcademicYear "1" -- "0..*" Groupe : englobe
+note as N1
+  Les entités héritent de BaseEntity (@MappedSuperclass : createdAt, updatedAt).
+  Méthodes affichées = méthodes métier principales (proposées).
+end note
+@enduml

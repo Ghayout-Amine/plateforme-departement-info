@@ -1,0 +1,62 @@
+@startuml
+title Diagramme de classes 5/6 — Notes, absences, ressources
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classBackgroundColor #FFFFE0
+skinparam classBorderColor #5D4037
+skinparam ArrowColor #455A64
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+skinparam class {
+  BackgroundColor<<réf>> #ECEFF1
+  BorderColor<<réf>> #90A4AE
+}
+hide empty members
+
+class Grade {
+  - id : Long
+  - score : BigDecimal
+  - status : GradeStatus
+  - reviewComment : String
+  + publish() : void
+}
+class Absence {
+  - id : Long
+  - absenceType : AbsenceType
+  - isJustified : boolean
+  - justification : String
+  - justificationFile : String
+  + justify(reason : String, file : String) : void
+}
+class Resource {
+  - id : Long
+  - title : String
+  - description : String
+  - resourceType : ResourceType
+  - fileName : String
+  - filePath : String
+  - mimeType : String
+  - fileSize : Long
+  - externalUrl : String
+  - isPublished : boolean
+}
+class CourseModule <<réf>>
+class Examen <<réf>>
+class Planning <<réf>>
+class Student <<réf>>
+class Teacher <<réf>>
+Student "1" -- "0..*" Grade : obtient
+Examen "1" -- "0..*" Grade : donne lieu à
+Teacher "0..1" -- "0..*" Grade : saisit
+Student "1" -- "0..*" Absence : est absent
+Planning "1" -- "0..*" Absence : donne lieu à
+Teacher "0..1" -- "0..*" Absence : enregistre
+CourseModule "1" -- "0..*" Resource : possède
+Teacher "1" -- "0..*" Resource : publie
+note as N1
+  Les entités héritent de BaseEntity (@MappedSuperclass : createdAt, updatedAt).
+  Méthodes affichées = méthodes métier principales (proposées).
+end note
+@enduml

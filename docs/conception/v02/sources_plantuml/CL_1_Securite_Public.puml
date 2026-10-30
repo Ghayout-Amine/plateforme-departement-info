@@ -1,0 +1,138 @@
+@startuml
+title Diagramme de classes 1/6 — Sécurité, administration, partie publique et veille (v02)
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classBackgroundColor #FFFFE0
+skinparam classBorderColor #5D4037
+skinparam ArrowColor #455A64
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+skinparam class {
+  BackgroundColor<<réf>> #ECEFF1
+  BorderColor<<réf>> #90A4AE
+}
+hide empty members
+class User {
+  - id : Long
+  - email : String
+  - passwordHash : String
+  - firstName : String
+  - lastName : String
+  - phone : String
+  - avatarUrl : String
+  - enabled : boolean
+  - lastLoginAt : LocalDateTime
+  - deletedAt : LocalDateTime
+  + hasRole(roleName : String) : boolean
+  + isActive() : boolean
+}
+class Role {
+  - id : Long
+  - name : String
+  - description : String
+}
+class Permission {
+  - id : Long
+  - code : String
+  - description : String
+}
+class UserToken {
+  - id : Long
+  - tokenType : TokenType
+  - tokenHash : String
+  - expiresAt : LocalDateTime
+  - revokedAt : LocalDateTime
+  + isExpired() : boolean
+}
+class AuditLog {
+  - id : Long
+  - action : String
+  - entityType : String
+  - entityId : Long
+  - details : String
+  - ipAddress : String
+}
+class SystemParameter {
+  - id : Long
+  - paramKey : String
+  - paramValue : String
+  - description : String
+}
+class News {
+  - id : Long
+  - title : String
+  - slug : String
+  - summary : String
+  - content : String
+  - category : NewsCategory
+  - visibility : NewsVisibility
+  - status : NewsStatus
+  - pinned : boolean
+  - coverImageUrl : String
+  - publishedAt : LocalDateTime
+  + publish() : void
+  + unpublish() : void
+  + archive() : void
+  + pin() : void
+}
+class ContactMessage {
+  - id : Long
+  - fullName : String
+  - email : String
+  - subject : String
+  - message : String
+  - status : MessageStatus
+  + markAsRead() : void
+}
+class NewsFeed {
+  - id : Long
+  - name : String
+  - feedUrl : String
+  - feedType : FeedType
+  - category : FeedCategory
+  - enabled : boolean
+  - syncIntervalMinutes : Integer
+  - lastSyncAt : LocalDateTime
+  - lastStatus : SyncStatus
+  - lastError : String
+  + isDue(now : LocalDateTime) : boolean
+}
+class ExternalArticle {
+  - id : Long
+  - title : String
+  - summary : String
+  - imageUrl : String
+  - originalUrl : String
+  - urlHash : String
+  - author : String
+  - category : FeedCategory
+  - status : ArticleStatus
+  - publishedAt : LocalDateTime
+  - fetchedAt : LocalDateTime
+  + hide() : void
+  + promote(author : User) : News
+}
+class NewsSubscription {
+  - id : Long
+  - category : FeedCategory
+  - channel : NotificationChannel
+}
+User "0..*" -- "1..*" Role : possède
+Role "0..*" -- "0..*" Permission : accorde
+User "1" *-- "0..*" UserToken : détient
+User "0..1" -- "0..*" AuditLog : effectue
+User "0..1" -- "0..*" SystemParameter : modifie
+User "1" -- "0..*" News : rédige
+User "0..1" -- "0..*" ContactMessage : traite
+User "0..1" -- "0..*" NewsFeed : ajoute
+NewsFeed "1" *-- "0..*" ExternalArticle : fournit
+ExternalArticle "0..1" -- "0..1" News : promu en
+User "1" *-- "0..*" NewsSubscription : s'abonne
+note as N1
+  Les entités héritent de BaseEntity (@MappedSuperclass : createdAt, updatedAt).
+  Méthodes affichées = méthodes métier principales (proposées).
+  ExternalArticle : purge après 30 jours sauf s'il est promu en annonce.
+end note
+@enduml

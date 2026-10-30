@@ -1,0 +1,80 @@
+@startuml
+title Séquence — Déclaration du stage/PFE, validation par le département et affectation de l'encadrant
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ArrowColor #37474F
+skinparam sequenceArrowThickness 1.1
+skinparam participantBackgroundColor #E3F2FD
+skinparam participantBorderColor #1565C0
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam boundaryBackgroundColor #E8F5E9
+skinparam controlBackgroundColor #FFF8E1
+skinparam databaseBackgroundColor #FFF3E0
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceDividerBackgroundColor #ECEFF1
+skinparam noteBackgroundColor #FFF8E1
+skinparam maxMessageSize 220
+skinparam entityBackgroundColor #F3E5F5
+skinparam entityBorderColor #6A1B9A
+autonumber
+actor "Étudiant" as E
+actor "Responsable\ndu département" as R
+boundary "Angular" as FE
+control "InternshipController" as IC
+control "InternshipService" as IS
+participant "FileStorageService" as FS
+participant "InternshipRepository" as IR
+participant "TeacherRepository" as TR
+participant "NotificationService" as NS
+participant "AuditService" as AU
+database "MySQL" as DB
+
+== Déclaration par l'étudiant ==
+E -> FE : renseigne sujet, entreprise, dates, tuteur\net joint la convention (PDF)
+FE -> IC : POST /api/students/me/internships (multipart : données + convention)
+IC -> IS : declare(userId, dto, fichier)
+IS -> IR : existsActiveByStudentAndType(étudiant, PFE)
+alt un stage du même type est déjà en cours
+  IS --> IC : DuplicateInternshipException
+  IC --> FE : 409 Conflict
+else
+  IS -> FS : store(convention) (PDF uniquement, taille contrôlée)
+  FS --> IS : chemin du fichier
+  IS -> IR : save(Internship PENDING_VALIDATION, trackingId facultatif)
+  IR -> DB : INSERT internships
+  IS -> NS : notifyDepartment(stage à valider)
+  IC --> FE : 201 Created
+end
+
+== Validation par le département ==
+R -> FE : ouvre « Stages à valider »
+FE -> IC : GET /api/internships?status=PENDING_VALIDATION
+IC --> FE : liste des déclarations (avec lien vers la convention)
+R -> FE : valide ou refuse (commentaire)
+FE -> IC : PUT /api/internships/{id}/validation {approved, comment}
+IC -> IS : validate(id, approved, comment, responsableId)
+IS -> IR : save(statut VALIDATED ou REJECTED, validatedBy, validatedAt)
+IR -> DB : UPDATE internships
+IS -> NS : notifyStudent(résultat de la validation)
+IS -> AU : log(VALIDATE_INTERNSHIP)
+IC --> FE : 200 OK
+
+== Affectation de l'encadrant ==
+R -> FE : choisit un enseignant et son rôle (principal ou co-encadrant)
+FE -> IC : POST /api/internships/{id}/supervisors {teacherId, role}
+IC -> IS : assignSupervisor(id, teacherId, role)
+IS -> TR : findById(teacherId)
+TR -> DB : SELECT teachers
+alt stage non validé ou encadrant déjà affecté
+  IS --> IC : InvalidStateException
+  IC --> FE : 409 Conflict
+else affectation possible
+  IS -> IR : addSupervisor(id, enseignant, rôle)
+  IR -> DB : INSERT internship_supervisors
+  IS -> NS : notifyTeacher et notifyStudent
+  IS -> AU : log(ASSIGN_SUPERVISOR)
+  IC --> FE : 201 Created
+end
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+title Vue globale 2/3 — Gestion pédagogique et espace étudiant (v02)
+skinparam dpi 130
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 15
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam ArrowColor #455A64
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam rectangleBackgroundColor #FAFAFA
+skinparam rectangleBorderColor #607D8B
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+left to right direction
+actor "Responsable\ndu département" as R
+actor "Enseignant" as T
+actor "Étudiant" as E
+rectangle "Plateforme de Gestion du Département Informatique" {
+  usecase "Gérer la structure pédagogique\n(formations, filières, modules,\ngroupes, salles)" as PED
+  usecase "Gérer emplois du temps\net examens" as EDT
+  usecase "Gérer étudiants\net enseignants" as PERS
+  usecase "Gérer ressources,\nnotes et absences" as ENS
+  usecase "Consulter son espace étudiant\n(profil, emploi du temps,\nrésultats, absences)" as ESP
+}
+R --> PED
+R --> EDT
+R --> PERS
+T --> ENS
+E --> ESP
+@enduml

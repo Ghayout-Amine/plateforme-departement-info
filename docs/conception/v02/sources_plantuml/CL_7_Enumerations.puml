@@ -1,0 +1,239 @@
+@startuml
+title Diagramme de classes — Énumérations (@Enumerated(EnumType.STRING), v02)
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classBackgroundColor #FFFFE0
+skinparam classBorderColor #5D4037
+skinparam ArrowColor #455A64
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+skinparam class {
+  BackgroundColor<<réf>> #ECEFF1
+  BorderColor<<réf>> #90A4AE
+}
+hide empty members
+skinparam enumBackgroundColor #E8F5E9
+skinparam enumBorderColor #2E7D32
+left to right direction
+enum AbsenceType {
+  ABSENT
+  LATE
+}
+enum AlertFrequency {
+  DAILY
+  WEEKLY
+}
+enum ArticleStatus {
+  VISIBLE
+  HIDDEN
+}
+enum ContractType {
+  INTERNSHIP
+  PFE
+  CDI
+  CDD
+  ALTERNANCE
+  FREELANCE
+  OTHER
+}
+enum DefenseMode {
+  ONSITE
+  ONLINE
+}
+enum DefenseStatus {
+  PLANNED
+  DONE
+  POSTPONED
+  CANCELLED
+}
+enum DegreeLevel {
+  LICENCE
+  MASTER
+  CYCLE_INGENIEUR
+  DOCTORAT
+}
+enum EnrollmentStatus {
+  ACTIVE
+  VALIDATED
+  REPEATING
+  SUSPENDED
+  WITHDRAWN
+}
+enum ExamType {
+  CC
+  TP
+  FINAL
+  RATTRAPAGE
+}
+enum FeedCategory {
+  DEPARTEMENT
+  UNIVERSITE
+  TECHNOLOGIE
+  EMPLOI
+  EVENEMENTS
+}
+enum FeedType {
+  RSS
+  ATOM
+  API
+}
+enum FollowupType {
+  MEETING
+  PROGRESS_REPORT
+  FINAL_REPORT
+  COMMENT
+}
+enum Gender {
+  MALE
+  FEMALE
+}
+enum GradeStatus {
+  DRAFT
+  PUBLISHED
+  ABSENT
+}
+enum InternshipStatus {
+  PENDING_VALIDATION
+  VALIDATED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+enum InternshipType {
+  INTERNSHIP
+  PFE
+}
+enum JuryRole {
+  PRESIDENT
+  EXAMINER
+  SUPERVISOR
+  RAPPORTEUR
+}
+enum MessageStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+}
+enum NewsCategory {
+  NEWS
+  ANNOUNCEMENT
+}
+enum NewsStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+enum NewsVisibility {
+  PUBLIC
+  AUTHENTICATED
+  STUDENTS
+  TEACHERS
+}
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+}
+enum OfferStatus {
+  ACTIVE
+  EXPIRED
+  HIDDEN
+}
+enum PlanningStatus {
+  PLANNED
+  CANCELLED
+  DONE
+}
+enum QuotaPeriod {
+  MINUTE
+  DAY
+  MONTH
+}
+enum ResourceType {
+  COURSE
+  TD
+  TP
+  EXAM_ARCHIVE
+  VIDEO
+  LINK
+  OTHER
+}
+enum RoomType {
+  AMPHI
+  CLASSROOM
+  LAB
+  OTHER
+}
+enum SessionType {
+  CM
+  TD
+  TP
+}
+enum SourceAccessMode {
+  CACHED
+  LIVE
+  MANUAL
+}
+enum SupervisorRole {
+  MAIN
+  CO_SUPERVISOR
+}
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+enum TokenType {
+  REFRESH
+  PASSWORD_RESET
+}
+enum TrackingStatus {
+  SENT
+  INTERVIEW
+  OFFER_RECEIVED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+AbsenceType -[hidden]right- AlertFrequency
+AlertFrequency -[hidden]right- ArticleStatus
+ArticleStatus -[hidden]right- ContractType
+ContractType -[hidden]right- DefenseMode
+DefenseMode -[hidden]right- DefenseStatus
+DefenseStatus -[hidden]right- DegreeLevel
+EnrollmentStatus -[hidden]right- ExamType
+ExamType -[hidden]right- FeedCategory
+FeedCategory -[hidden]right- FeedType
+FeedType -[hidden]right- FollowupType
+FollowupType -[hidden]right- Gender
+Gender -[hidden]right- GradeStatus
+InternshipStatus -[hidden]right- InternshipType
+InternshipType -[hidden]right- JuryRole
+JuryRole -[hidden]right- MessageStatus
+MessageStatus -[hidden]right- NewsCategory
+NewsCategory -[hidden]right- NewsStatus
+NewsStatus -[hidden]right- NewsVisibility
+NotificationChannel -[hidden]right- OfferStatus
+OfferStatus -[hidden]right- PlanningStatus
+PlanningStatus -[hidden]right- QuotaPeriod
+QuotaPeriod -[hidden]right- ResourceType
+ResourceType -[hidden]right- RoomType
+RoomType -[hidden]right- SessionType
+SourceAccessMode -[hidden]right- SupervisorRole
+SupervisorRole -[hidden]right- SyncStatus
+SyncStatus -[hidden]right- TokenType
+TokenType -[hidden]right- TrackingStatus
+AbsenceType -[hidden]down- EnrollmentStatus
+EnrollmentStatus -[hidden]down- InternshipStatus
+InternshipStatus -[hidden]down- NotificationChannel
+NotificationChannel -[hidden]down- SourceAccessMode
+note as N1
+  v02 : ajoutées AlertFrequency, ArticleStatus, ContractType, FeedCategory, FeedType,
+  NotificationChannel, QuotaPeriod, SourceAccessMode, SyncStatus, TrackingStatus ;
+  OfferStatus redéfinie ; supprimées ApplicationStatus, CompanyStatus, DocumentType.
+end note
+@enduml

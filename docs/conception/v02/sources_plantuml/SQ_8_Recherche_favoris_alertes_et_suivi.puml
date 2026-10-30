@@ -1,0 +1,86 @@
+@startuml
+title Séquence — Recherche d'offres, favoris, alerte et suivi de candidature (étudiant)
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ArrowColor #37474F
+skinparam sequenceArrowThickness 1.1
+skinparam participantBackgroundColor #E3F2FD
+skinparam participantBorderColor #1565C0
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam boundaryBackgroundColor #E8F5E9
+skinparam controlBackgroundColor #FFF8E1
+skinparam databaseBackgroundColor #FFF3E0
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceDividerBackgroundColor #ECEFF1
+skinparam noteBackgroundColor #FFF8E1
+skinparam maxMessageSize 220
+skinparam entityBackgroundColor #F3E5F5
+skinparam entityBorderColor #6A1B9A
+autonumber
+actor "Étudiant" as E
+boundary "Angular" as FE
+control "OfferController" as OC
+control "OfferSearchService" as OS
+participant "ExternalOfferRepository" as OR
+participant "CareerjetProvider\n(source LIVE)" as CJ
+entity "API Careerjet" as API
+control "StudentOfferController" as SC
+participant "FavoriteRepository" as FR
+participant "SavedSearchRepository" as SS
+participant "TrackingRepository" as TR
+database "MySQL" as DB
+
+== Recherche ==
+E -> FE : saisit « développeur java », contrat = PFE, pays = Maroc
+FE -> OC : GET /api/offers?query=java&contractType=PFE&country=MA&page=0
+OC -> OS : search(criteria)
+OS -> OR : searchActive(criteria)
+OR -> DB : SELECT external_offers ACTIVE + MATCH(title, company_name, snippet) AGAINST (?)
+par recherche en direct (sources LIVE)
+  OS -> CJ : search(criteria, ipUtilisateur, userAgent)
+  CJ -> API : GET /search (IP et navigateur de l'utilisateur obligatoires)
+  alt Careerjet indisponible
+    CJ --> OS : liste vide (délai dépassé, journalisé)
+  else
+    API --> CJ : offres
+    CJ --> OS : offres normalisées (non stockées)
+  end
+end
+OS -> OS : fusion, dédoublonnage par empreinte,\noffres mises en avant en premier, tri par date
+OC --> FE : 200 OK (page : titre, entreprise, lieu, contrat, source, lien)
+FE --> E : affiche les résultats avec la mention de chaque source
+
+== Favori ==
+E -> FE : clique sur ☆
+FE -> SC : POST /api/students/me/favorites {offerId}
+SC -> FR : save(FavoriteOffer)
+FR -> DB : INSERT favorite_offers
+SC --> FE : 201 Created
+
+== Alerte ==
+E -> FE : « Créer une alerte pour cette recherche »
+FE -> SC : POST /api/students/me/alerts {name, keywords, contractTypes, country, frequency}
+SC -> SS : save(SavedSearch active)
+SS -> DB : INSERT saved_searches
+SC --> FE : 201 Created
+
+== Candidature sur le site d'origine ==
+E -> FE : clique sur « Postuler »
+FE --> E : ouvre originalUrl dans un nouvel onglet (site de l'offre)
+FE -> SC : POST /api/students/me/applications {offerId, status: SENT, appliedAt}
+SC -> TR : existsByStudentAndOffer
+alt déjà suivie
+  SC --> FE : 409 Conflict
+else
+  SC -> TR : save(ApplicationTracking SENT, poste et entreprise copiés de l'offre)
+  TR -> DB : INSERT application_trackings
+  SC --> FE : 201 Created
+end
+E -> FE : met à jour l'étape (entretien, accepté…)
+FE -> SC : PATCH /api/students/me/applications/{id} {status: INTERVIEW, nextStepAt}
+SC -> TR : save
+TR -> DB : UPDATE application_trackings
+SC --> FE : 200 OK
+@enduml

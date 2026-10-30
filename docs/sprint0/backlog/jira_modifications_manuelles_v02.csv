@@ -1,0 +1,15 @@
+Ticket existant,Action,Nouveau contenu
+E7,Renommer,"Stages, PFE et offres externes (API)"
+E8,Renommer + label membre5-pfe,"Actualités, annonces et veille externe"
+US23,Passer en « Abandonné » (ou supprimer) + commentaire,"Remplacée par US62 (cahier des charges v2, module 6)"
+US31,Passer en « Abandonné » (ou supprimer) + commentaire,"Remplacée par US63 (cahier des charges v2, module 6)"
+US38,Passer en « Abandonné » (ou supprimer) + commentaire,"Remplacée par US65 (cahier des charges v2, module 6)"
+US39,Passer en « Abandonné » (ou supprimer) + commentaire,"Remplacée par US66 (cahier des charges v2, module 6)"
+US32,Remplacer la description,"- Liste des offres ACTIVE, toutes sources confondues (cache + sources LIVE) ; - Recherche par mot-clé (plein texte titre, entreprise, extrait) ; - Filtres : type de contrat, ville, pays, télétravail, date de publication, source ; - Source affichée sur chaque offre + mentions obligatoires (logos Adzuna / France Travail) ; - Offres mises en avant en premier, pagination"
+US50,Remplacer la description,"- Candidatures : SENT, INTERVIEW, OFFER_RECEIVED, ACCEPTED, REJECTED, WITHDRAWN (voir US65) ; - Stage déclaré : PENDING_VALIDATION, VALIDATED, REJECTED, IN_PROGRESS, COMPLETED"
+US51,Remplacer la description,"- Validation uniquement d'un stage déclaré par l'étudiant avec convention (US66) ; - Validation ou refus avec commentaire, notification à l'étudiant ; - Encadrant choisi parmi les enseignants (principal / co-encadrant), seulement si VALIDATED"
+US59,Remplacer la description,"- Date, salle (ou lien visio), jury avec un président ; - Détection des conflits de salle et de jury ; - Soutenance visible par l'étudiant ; tuteur entreprise prévenu par email"
+US56,Renommer + description,Aperçu public des dernières offres de stage et d'emploi
+US41,Renommer,"Publier, dépublier ou épingler une actualité (ajouter le critère : une annonce épinglée apparaît en tête du fil)"
+"US13, US43",Vérifier,"Retirer toute mention de ROLE_COMPANY / entreprise (rôles : ADMIN, CHEF_DEPARTEMENT, ENSEIGNANT, ETUDIANT)"
+PGDI2026-18,Corriger,Assignation (Mrabet → responsable réel) ; lier les 13 bugs avec « est causé par / relates to »

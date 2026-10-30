@@ -1,0 +1,43 @@
+@startuml
+title Vue globale 3/3 — Stages, offres externes et veille (v02)
+skinparam dpi 130
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 15
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam ArrowColor #455A64
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam rectangleBackgroundColor #FAFAFA
+skinparam rectangleBorderColor #607D8B
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+left to right direction
+actor "Étudiant" as E
+actor "Enseignant" as T
+actor "Responsable\ndu département" as R
+actor "Services externes\n(API emploi,\nflux RSS/API actualités)" as X <<système>>
+rectangle "Plateforme de Gestion du Département Informatique" {
+  usecase "Rechercher des offres de stage,\nPFE et emploi (agrégées)" as OFF
+  usecase "Suivre ses candidatures\net déclarer son stage/PFE" as CAND
+  usecase "Valider et suivre les stages/PFE\n(encadrants, soutenances)" as PFE
+  usecase "Configurer les sources d'offres" as SRC
+  usecase "Gérer actualités, annonces\net flux de veille" as NEWS
+  usecase "Synchroniser offres\net actualités" as SYNC
+}
+E --> OFF
+E --> CAND
+T --> PFE
+R --> PFE
+R --> SRC
+R --> NEWS
+SYNC <-- X
+note bottom of X
+  Les entreprises n'ont plus de compte :
+  les offres proviennent d'API externes
+  (Jooble, Careerjet, JSearch, France Travail…)
+  ou d'une saisie du département.
+end note
+@enduml

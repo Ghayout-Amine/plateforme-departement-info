@@ -1,0 +1,72 @@
+@startuml
+title Cas d'utilisation — Espace étudiant (v02)
+skinparam dpi 120
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam ArrowColor #455A64
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam rectangleBackgroundColor #FAFAFA
+skinparam rectangleBorderColor #607D8B
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+left to right direction
+actor "Étudiant" as E
+rectangle "Plateforme de Gestion du Département Informatique" {
+  package "Profil et scolarité" {
+    usecase "Consulter son profil" as S1
+    usecase "Modifier certaines informations\npersonnelles" as S2
+    usecase "Consulter sa formation" as S3
+    usecase "Consulter ses modules d'enseignement" as S4
+    usecase "Consulter son groupe" as S5
+  }
+  package "Suivi pédagogique" {
+    usecase "Consulter son emploi du temps" as P1
+    usecase "Consulter ses résultats" as P2
+    usecase "Consulter ses absences" as P3
+    usecase "Télécharger des documents pédagogiques" as P4
+    usecase "Consulter les annonces\net la veille" as P5
+    usecase "S'abonner à des catégories\nd'actualités" as P6
+  }
+  package "Offres, stages et PFE" {
+    usecase "Rechercher des offres\n(stage, PFE, CDI, CDD, alternance…)" as T1
+    usecase "Filtrer (contrat, ville, pays,\ntélétravail, date, source)" as T2
+    usecase "Gérer ses favoris" as T3
+    usecase "Créer une alerte\n(recherche enregistrée)" as T4
+    usecase "Postuler sur le site d'origine" as T5
+    usecase "Suivre ses candidatures" as T6
+    usecase "Déclarer son stage/PFE" as T7
+    usecase "Déposer la convention" as T8
+    usecase "Consulter son stage/PFE\n(encadrant, suivi, soutenance)" as T9
+  }
+}
+E --> S1
+E --> S3
+E --> S4
+E --> S5
+E --> P1
+E --> P2
+E --> P3
+E --> P4
+E --> P5
+E --> T1
+E --> T3
+E --> T4
+E --> T6
+E --> T7
+E --> T9
+S2 .> S1 : <<extend>>
+P6 .> P5 : <<extend>>
+T2 .> T1 : <<extend>>
+T5 .> T1 : <<extend>>
+T7 ..> T8 : <<include>>
+note bottom of E
+  Tous les cas nécessitent « S'authentifier »
+  avec le rôle ROLE_STUDENT.
+  La candidature se fait sur le site de l'offre :
+  la plateforme ne transmet aucun CV.
+end note
+@enduml
