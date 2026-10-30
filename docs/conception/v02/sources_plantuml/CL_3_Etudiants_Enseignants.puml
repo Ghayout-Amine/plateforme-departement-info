@@ -1,0 +1,56 @@
+@startuml
+title Diagramme de classes 3/6 — Étudiants, enseignants, inscriptions
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classBackgroundColor #FFFFE0
+skinparam classBorderColor #5D4037
+skinparam ArrowColor #455A64
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+skinparam class {
+  BackgroundColor<<réf>> #ECEFF1
+  BorderColor<<réf>> #90A4AE
+}
+hide empty members
+
+class Student {
+  - id : Long
+  - studentNumber : String
+  - cne : String
+  - birthDate : LocalDate
+  - birthPlace : String
+  - gender : Gender
+  - address : String
+  - city : String
+}
+class Teacher {
+  - id : Long
+  - employeeNumber : String
+  - academicTitle : String
+  - specialty : String
+  - office : String
+  - hireDate : LocalDate
+  - bio : String
+}
+class Enrollment {
+  - id : Long
+  - status : EnrollmentStatus
+  + assignToGroupe(g : Groupe) : void
+}
+class AcademicYear <<réf>>
+class Filiere <<réf>>
+class Groupe <<réf>>
+class User <<réf>>
+User "1" -- "0..1" Student : compte de
+User "1" -- "0..1" Teacher : compte de
+Student "1" -- "0..*" Enrollment : s'inscrit
+Filiere "1" -- "0..*" Enrollment : accueille
+AcademicYear "1" -- "0..*" Enrollment : englobe
+Groupe "0..1" -- "0..*" Enrollment : regroupe
+note as N1
+  Les entités héritent de BaseEntity (@MappedSuperclass : createdAt, updatedAt).
+  Méthodes affichées = méthodes métier principales (proposées).
+end note
+@enduml

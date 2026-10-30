@@ -1,0 +1,58 @@
+@startuml
+title Diagramme de classes 4/6 — Enseignement, emploi du temps, examens
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classBackgroundColor #FFFFE0
+skinparam classBorderColor #5D4037
+skinparam ArrowColor #455A64
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+skinparam class {
+  BackgroundColor<<réf>> #ECEFF1
+  BorderColor<<réf>> #90A4AE
+}
+hide empty members
+
+class TeachingAssignment {
+  - id : Long
+  - sessionType : SessionType
+}
+class Planning {
+  - id : Long
+  - sessionDate : LocalDate
+  - startTime : LocalTime
+  - endTime : LocalTime
+  - status : PlanningStatus
+  - notes : String
+  + overlaps(other : Planning) : boolean
+  + cancel() : void
+}
+class Examen {
+  - id : Long
+  - title : String
+  - examType : ExamType
+  - examDate : LocalDate
+  - startTime : LocalTime
+  - endTime : LocalTime
+  - weight : BigDecimal
+}
+class AcademicYear <<réf>>
+class CourseModule <<réf>>
+class Groupe <<réf>>
+class Salle <<réf>>
+class Teacher <<réf>>
+Teacher "1" -- "0..*" TeachingAssignment : assure
+CourseModule "1" -- "0..*" TeachingAssignment : fait l'objet de
+Groupe "1" -- "0..*" TeachingAssignment : reçoit
+TeachingAssignment "1" -- "0..*" Planning : planifie
+Salle "1" -- "0..*" Planning : accueille
+CourseModule "1" -- "0..*" Examen : est évalué par
+AcademicYear "1" -- "0..*" Examen : englobe
+Examen "0..*" -- "0..*" Salle : se déroule dans
+note as N1
+  Les entités héritent de BaseEntity (@MappedSuperclass : createdAt, updatedAt).
+  Méthodes affichées = méthodes métier principales (proposées).
+end note
+@enduml

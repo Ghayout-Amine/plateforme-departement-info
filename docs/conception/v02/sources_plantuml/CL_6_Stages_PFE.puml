@@ -1,0 +1,189 @@
+@startuml
+title Diagramme de classes 6/6 — Stages, PFE et offres externes (v02)
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classBackgroundColor #FFFFE0
+skinparam classBorderColor #5D4037
+skinparam ArrowColor #455A64
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+skinparam class {
+  BackgroundColor<<réf>> #ECEFF1
+  BorderColor<<réf>> #90A4AE
+}
+hide empty members
+interface JobProvider <<connecteur>> {
+  + code() : String
+  + accessMode() : SourceAccessMode
+  + search(criteria : OfferSearchCriteria) : List<ExternalOfferDto>
+}
+class JoobleProvider <<connecteur>>
+class CareerjetProvider <<connecteur>>
+class JSearchProvider <<connecteur>>
+class FranceTravailProvider <<connecteur>>
+JobProvider <|.. JoobleProvider
+JobProvider <|.. CareerjetProvider
+JobProvider <|.. JSearchProvider
+JobProvider <|.. FranceTravailProvider
+
+class JobSource {
+  - id : Long
+  - code : String
+  - name : String
+  - websiteUrl : String
+  - accessMode : SourceAccessMode
+  - enabled : boolean
+  - apiKeyRef : String
+  - syncIntervalMinutes : Integer
+  - defaultKeywords : String
+  - defaultLocations : String
+  - quotaLimit : Integer
+  - quotaPeriod : QuotaPeriod
+  - attributionText : String
+  - logoUrl : String
+  - lastSyncAt : LocalDateTime
+  + isDue(now : LocalDateTime) : boolean
+}
+class SyncLog {
+  - id : Long
+  - startedAt : LocalDateTime
+  - finishedAt : LocalDateTime
+  - status : SyncStatus
+  - fetchedCount : Integer
+  - createdCount : Integer
+  - updatedCount : Integer
+  - expiredCount : Integer
+  - quotaRemaining : Integer
+  - errorMessage : String
+}
+class ExternalOffer {
+  - id : Long
+  - externalId : String
+  - title : String
+  - companyName : String
+  - city : String
+  - country : String
+  - contractType : ContractType
+  - remote : boolean
+  - snippet : String
+  - salaryText : String
+  - originalUrl : String
+  - fingerprint : String
+  - status : OfferStatus
+  - featured : boolean
+  - publishedAt : LocalDateTime
+  - expiresAt : LocalDateTime
+  - firstSeenAt : LocalDateTime
+  - lastSeenAt : LocalDateTime
+  + markSeen(now : LocalDateTime) : void
+  + expire() : void
+  + hide() : void
+  + feature() : void
+}
+class FavoriteOffer {
+  - savedAt : LocalDateTime
+}
+class SavedSearch {
+  - id : Long
+  - name : String
+  - keywords : String
+  - contractTypes : Set<ContractType>
+  - city : String
+  - country : String
+  - remoteOnly : boolean
+  - frequency : AlertFrequency
+  - active : boolean
+  - lastNotifiedAt : LocalDateTime
+  + matches(offer : ExternalOffer) : boolean
+}
+class ApplicationTracking {
+  - id : Long
+  - positionTitle : String
+  - companyName : String
+  - offerUrl : String
+  - status : TrackingStatus
+  - appliedAt : LocalDate
+  - nextStepAt : LocalDate
+  - notes : String
+  + moveTo(status : TrackingStatus) : void
+}
+class Internship {
+  - id : Long
+  - subject : String
+  - internshipType : InternshipType
+  - companyName : String
+  - companyCity : String
+  - companyCountry : String
+  - startDate : LocalDate
+  - endDate : LocalDate
+  - status : InternshipStatus
+  - companyTutorName : String
+  - companyTutorEmail : String
+  - companyTutorPhone : String
+  - agreementFilePath : String
+  - declaredAt : LocalDateTime
+  - validationComment : String
+  - validatedAt : LocalDateTime
+  + validate(by : User, comment : String) : void
+  + reject(by : User, comment : String) : void
+}
+class InternshipSupervisor {
+  - supervisorRole : SupervisorRole
+  - assignedAt : LocalDateTime
+}
+class InternshipFollowup {
+  - id : Long
+  - followupType : FollowupType
+  - followupDate : LocalDate
+  - progressPercent : Integer
+  - content : String
+  - attachmentPath : String
+}
+class Defense {
+  - id : Long
+  - defenseDate : LocalDate
+  - startTime : LocalTime
+  - endTime : LocalTime
+  - mode : DefenseMode
+  - meetingLink : String
+  - finalScore : BigDecimal
+  - mention : String
+  - status : DefenseStatus
+  + recordResult(score : BigDecimal, mention : String) : void
+}
+class DefenseJuryMember {
+  - juryRole : JuryRole
+}
+class Salle <<réf>>
+class Student <<réf>>
+class Teacher <<réf>>
+class User <<réf>>
+JobSource ..> JobProvider : utilise (code)
+JobSource "1" *-- "0..*" SyncLog : journalise
+JobSource "1" -- "0..*" ExternalOffer : fournit
+User "0..1" -- "0..*" ExternalOffer : saisit (source DEPARTEMENT)
+Student "0..*" -- "0..*" ExternalOffer : favoris
+(Student, ExternalOffer) .. FavoriteOffer
+Student "1" *-- "0..*" SavedSearch : crée
+Student "1" *-- "0..*" ApplicationTracking : suit
+ExternalOffer "0..1" -- "0..*" ApplicationTracking : concerne
+Student "1" -- "0..*" Internship : déclare
+ApplicationTracking "0..1" -- "0..1" Internship : aboutit à
+User "0..1" -- "0..*" Internship : valide
+Internship "0..*" -- "0..*" Teacher : encadré par
+(Internship, Teacher) .. InternshipSupervisor
+Internship "1" *-- "0..*" InternshipFollowup : fait l'objet de
+User "1" -- "0..*" InternshipFollowup : rédige
+Internship "1" -- "0..1" Defense : se conclut par
+Salle "0..1" -- "0..*" Defense : accueille
+Defense "0..*" -- "1..*" Teacher : a pour jury
+(Defense, Teacher) .. DefenseJuryMember
+note as N1
+  Entités JPA : héritent de BaseEntity (createdAt, updatedAt).
+  Connecteurs (<<connecteur>>) : beans Spring, non persistés ;
+  ajouter une source = ajouter une implémentation de JobProvider.
+  Sources LIVE (Careerjet) : résultats non stockés, interrogés à chaque recherche.
+end note
+@enduml

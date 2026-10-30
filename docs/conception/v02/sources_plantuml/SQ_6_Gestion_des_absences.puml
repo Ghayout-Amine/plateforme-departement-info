@@ -1,0 +1,75 @@
+@startuml
+title Séquence — Gestion des absences
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ArrowColor #37474F
+skinparam sequenceArrowThickness 1.1
+skinparam participantBackgroundColor #E3F2FD
+skinparam participantBorderColor #1565C0
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam boundaryBackgroundColor #E8F5E9
+skinparam controlBackgroundColor #FFF8E1
+skinparam databaseBackgroundColor #FFF3E0
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceDividerBackgroundColor #ECEFF1
+skinparam noteBackgroundColor #FFF8E1
+skinparam maxMessageSize 220
+autonumber
+
+actor "Enseignant" as T
+actor "Étudiant" as E
+boundary "Angular" as FE
+control "AbsenceController" as AC
+control "AbsenceService" as AS
+participant "PlanningRepository" as PR
+participant "EnrollmentRepository" as ER
+participant "AbsenceRepository" as AR
+participant "FileStorageService" as FS
+participant "AuditService" as AU
+database "MySQL" as DB
+
+== Appel en début de séance ==
+T -> FE : ouvre la séance du jour
+FE -> AC : GET /api/plannings/{id}/attendance
+AC -> AS : getAttendanceSheet(planningId, teacherId)
+AS -> PR : findById(planningId)
+PR -> DB : SELECT plannings + teaching_assignments
+alt la séance n'est pas animée par cet enseignant
+  AS --> AC : AccessDeniedException
+  AC --> FE : 403 Forbidden
+else séance de l'enseignant
+  AS -> ER : findStudentsByGroupe(groupeId)
+  ER -> DB : SELECT enrollments + students
+  AC --> FE : liste des étudiants du groupe
+  T -> FE : coche les absents et les retards
+  FE -> AC : POST /api/plannings/{id}/absences [{studentId, type}]
+  AC -> AS : recordAbsences(planningId, liste, teacherId)
+  loop pour chaque étudiant signalé
+    AS -> AR : upsert(étudiant, séance, type)
+    AR -> DB : INSERT ou UPDATE absences (unicité étudiant + séance)
+  end
+  AS -> AU : log(RECORD_ABSENCES)
+  AC --> FE : 200 OK
+end
+
+== Justification d'une absence ==
+T -> FE : saisit le motif et joint le justificatif
+FE -> AC : PUT /api/absences/{id}/justify {motif, fichier}
+AC -> AS : justify(id, motif, fichier)
+AS -> FS : store(fichier)
+FS --> AS : chemin du fichier
+AS -> AR : save(is_justified = true, justification, justification_file)
+AR -> DB : UPDATE absences
+AC --> FE : 200 OK
+
+== Consultation (étudiant) ==
+E -> FE : ouvre « Mes absences »
+FE -> AC : GET /api/students/me/absences
+AC -> AS : findByStudent(userId)
+AS -> AR : findByStudent(studentId)
+AR -> DB : SELECT absences + séances + modules
+AC --> FE : liste (date, module, absence ou retard, justifiée ou non)
+FE --> E : affiche ses absences
+@enduml

@@ -1,0 +1,67 @@
+@startuml
+title Cas d'utilisation — Visiteur et authentification (v02)
+skinparam dpi 120
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam ArrowColor #455A64
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam rectangleBackgroundColor #FAFAFA
+skinparam rectangleBorderColor #607D8B
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+left to right direction
+actor "Visiteur" as V
+actor "Étudiant" as E
+actor "Enseignant" as T
+actor "Responsable\ndu département" as R
+actor "Administrateur" as A
+actor "Utilisateur\nauthentifié" as UA
+E --|> UA
+T --|> UA
+R --|> UA
+A --|> UA
+rectangle "Plateforme de Gestion du Département Informatique" {
+  package "Partie publique" {
+    usecase "Consulter la page d'accueil" as P1
+    usecase "Consulter la présentation du département" as P2
+    usecase "Consulter les formations" as P3
+    usecase "Consulter le fil d'actualités\n(interne + veille externe)" as P4
+    usecase "Rechercher une actualité" as P5
+    usecase "Consulter les annonces publiques" as P6
+    usecase "Consulter les informations de contact" as P7
+    usecase "Envoyer un message\n(formulaire de contact)" as P8
+    usecase "Consulter un aperçu des dernières\noffres de stage et d'emploi" as P9
+  }
+  package "Authentification et accès" {
+    usecase "Se connecter" as L1
+    usecase "Vérifier le rôle\net les permissions" as L2
+    usecase "Réinitialiser son mot de passe" as L3
+    usecase "Se déconnecter" as L4
+    usecase "Modifier son mot de passe" as L5
+  }
+}
+V --> P1
+V --> P2
+V --> P3
+V --> P4
+V --> P6
+V --> P7
+V --> P8
+V --> P9
+V --> L1
+P5 .> P4 : <<extend>>
+L1 ..> L2 : <<include>>
+L3 .> L1 : <<extend>>
+UA --> L1
+UA --> L4
+UA --> L5
+note bottom of UA
+  Contrôle exécuté côté serveur :
+  Spring Security + jeton JWT,
+  protection de chaque API par rôle.
+end note
+@enduml

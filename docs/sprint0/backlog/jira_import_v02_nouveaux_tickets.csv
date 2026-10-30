@@ -1,0 +1,220 @@
+Issue ID,Summary,Issue Type,Description,Priority,Story Points,Labels,Labels,Sprint,Parent
+US62,Configurer les sources d'offres externes,Story,"En tant que responsable du département, je veux activer ou désactiver les sources d'offres (Jooble, Careerjet, JSearch, France Travail, Adzuna) et régler leurs mots-clés, zones et fréquence afin de contrôler les offres proposées aux étudiants.
+
+Critères d'acceptation :
+- Liste des sources avec statut, mode (CACHED/LIVE/MANUAL) et dernière synchronisation
+- Activer / désactiver une source
+- Mots-clés, localisations et fréquence modifiables (min. 15 min)
+- La clé d'API n'est jamais affichée ni stockée en base (seul le nom de la variable d'environnement)
+- Réservé à ROLE_DEPARTMENT_HEAD
+- Remplace US23 (profil entreprise)",High,3,membre5-pfe,v02,PGDI - Sprint 2,CLE_EPIC_E7
+US63,Synchroniser automatiquement les offres depuis les API externes,Story,"En tant que étudiant, je veux voir des offres de stage, PFE et emploi à jour publiées sur les sites de recrutement afin de trouver un stage sans dépendre des entreprises inscrites.
+
+Critères d'acceptation :
+- Tâche planifiée par source selon son intervalle (diagramme SQ7)
+- Au minimum Jooble et JSearch synchronisés
+- Type de contrat normalisé : INTERNSHIP, PFE, CDI, CDD, ALTERNANCE, FREELANCE, OTHER
+- Dédoublonnage par empreinte (titre + entreprise + ville)
+- Offre non revue depuis 45 jours → EXPIRED
+- Chaque exécution écrite dans sync_logs (compteurs, erreurs, quota)
+- Une API en panne n'efface pas les offres en cache
+- Remplace US31 (publier une offre)",Highest,8,membre5-pfe,v02,PGDI - Sprint 3,CLE_EPIC_E7
+US64,"Saisir, mettre en avant ou masquer une offre (département)",Story,"En tant que responsable du département, je veux saisir une offre reçue directement et mettre en avant ou masquer une offre afin de valoriser les offres des partenaires et retirer les offres inadaptées.
+
+Critères d'acceptation :
+- Saisie manuelle (source DEPARTEMENT) : titre, entreprise, ville, contrat, lien, résumé
+- Une offre mise en avant apparaît en tête des résultats
+- Une offre masquée (HIDDEN) n'est plus visible par les étudiants",Medium,2,membre5-pfe,v02,PGDI - Sprint 3,CLE_EPIC_E7
+US65,Postuler sur le site d'origine et suivre ses candidatures,Story,"En tant que étudiant, je veux postuler via le lien de l'offre puis suivre l'avancement de mes candidatures afin de savoir où j'en suis dans ma recherche.
+
+Critères d'acceptation :
+- Le bouton « Postuler » ouvre l'annonce d'origine dans un nouvel onglet
+- Une fiche de suivi est créée (statut SENT, poste et entreprise copiés)
+- Une seule fiche par offre (409 sinon)
+- Ajout manuel d'une candidature trouvée ailleurs (sans offre liée)
+- Statuts : SENT, INTERVIEW, OFFER_RECEIVED, ACCEPTED, REJECTED, WITHDRAWN
+- Notes personnelles et date de prochaine étape
+- La plateforme ne transmet aucun CV
+- Remplace US38 (postuler à une offre)",Highest,5,membre5-pfe,v02,PGDI - Sprint 4,CLE_EPIC_E7
+US66,Déclarer son stage/PFE avec la convention,Story,"En tant que étudiant, je veux déclarer le stage ou PFE obtenu et déposer ma convention afin de le faire valider par le département.
+
+Critères d'acceptation :
+- Champs : sujet, type, entreprise, ville, pays, dates, tuteur (nom, email, téléphone)
+- Convention PDF obligatoire (taille maximale contrôlée)
+- Lien facultatif vers une candidature suivie
+- Statut initial PENDING_VALIDATION, notification au département
+- Un seul stage actif du même type par étudiant (409 sinon)
+- Remplace US39 (accepter / refuser une candidature)",High,3,membre5-pfe,v02,PGDI - Sprint 4,CLE_EPIC_E7
+US67,Gérer ses favoris et ses alertes d'offres,Story,"En tant que étudiant, je veux enregistrer des offres en favoris et créer des alertes afin de être prévenu des nouvelles offres qui m'intéressent.
+
+Critères d'acceptation :
+- Ajouter / retirer une offre des favoris
+- Créer une alerte à partir d'une recherche (mots-clés, contrats, ville, pays, télétravail)
+- Fréquence quotidienne ou hebdomadaire
+- Email récapitulatif des nouvelles offres correspondantes
+- Activer / désactiver / supprimer une alerte",Medium,5,membre5-pfe,v02,PGDI - Sprint 4,CLE_EPIC_E7
+US68,Superviser les intégrations externes,Story,"En tant que administrateur, je veux consulter les journaux de synchronisation et les quotas des API afin de détecter rapidement une source en panne.
+
+Critères d'acceptation :
+- Journal par source : date, statut, offres reçues / créées / expirées, erreur
+- Quota restant et alerte à 80 %
+- Relancer manuellement une synchronisation
+- Réservé à ROLE_ADMIN",Medium,3,membre1-securite,v02,PGDI - Sprint 5,CLE_EPIC_E2
+US69,"Gérer les flux de veille (RSS/Atom, API)",Story,"En tant que responsable du département, je veux ajouter et configurer des flux d'actualités externes afin de alimenter automatiquement le fil d'actualités.
+
+Critères d'acceptation :
+- Ajouter un flux : nom, URL, type (RSS, ATOM, API), catégorie
+- Activer / désactiver un flux
+- URL unique (409 si déjà présente)
+- Affichage du dernier statut et de la dernière erreur",Medium,3,membre5-pfe,v02,PGDI - Sprint 4,CLE_EPIC_E8
+US70,Synchroniser la veille externe,Story,"En tant que visiteur, je veux voir des actualités externes récentes (technologie, université, événements) afin de rester informé sans saisie manuelle du département.
+
+Critères d'acceptation :
+- Synchronisation toutes les heures (diagramme SQ11)
+- Dédoublonnage par URL (empreinte SHA-256)
+- Résumé nettoyé (jsoup) : aucune balise script
+- Seuls titre, résumé, image, date et lien sont stockés
+- Purge des articles de plus de 30 jours non promus
+- Un flux en erreur est signalé sans bloquer les autres",Medium,5,membre5-pfe,v02,PGDI - Sprint 5,CLE_EPIC_E8
+US71,Consulter le fil d'actualités unifié,Story,"En tant que visiteur ou étudiant, je veux consulter un fil unique avec les annonces du département et la veille externe afin de trouver toute l'information au même endroit.
+
+Critères d'acceptation :
+- Badge INTERNE / EXTERNE sur chaque élément
+- Filtre par catégorie et par source, pagination
+- Annonces épinglées en tête
+- Un article externe s'ouvre sur son site d'origine
+- Visibilité des annonces internes respectée selon le rôle",Medium,3,a-repartir,v02,PGDI - Sprint 5,CLE_EPIC_E8
+US72,Masquer ou promouvoir un article externe,Story,"En tant que responsable du département, je veux masquer un article externe ou le promouvoir en annonce afin de garder un fil pertinent.
+
+Critères d'acceptation :
+- Masquer → statut HIDDEN, invisible pour tous
+- Promouvoir → crée une annonce liée à l'article (source_article_id)
+- Un article promu n'est pas purgé",Low,2,membre5-pfe,v02,PGDI - Sprint 6,CLE_EPIC_E8
+US73,S'abonner à des catégories d'actualités,Story,"En tant que utilisateur authentifié, je veux m'abonner à des catégories d'actualités afin de recevoir une notification quand un nouvel élément est publié.
+
+Critères d'acceptation :
+- Catégories : DEPARTEMENT, UNIVERSITE, TECHNOLOGIE, EMPLOI, EVENEMENTS
+- Canal email ou dans l'application
+- Un seul abonnement par catégorie
+- Désabonnement en un clic",Low,2,a-repartir,v02,PGDI - Sprint 6,CLE_EPIC_E8
+T01,Demander les clés d'API des sources d'offres,Task,"Demander dès maintenant (délais de réponse) :
+- Jooble : formulaire sur jooble.org/api/about
+- Careerjet : compte éditeur (une clé par site)
+- JSearch : compte RapidAPI / OpenWeb Ninja (plan gratuit 200 requêtes/mois)
+- France Travail : application sur francetravail.io (OAuth2)
+
+Ranger les clés dans des variables d'environnement (JOOBLE_API_KEY, CAREERJET_API_KEY, JSEARCH_RAPIDAPI_KEY, FRANCE_TRAVAIL_CLIENT…), jamais dans le dépôt Git.",Highest,1,membre5-pfe,v02,PGDI - Sprint 2,CLE_EPIC_E7
+T02,Créer l'interface JobProvider et le connecteur Jooble,Task,"Interface JobProvider (code(), accessMode(), search(criteria)) + JoobleProvider + OfferNormalizer, selon le diagramme de classes CL6 v02 et la séquence SQ7.
+Entités JobSource, SyncLog, ExternalOffer ; repositories ; tâche @Scheduled.",Highest,5,membre5-pfe,v02,PGDI - Sprint 3,CLE_EPIC_E7
+T03,Connecteurs JSearch et France Travail,Task,"JSearchProvider (RapidAPI, quota 200/mois → synchronisation quotidienne) et FranceTravailProvider (OAuth2 client credentials, mention de source obligatoire).",High,5,membre5-pfe,v02,PGDI - Sprint 4,CLE_EPIC_E7
+T04,Connecteur Careerjet en temps réel,Task,"CareerjetProvider en mode LIVE : appel à chaque recherche avec l'IP et le user-agent de l'utilisateur, résultats fusionnés mais non stockés, délai maximal 5 s (diagramme SQ8).",Medium,3,membre5-pfe,v02,PGDI - Sprint 4,CLE_EPIC_E7
+T05,"Résilience, cache et quotas des connecteurs",Task,"Resilience4j (timeout, retry, circuit breaker) sur chaque connecteur ; cache Caffeine ; contrôle du quota avant appel et alerte à 80 % (paramètre offers.quota.alert.percent).",High,3,membre5-pfe,v02,PGDI - Sprint 4,CLE_EPIC_E7
+T06,Tests des connecteurs avec WireMock,Task,"Simuler chaque API externe avec WireMock : réponse normale, réponse vide, erreur 500, timeout, quota dépassé. Vérifier normalisation et dédoublonnage.",Medium,3,membre5-pfe,v02,PGDI - Sprint 4,CLE_EPIC_E7
+T07,Choisir la source de vérité du schéma de base de données,Task,"Le script db/migration/V1 n'est pas exécuté (pas de Flyway dans le pom.xml, Hibernate ddl-auto=update) et diffère des entités (users.role vs roles/user_roles, filieres.nom vs name, modules vs course_modules).
+Décider : (a) ajouter Flyway et appliquer V1/V2 v02 en alignant les entités, ou (b) garder les entités et mettre à jour le MLD.
+Décision à documenter dans le README.",Highest,1,commun,v02,PGDI - Sprint 2,CLE_EPIC_E0
+T08,Intégrer les documents de conception v02 dans le dépôt,Task,"Ajouter le cahier des charges v2, le PDF + images + sources UML v02, les MCD 1 et 6 v02 et les prompts 1/6 et 6/6 ; déplacer les versions v01 dans un dossier v01/. Pull request docs/v02-modules-6-7.",High,1,membre5-pfe,v02,PGDI - Sprint 2,CLE_EPIC_E0
+BUG01,A1 - Requête sans jeton : 403 au lieu de 401,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A1 - Sans jeton → 401 Unauthorized (pas 403) ».
+
+Étapes : GET /api/test/protected sans en-tête Authorization
+Résultat actuel : 403 Forbidden
+Résultat attendu : 401 Unauthorized
+Piste de correction : SecurityConfig : .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+
+Critère de fermeture : la requête « A1 - Sans jeton → 401 Unauthorized (pas 403) » passe au vert.",Medium,1,membre1-securite,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E1
+BUG02,A2 - /api/auth/me accessible sans jeton,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A2 - /api/auth/me doit exiger un jeton ».
+
+Étapes : GET /api/auth/me sans jeton
+Résultat actuel : 200 OK (permitAll sur /api/auth/**)
+Résultat attendu : 401
+Piste de correction : Limiter permitAll à /api/auth/login (et /api/auth/test)
+
+Critère de fermeture : la requête « A2 - /api/auth/me doit exiger un jeton » passe au vert.",High,1,membre1-securite,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E1
+BUG03,A3 - La connexion ne renvoie pas le rôle,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A3 - La connexion doit renvoyer le rôle ».
+
+Étapes : POST /api/auth/login avec un compte étudiant
+Résultat actuel : Réponse {token, tokenType} sans rôle
+Résultat attendu : Rôle présent dans la réponse ou dans le JWT (claim roles)
+Piste de correction : Ajouter role à LoginResponse et un claim dans JwtService ; bloque la story « Redirection selon le rôle »
+
+Critère de fermeture : la requête « A3 - La connexion doit renvoyer le rôle » passe au vert.",High,2,membre1-securite,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E1
+BUG04,A4 - Un étudiant peut créer un compte ADMIN,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A4 - Un étudiant ne doit pas créer d'utilisateur → 403 ».
+
+Étapes : POST /api/users avec le jeton d'un étudiant, role ADMIN
+Résultat actuel : 201 Created
+Résultat attendu : 403 Forbidden
+Piste de correction : CustomUserDetailsService : authorities = ROLE_ + user.getRole() ; @PreAuthorize(""hasRole('ADMIN')"") sur UserController (@EnableMethodSecurity)
+
+Critère de fermeture : la requête « A4 - Un étudiant ne doit pas créer d'utilisateur → 403 » passe au vert.",Highest,3,membre1-securite,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E1
+BUG05,A5 - Un enseignant peut lister tous les comptes,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A5 - Un enseignant ne doit pas lister les comptes → 403 ».
+
+Étapes : GET /api/users avec le jeton d'un enseignant
+Résultat actuel : 200 OK
+Résultat attendu : 403 Forbidden
+Piste de correction : Même correctif que A4
+
+Critère de fermeture : la requête « A5 - Un enseignant ne doit pas lister les comptes → 403 » passe au vert.",High,1,membre1-securite,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E1
+BUG06,A6 - Un étudiant peut supprimer une filière,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A6 - Un étudiant ne doit pas supprimer une filière → 403 ».
+
+Étapes : DELETE /api/filieres/{id} avec le jeton d'un étudiant
+Résultat actuel : 204 No Content
+Résultat attendu : 403 Forbidden
+Piste de correction : @PreAuthorize(""hasRole('CHEF_DEPARTEMENT')"") sur les écritures de FiliereController et ModuleCoursController (après A4)
+
+Critère de fermeture : la requête « A6 - Un étudiant ne doit pas supprimer une filière → 403 » passe au vert.",High,1,membre4-pedagogie,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E6
+BUG07,A7 - Email déjà utilisé : erreur 500,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A7 - Email déjà utilisé → 409 Conflict ».
+
+Étapes : POST /api/users avec admin@pgdi.test
+Résultat actuel : 500 (RuntimeException non gérée)
+Résultat attendu : 409 Conflict
+Piste de correction : Exception métier ConflictException + @RestControllerAdvice global (story US05)
+
+Critère de fermeture : la requête « A7 - Email déjà utilisé → 409 Conflict » passe au vert.",Medium,2,membre1-securite,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E0
+BUG08,A8 - Code de filière déjà utilisé : erreur 500,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A8 - Code filière déjà utilisé → 409 Conflict ».
+
+Étapes : POST /api/filieres avec le code M2I-ISI
+Résultat actuel : 500
+Résultat attendu : 409 Conflict
+Piste de correction : Lever ConflictException dans FiliereService (après A7)
+
+Critère de fermeture : la requête « A8 - Code filière déjà utilisé → 409 Conflict » passe au vert.",Medium,1,membre4-pedagogie,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E6
+BUG09,A9 - Utilisateur inexistant : erreur 500,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A9 - Utilisateur inexistant → 404 Not Found ».
+
+Étapes : GET /api/users/999999
+Résultat actuel : 500
+Résultat attendu : 404 Not Found
+Piste de correction : NotFoundException + @RestControllerAdvice
+
+Critère de fermeture : la requête « A9 - Utilisateur inexistant → 404 Not Found » passe au vert.",Medium,1,membre1-securite,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E0
+BUG10,A10 - Filière inexistante : erreur 500,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A10 - Filière inexistante → 404 Not Found ».
+
+Étapes : GET /api/filieres/999999
+Résultat actuel : 500
+Résultat attendu : 404 Not Found
+Piste de correction : Lever NotFoundException dans FiliereService
+
+Critère de fermeture : la requête « A10 - Filière inexistante → 404 Not Found » passe au vert.",Medium,1,membre4-pedagogie,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E6
+BUG11,A11 - Module avec filière inexistante : erreur 500,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A11 - Module rattaché à une filière inexistante → 404/422 ».
+
+Étapes : POST /api/modules avec filiereId = 999999
+Résultat actuel : 500
+Résultat attendu : 404 ou 422
+Piste de correction : Lever NotFoundException dans ModuleCoursService
+
+Critère de fermeture : la requête « A11 - Module rattaché à une filière inexistante → 404/422 » passe au vert.",Medium,1,membre4-pedagogie,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E6
+BUG12,A12 - Suppression d'une filière qui a des modules : erreur 500,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A12 - Supprimer une filière qui a des modules → 409 Conflict ».
+
+Étapes : DELETE /api/filieres/3 (2 modules rattachés)
+Résultat actuel : 500 (violation de clé étrangère)
+Résultat attendu : 409 Conflict avec message explicite
+Piste de correction : Vérifier moduleCoursRepository.existsByFiliereId avant suppression
+
+Critère de fermeture : la requête « A12 - Supprimer une filière qui a des modules → 409 Conflict » passe au vert.",Medium,2,membre4-pedagogie,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E6
+BUG13,A13 - Erreurs de validation non détaillées par champ,Bug,"Détecté par la collection Postman PGDI2026-18 (tests/api/), dossier « 99 - Anomalies à corriger », requête « A13 - Erreurs de validation champ par champ ».
+
+Étapes : POST /api/users avec un corps vide {}
+Résultat actuel : 400 sans le détail des champs
+Résultat attendu : 400 avec la liste des champs en erreur et leurs messages
+Piste de correction : Handler MethodArgumentNotValidException dans le @RestControllerAdvice (story commune Sprint 1)
+
+Critère de fermeture : la requête « A13 - Erreurs de validation champ par champ » passe au vert.",Medium,2,membre1-securite,PGDI2026-18,PGDI - Sprint 2,CLE_EPIC_E0

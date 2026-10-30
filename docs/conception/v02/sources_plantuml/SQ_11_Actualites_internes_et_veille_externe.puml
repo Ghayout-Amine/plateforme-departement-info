@@ -1,0 +1,88 @@
+@startuml
+title Séquence — Actualités internes, synchronisation de la veille externe et consultation
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ArrowColor #37474F
+skinparam sequenceArrowThickness 1.1
+skinparam participantBackgroundColor #E3F2FD
+skinparam participantBorderColor #1565C0
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam boundaryBackgroundColor #E8F5E9
+skinparam controlBackgroundColor #FFF8E1
+skinparam databaseBackgroundColor #FFF3E0
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceDividerBackgroundColor #ECEFF1
+skinparam noteBackgroundColor #FFF8E1
+skinparam maxMessageSize 220
+skinparam entityBackgroundColor #F3E5F5
+skinparam entityBorderColor #6A1B9A
+autonumber
+actor "Responsable\ndu département" as R
+actor "Visiteur / Étudiant" as V
+boundary "Angular" as FE
+control "NewsController" as NC
+control "NewsService" as NS
+participant "FeedSyncScheduler\n(@Scheduled)" as SCH
+control "FeedSyncService" as FSS
+entity "Flux RSS/Atom\nou API d'actualités" as SRC
+participant "HtmlSanitizer\n(jsoup)" as HS
+participant "ArticleRepository" as AR
+participant "NewsRepository" as NR
+database "MySQL" as DB
+
+== Publication interne ==
+R -> FE : rédige l'annonce (titre, contenu, catégorie, visibilité)
+FE -> NC : POST /api/news + JWT
+NC -> NS : create(dto, userId)
+NS -> NR : save(actualité DRAFT, slug unique)
+NR -> DB : INSERT news
+R -> FE : « Publier » (option : épingler)
+FE -> NC : PUT /api/news/{id}/publish
+NS -> NR : save(PUBLISHED, publishedAt)
+NR -> DB : UPDATE news
+NC --> FE : 200 OK
+
+== Synchronisation de la veille (toutes les heures) ==
+SCH -> FSS : syncDueFeeds()
+FSS -> DB : SELECT news_feeds actifs dont l'intervalle est écoulé
+loop pour chaque flux
+  FSS -> SRC : GET feedUrl (délai max 10 s)
+  alt flux en erreur
+    SRC --> FSS : erreur / XML invalide
+    FSS -> DB : UPDATE news_feeds SET last_status = 'FAILED', last_error
+    note right of FSS : les autres flux continuent ;\nle responsable est averti
+  else
+    SRC --> FSS : entrées (titre, résumé, lien, date, image)
+    loop pour chaque entrée
+      FSS -> HS : clean(résumé)
+      HS --> FSS : texte sans script (anti-XSS)
+      FSS -> AR : existsByUrlHash(SHA-256(lien))
+      opt nouvel article
+        FSS -> AR : save(ExternalArticle VISIBLE, catégorie du flux)
+        AR -> DB : INSERT external_articles
+      end
+    end
+    FSS -> DB : UPDATE news_feeds SET last_status = 'SUCCESS', last_sync_at
+  end
+end
+FSS -> AR : purgeOlderThan(30 jours, non promus)
+
+== Consultation du fil unifié ==
+V -> FE : ouvre « Actualités » (filtre : Technologie)
+FE -> NC : GET /api/public/feed?category=TECHNOLOGIE&page=0
+NC -> NS : unifiedFeed(category, rôles du visiteur)
+NS -> NR : findPublishedVisibleFor(rôles)
+NS -> AR : findVisible(category)
+NS -> NS : fusion, annonces épinglées en tête, tri par date
+NC --> FE : 200 OK (éléments avec badge INTERNE / EXTERNE)
+FE --> V : affiche le fil ; un article externe s'ouvre sur son site d'origine
+
+== Promotion d'un article externe ==
+R -> FE : « Promouvoir en annonce »
+FE -> NC : POST /api/external-articles/{id}/promote
+NS -> NR : save(News PUBLISHED, sourceArticleId = id)
+NR -> DB : INSERT news
+NC --> FE : 201 Created
+@enduml

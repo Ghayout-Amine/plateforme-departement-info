@@ -1,0 +1,73 @@
+@startuml
+title Cas d'utilisation — Responsable du département (gestion pédagogique et administrative, v02)
+skinparam dpi 120
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam ArrowColor #455A64
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam rectangleBackgroundColor #FAFAFA
+skinparam rectangleBorderColor #607D8B
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+left to right direction
+actor "Responsable\ndu département" as R
+rectangle "Plateforme de Gestion du Département Informatique" {
+  package "Structure pédagogique" {
+    usecase "Gérer les formations" as A1
+    usecase "Gérer les filières" as A2
+    usecase "Gérer les modules d'enseignement" as A3
+    usecase "Définir le programme d'une filière\n(semestre, crédits, coefficient)" as A4
+    usecase "Gérer les groupes" as A5
+    usecase "Gérer les salles" as A6
+  }
+  package "Enseignement et évaluation" {
+    usecase "Affecter les enseignants\naux modules et aux groupes" as B1
+    usecase "Gérer les emplois du temps" as B2
+    usecase "Vérifier les conflits\n(salle, enseignant, groupe)" as B3
+    usecase "Gérer les examens" as B4
+    usecase "Consulter les résultats" as B5
+    usecase "Suivre les absences" as B6
+  }
+  package "Personnes" {
+    usecase "Gérer les étudiants\n(recherche, création, désactivation)" as C1
+    usecase "Affecter un étudiant\nà une filière et à un groupe" as C2
+    usecase "Gérer les enseignants" as C3
+  }
+  package "Communication et pilotage" {
+    usecase "Gérer les actualités et annonces" as D1
+    usecase "Publier / dépublier / épingler" as D2
+    usecase "Gérer les flux de veille\n(RSS/Atom, API)" as D4
+    usecase "Masquer ou promouvoir\nun article externe" as D5
+    usecase "Consulter les statistiques du département" as D3
+  }
+}
+R --> A1
+R --> A2
+R --> A3
+R --> A5
+R --> A6
+R --> B1
+R --> B2
+R --> B4
+R --> B5
+R --> B6
+R --> C1
+R --> C3
+R --> D1
+R --> D4
+R --> D5
+R --> D3
+A3 ..> A4 : <<include>>
+B2 ..> B3 : <<include>>
+C1 ..> C2 : <<include>>
+D1 ..> D2 : <<include>>
+note bottom of R
+  Les sources d'offres, les stages/PFE
+  (validation, encadrants, soutenances) sont
+  détaillés dans le diagramme « Stages, PFE et offres ».
+end note
+@enduml

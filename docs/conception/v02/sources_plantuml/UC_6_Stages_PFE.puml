@@ -1,0 +1,80 @@
+@startuml
+title Cas d'utilisation — Stages, PFE et offres d'emploi externes (v02)
+skinparam dpi 120
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam ArrowColor #455A64
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam rectangleBackgroundColor #FAFAFA
+skinparam rectangleBorderColor #607D8B
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+left to right direction
+actor "Étudiant" as E
+actor "Responsable\ndu département" as R
+actor "Enseignant\n(encadrant)" as T
+actor "Services externes\n(Jooble, Careerjet,\nJSearch, France Travail…)" as X <<système>>
+rectangle "Plateforme de Gestion du Département Informatique" {
+  package "Agrégation des offres" {
+    usecase "Synchroniser les offres\n(tâche planifiée)" as S1
+    usecase "Rechercher en temps réel\n(sources LIVE)" as S2
+    usecase "Normaliser, classer\net dédoublonner" as S3
+  }
+  package "Espace étudiant" {
+    usecase "Rechercher / filtrer les offres" as E1
+    usecase "Gérer ses favoris" as E2
+    usecase "Créer une alerte" as E3
+    usecase "Recevoir les nouvelles offres\npar email" as E4
+    usecase "Postuler sur le site d'origine" as E5
+    usecase "Suivre ses candidatures" as E6
+    usecase "Déclarer son stage/PFE\n(+ convention)" as E7
+    usecase "Consulter son stage/PFE" as E8
+  }
+  package "Département" {
+    usecase "Configurer les sources d'offres" as R0
+    usecase "Saisir une offre reçue\npar le département" as R1
+    usecase "Mettre en avant / masquer une offre" as R2
+    usecase "Valider un stage/PFE" as R3
+    usecase "Affecter un encadrant" as R4
+    usecase "Suivre l'avancement du PFE" as R5
+    usecase "Gérer les soutenances" as R6
+    usecase "Composer le jury" as R7
+  }
+  package "Encadrement" {
+    usecase "Rédiger un compte rendu de suivi" as T1
+    usecase "Consulter ses étudiants encadrés" as T2
+  }
+}
+X --> S1
+X --> S2
+S1 ..> S3 : <<include>>
+E --> E1
+E --> E2
+E --> E3
+E --> E6
+E --> E7
+E --> E8
+E1 ..> S2 : <<include>>
+E4 .> E3 : <<extend>>
+E5 .> E1 : <<extend>>
+R --> R0
+R --> R1
+R --> R2
+R --> R3
+R --> R4
+R --> R5
+R --> R6
+R4 .> R3 : <<extend>>
+R6 ..> R7 : <<include>>
+T --> T1
+T --> T2
+note bottom of R
+  Processus : offre agrégée → candidature sur le site d'origine →
+  suivi personnel → déclaration + convention → validation
+  par le département → encadrant → suivi → soutenance.
+end note
+@enduml

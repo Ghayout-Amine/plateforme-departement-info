@@ -1,0 +1,43 @@
+@startuml
+title Vue globale 1/3 — Accès, administration et pilotage (v02)
+skinparam dpi 130
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 15
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam ArrowColor #455A64
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam rectangleBackgroundColor #FAFAFA
+skinparam rectangleBorderColor #607D8B
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+left to right direction
+actor "Visiteur" as V
+actor "Utilisateur\nauthentifié" as UA
+actor "Étudiant" as E
+actor "Enseignant" as T
+actor "Responsable\ndu département" as R
+actor "Administrateur" as A
+E --|> UA
+T --|> UA
+R --|> UA
+A --|> UA
+rectangle "Plateforme de Gestion du Département Informatique" {
+  usecase "Consulter la partie publique" as P1
+  usecase "S'authentifier" as AUTH
+  usecase "Administrer utilisateurs,\nrôles, permissions et clés d'API" as ADM
+  usecase "Consulter les statistiques" as STAT
+}
+V --> P1
+UA --> AUTH
+A --> ADM
+A --> STAT
+R --> STAT
+note right of AUTH
+  Chaque cas des vues 2/3 et 3/3
+  exige d'être authentifié.
+end note
+@enduml

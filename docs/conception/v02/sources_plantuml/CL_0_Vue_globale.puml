@@ -1,0 +1,113 @@
+@startuml
+title Diagramme de classes — Vue globale des entités (sans attributs, v02)
+skinparam dpi 110
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classBackgroundColor #FFFFE0
+skinparam classBorderColor #5D4037
+skinparam ArrowColor #455A64
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor #FFF8E1
+skinparam noteBorderColor #BCAAA4
+skinparam class {
+  BackgroundColor<<réf>> #ECEFF1
+  BorderColor<<réf>> #90A4AE
+}
+hide empty members
+hide members
+class User
+class Role
+class Permission
+class UserToken
+class AuditLog
+class SystemParameter
+class News
+class ContactMessage
+class NewsFeed
+class ExternalArticle
+class NewsSubscription
+class AcademicYear
+class Formation
+class Filiere
+class CourseModule
+class FiliereModule
+class Groupe
+class Salle
+class Student
+class Teacher
+class Enrollment
+class TeachingAssignment
+class Planning
+class Examen
+class Grade
+class Absence
+class Resource
+class JobSource
+class SyncLog
+class ExternalOffer
+class FavoriteOffer
+class SavedSearch
+class ApplicationTracking
+class Internship
+class InternshipSupervisor
+class InternshipFollowup
+class Defense
+class DefenseJuryMember
+User "0..*" -- "1..*" Role
+Role "0..*" -- "0..*" Permission
+User "1" *-- "0..*" UserToken
+User "0..1" -- "0..*" AuditLog
+User "0..1" -- "0..*" SystemParameter
+User "1" -- "0..*" News
+User "0..1" -- "0..*" ContactMessage
+User "0..1" -- "0..*" NewsFeed
+NewsFeed "1" *-- "0..*" ExternalArticle
+ExternalArticle "0..1" -- "0..1" News
+User "1" *-- "0..*" NewsSubscription
+Formation "1" -- "0..*" Filiere
+Filiere "0..*" -- "0..*" CourseModule
+(Filiere, CourseModule) .. FiliereModule
+Filiere "1" -- "0..*" Groupe
+AcademicYear "1" -- "0..*" Groupe
+User "1" -- "0..1" Student
+User "1" -- "0..1" Teacher
+Student "1" -- "0..*" Enrollment
+Filiere "1" -- "0..*" Enrollment
+AcademicYear "1" -- "0..*" Enrollment
+Groupe "0..1" -- "0..*" Enrollment
+Teacher "1" -- "0..*" TeachingAssignment
+CourseModule "1" -- "0..*" TeachingAssignment
+Groupe "1" -- "0..*" TeachingAssignment
+TeachingAssignment "1" -- "0..*" Planning
+Salle "1" -- "0..*" Planning
+CourseModule "1" -- "0..*" Examen
+AcademicYear "1" -- "0..*" Examen
+Examen "0..*" -- "0..*" Salle
+Student "1" -- "0..*" Grade
+Examen "1" -- "0..*" Grade
+Teacher "0..1" -- "0..*" Grade
+Student "1" -- "0..*" Absence
+Planning "1" -- "0..*" Absence
+Teacher "0..1" -- "0..*" Absence
+CourseModule "1" -- "0..*" Resource
+Teacher "1" -- "0..*" Resource
+JobSource "1" *-- "0..*" SyncLog
+JobSource "1" -- "0..*" ExternalOffer
+User "0..1" -- "0..*" ExternalOffer
+Student "0..*" -- "0..*" ExternalOffer
+(Student, ExternalOffer) .. FavoriteOffer
+Student "1" *-- "0..*" SavedSearch
+Student "1" *-- "0..*" ApplicationTracking
+ExternalOffer "0..1" -- "0..*" ApplicationTracking
+Student "1" -- "0..*" Internship
+ApplicationTracking "0..1" -- "0..1" Internship
+User "0..1" -- "0..*" Internship
+Internship "0..*" -- "0..*" Teacher
+(Internship, Teacher) .. InternshipSupervisor
+Internship "1" *-- "0..*" InternshipFollowup
+User "1" -- "0..*" InternshipFollowup
+Internship "1" -- "0..1" Defense
+Salle "0..1" -- "0..*" Defense
+Defense "0..*" -- "1..*" Teacher
+(Defense, Teacher) .. DefenseJuryMember
+@enduml
