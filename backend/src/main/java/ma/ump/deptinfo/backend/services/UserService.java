@@ -5,6 +5,8 @@ import ma.ump.deptinfo.backend.dtos.UserResponseDTO;
 import ma.ump.deptinfo.backend.dtos.UserUpdateDTO;
 import ma.ump.deptinfo.backend.entities.Role;
 import ma.ump.deptinfo.backend.entities.User;
+import ma.ump.deptinfo.backend.exceptions.ConflictException;
+import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,14 +35,14 @@ public class UserService {
     // Récupérer un utilisateur par son identifiant
     public UserResponseDTO getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable avec l'id : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + id));
         return toResponseDTO(user);
     }
 
     // Créer un utilisateur avec vérification et hachage du mot de passe
     public UserResponseDTO createUser(UserCreateDTO dto) {
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new RuntimeException("Un utilisateur avec cet email existe déjà !");
+            throw new ConflictException("Un utilisateur avec cet email existe déjà !");
         }
 
         User user = new User();
@@ -59,7 +61,7 @@ public class UserService {
     // Mettre à jour les informations d'un utilisateur
     public UserResponseDTO updateUser(Long id, UserUpdateDTO dto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable avec l'id : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + id));
 
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
@@ -79,7 +81,7 @@ public class UserService {
     // Supprimer un utilisateur
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("Utilisateur introuvable avec l'id : " + id);
+            throw new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + id);
         }
         userRepository.deleteById(id);
     }

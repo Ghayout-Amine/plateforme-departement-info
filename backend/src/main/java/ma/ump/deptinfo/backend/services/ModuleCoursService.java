@@ -5,6 +5,8 @@ import ma.ump.deptinfo.backend.dtos.ModuleCoursResponseDTO;
 import ma.ump.deptinfo.backend.entities.Filiere;
 import ma.ump.deptinfo.backend.entities.ModuleCours;
 import ma.ump.deptinfo.backend.entities.User;
+import ma.ump.deptinfo.backend.exceptions.ConflictException;
+import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import ma.ump.deptinfo.backend.repositories.FiliereRepository;
 import ma.ump.deptinfo.backend.repositories.ModuleCoursRepository;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
@@ -39,6 +41,9 @@ public class ModuleCoursService {
 
     // Récupérer les modules d'une filière spécifique
     public List<ModuleCoursResponseDTO> getModulesByFiliereId(Long filiereId) {
+        if (!filiereRepository.existsById(filiereId)) {
+            throw new ResourceNotFoundException("Filière introuvable avec l'id : " + filiereId);
+        }
         return moduleCoursRepository.findByFiliereId(filiereId).stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
@@ -47,18 +52,18 @@ public class ModuleCoursService {
     // Récupérer un module par son identifiant
     public ModuleCoursResponseDTO getModuleById(Long id) {
         ModuleCours module = moduleCoursRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Module introuvable avec l'id : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Module introuvable avec l'id : " + id));
         return toResponseDTO(module);
     }
 
     // Créer un nouveau module
     public ModuleCoursResponseDTO createModule(ModuleCoursRequestDTO dto) {
         if (moduleCoursRepository.findByCode(dto.getCode()).isPresent()) {
-            throw new RuntimeException("Un module avec ce code existe déjà : " + dto.getCode());
+            throw new ConflictException("Un module avec ce code existe déjà : " + dto.getCode());
         }
 
         Filiere filiere = filiereRepository.findById(dto.getFiliereId())
-                .orElseThrow(() -> new RuntimeException("Filière introuvable avec l'id : " + dto.getFiliereId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Filière introuvable avec l'id : " + dto.getFiliereId()));
 
         ModuleCours module = new ModuleCours();
         module.setCode(dto.getCode());
@@ -69,7 +74,7 @@ public class ModuleCoursService {
 
         if (dto.getEnseignantId() != null) {
             User enseignant = userRepository.findById(dto.getEnseignantId())
-                    .orElseThrow(() -> new RuntimeException("Enseignant introuvable avec l'id : " + dto.getEnseignantId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Enseignant introuvable avec l'id : " + dto.getEnseignantId()));
             module.setEnseignant(enseignant);
         }
 
@@ -80,16 +85,16 @@ public class ModuleCoursService {
     // Mettre à jour un module existant
     public ModuleCoursResponseDTO updateModule(Long id, ModuleCoursRequestDTO dto) {
         ModuleCours module = moduleCoursRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Module introuvable avec l'id : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Module introuvable avec l'id : " + id));
 
         moduleCoursRepository.findByCode(dto.getCode()).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
-                throw new RuntimeException("Un autre module utilise déjà le code : " + dto.getCode());
+                throw new ConflictException("Un autre module utilise déjà le code : " + dto.getCode());
             }
         });
 
         Filiere filiere = filiereRepository.findById(dto.getFiliereId())
-                .orElseThrow(() -> new RuntimeException("Filière introuvable avec l'id : " + dto.getFiliereId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Filière introuvable avec l'id : " + dto.getFiliereId()));
 
         module.setCode(dto.getCode());
         module.setNom(dto.getNom());
@@ -99,7 +104,7 @@ public class ModuleCoursService {
 
         if (dto.getEnseignantId() != null) {
             User enseignant = userRepository.findById(dto.getEnseignantId())
-                    .orElseThrow(() -> new RuntimeException("Enseignant introuvable avec l'id : " + dto.getEnseignantId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Enseignant introuvable avec l'id : " + dto.getEnseignantId()));
             module.setEnseignant(enseignant);
         } else {
             module.setEnseignant(null);
@@ -112,7 +117,7 @@ public class ModuleCoursService {
     // Supprimer un module
     public void deleteModule(Long id) {
         if (!moduleCoursRepository.existsById(id)) {
-            throw new RuntimeException("Module introuvable avec l'id : " + id);
+            throw new ResourceNotFoundException("Module introuvable avec l'id : " + id);
         }
         moduleCoursRepository.deleteById(id);
     }

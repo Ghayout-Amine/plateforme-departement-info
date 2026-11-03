@@ -4,7 +4,10 @@ import ma.ump.deptinfo.backend.dtos.FiliereRequestDTO;
 import ma.ump.deptinfo.backend.dtos.FiliereResponseDTO;
 import ma.ump.deptinfo.backend.entities.Filiere;
 import ma.ump.deptinfo.backend.entities.User;
+import ma.ump.deptinfo.backend.exceptions.ConflictException;
+import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import ma.ump.deptinfo.backend.repositories.FiliereRepository;
+import ma.ump.deptinfo.backend.repositories.ModuleCoursRepository;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +21,14 @@ public class FiliereService {
 
     private final FiliereRepository filiereRepository;
     private final UserRepository userRepository;
+    private final ModuleCoursRepository moduleCoursRepository;
 
-    public FiliereService(FiliereRepository filiereRepository, UserRepository userRepository) {
+    public FiliereService(FiliereRepository filiereRepository,
+                          UserRepository userRepository,
+                          ModuleCoursRepository moduleCoursRepository) {
         this.filiereRepository = filiereRepository;
         this.userRepository = userRepository;
+        this.moduleCoursRepository = moduleCoursRepository;
     }
 
     // Récupérer toutes les filières
@@ -34,14 +41,14 @@ public class FiliereService {
     // Récupérer une filière par son identifiant
     public FiliereResponseDTO getFiliereById(Long id) {
         Filiere filiere = filiereRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Filière introuvable avec l'id : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Filière introuvable avec l'id : " + id));
         return toResponseDTO(filiere);
     }
 
     // Créer une nouvelle filière
     public FiliereResponseDTO createFiliere(FiliereRequestDTO dto) {
         if (filiereRepository.findByCode(dto.getCode()).isPresent()) {
-            throw new RuntimeException("Une filière avec ce code existe déjà : " + dto.getCode());
+            throw new ConflictException("Une filière avec ce code existe déjà : " + dto.getCode());
         }
 
         Filiere filiere = new Filiere();
@@ -52,7 +59,7 @@ public class FiliereService {
 
         if (dto.getResponsableId() != null) {
             User responsable = userRepository.findById(dto.getResponsableId())
-                    .orElseThrow(() -> new RuntimeException("Responsable introuvable avec l'id : " + dto.getResponsableId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Responsable introuvable avec l'id : " + dto.getResponsableId()));
             filiere.setResponsable(responsable);
         }
 
@@ -63,11 +70,11 @@ public class FiliereService {
     // Mettre à jour une filière existante
     public FiliereResponseDTO updateFiliere(Long id, FiliereRequestDTO dto) {
         Filiere filiere = filiereRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Filière introuvable avec l'id : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Filière introuvable avec l'id : " + id));
 
         filiereRepository.findByCode(dto.getCode()).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
-                throw new RuntimeException("Une autre filière utilise déjà le code : " + dto.getCode());
+                throw new ConflictException("Une autre filière utilise déjà le code : " + dto.getCode());
             }
         });
 
@@ -78,7 +85,7 @@ public class FiliereService {
 
         if (dto.getResponsableId() != null) {
             User responsable = userRepository.findById(dto.getResponsableId())
-                    .orElseThrow(() -> new RuntimeException("Responsable introuvable avec l'id : " + dto.getResponsableId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Responsable introuvable avec l'id : " + dto.getResponsableId()));
             filiere.setResponsable(responsable);
         } else {
             filiere.setResponsable(null);
@@ -91,7 +98,10 @@ public class FiliereService {
     // Supprimer une filière
     public void deleteFiliere(Long id) {
         if (!filiereRepository.existsById(id)) {
-            throw new RuntimeException("Filière introuvable avec l'id : " + id);
+            throw new ResourceNotFoundException("Filière introuvable avec l'id : " + id);
+        }
+        if (moduleCoursRepository.existsByFiliereId(id)) {
+            throw new ConflictException("Impossible de supprimer une filière qui contient des modules.");
         }
         filiereRepository.deleteById(id);
     }

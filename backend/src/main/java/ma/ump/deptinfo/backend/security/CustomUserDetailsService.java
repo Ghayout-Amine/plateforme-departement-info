@@ -1,4 +1,3 @@
-
 package ma.ump.deptinfo.backend.security;
 
 import ma.ump.deptinfo.backend.entities.User;
@@ -32,11 +31,13 @@ public class CustomUserDetailsService implements UserDetailsService {
                     "Ce compte n'existe plus.");
         }
 
+        String roleName = user.getRole() != null ? user.getRole().name() : "ENSEIGNANT";
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPasswordHash())
                 .disabled(!Boolean.TRUE.equals(user.getEnabled()))
-                .authorities("ROLE_USER")
+                .authorities("ROLE_" + roleName)
                 .build();
     }
 }

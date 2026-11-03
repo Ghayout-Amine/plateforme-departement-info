@@ -1,4 +1,3 @@
-
 package ma.ump.deptinfo.backend.security;
 
 import io.jsonwebtoken.Claims;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtService {
@@ -17,8 +17,7 @@ public class JwtService {
     @Value("${app.jwt.secret}")
     private String secretKey;
 
-    private static final long EXPIRATION_TIME =
-            1000 * 60 * 60; // 1 heure
+    private static final long EXPIRATION_TIME = 1000 * 60 * 60; // 1 heure
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(
@@ -27,17 +26,25 @@ public class JwtService {
     }
 
     public String generateToken(String username) {
-        Date now = new Date();
-        Date expiration = new Date(
-                now.getTime() + EXPIRATION_TIME
-        );
+        return generateToken(username, null);
+    }
 
-        return Jwts.builder()
+    public String generateToken(String username, String role) {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + EXPIRATION_TIME);
+
+        var builder = Jwts.builder()
                 .subject(username)
                 .issuedAt(now)
-                .expiration(expiration)
-                .signWith(getSigningKey())
-                .compact();
+                .expiration(expiration);
+
+        if (role != null) {
+            builder.claim("role", role)
+                   .claim("roles", List.of("ROLE_" + role))
+                   .claim("authorities", List.of("ROLE_" + role));
+        }
+
+        return builder.signWith(getSigningKey()).compact();
     }
 
     public String extractUsername(String token) {

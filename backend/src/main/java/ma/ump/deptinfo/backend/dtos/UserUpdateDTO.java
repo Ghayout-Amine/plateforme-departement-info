@@ -11,7 +11,7 @@ import ma.ump.deptinfo.backend.entities.Role;
 @AllArgsConstructor
 public class UserUpdateDTO {
 
-    @NotBlank(message = "Le prenom est obligatoire")
+    @NotBlank(message = "Le prénom est obligatoire")
     private String firstName;
 
     @NotBlank(message = "Le nom est obligatoire")

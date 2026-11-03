@@ -6,6 +6,7 @@ import ma.ump.deptinfo.backend.dtos.ModuleCoursResponseDTO;
 import ma.ump.deptinfo.backend.services.ModuleCoursService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,18 +38,21 @@ public class ModuleCoursController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHEF_DEPARTEMENT')")
     public ResponseEntity<ModuleCoursResponseDTO> createModule(@Valid @RequestBody ModuleCoursRequestDTO dto) {
         ModuleCoursResponseDTO created = moduleCoursService.createModule(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHEF_DEPARTEMENT')")
     public ResponseEntity<ModuleCoursResponseDTO> updateModule(@PathVariable Long id,
                                                                @Valid @RequestBody ModuleCoursRequestDTO dto) {
         return ResponseEntity.ok(moduleCoursService.updateModule(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHEF_DEPARTEMENT')")
     public ResponseEntity<Void> deleteModule(@PathVariable Long id) {
         moduleCoursService.deleteModule(id);
         return ResponseEntity.noContent().build();

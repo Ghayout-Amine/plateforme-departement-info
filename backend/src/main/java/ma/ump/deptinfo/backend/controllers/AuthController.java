@@ -1,4 +1,3 @@
-
 package ma.ump.deptinfo.backend.controllers;
 
 import ma.ump.deptinfo.backend.dtos.LoginRequest;
@@ -39,8 +38,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(
-            @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElse(null);
@@ -57,15 +55,23 @@ public class AuthController {
                     .body("Email ou mot de passe incorrect.");
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        String roleName = user.getRole() != null ? user.getRole().name() : null;
+        String token = jwtService.generateToken(user.getEmail(), roleName);
 
         return ResponseEntity.ok(
-                new LoginResponse(token, "Bearer"));
+                new LoginResponse(
+                        token,
+                        "Bearer",
+                        user.getRole(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName()
+                )
+        );
     }
 
     @GetMapping("/me")
     public ResponseEntity<String> me() {
-        return ResponseEntity.ok(
-                "Authentification JWT réussie !");
+        return ResponseEntity.ok("Authentification JWT réussie !");
     }
 }

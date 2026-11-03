@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { UserRole } from '../../models/auth.model';
 
 @Component({
   selector: 'app-login',
@@ -30,9 +31,9 @@ export class Login {
     this.error.set('');
     this.loading.set(true);
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => {
+      next: (res) => {
         this.loading.set(false);
-        this.router.navigate(['/dashboard']);
+        this.redirectUser(res.role);
       },
       error: (err) => {
         this.loading.set(false);
@@ -43,5 +44,18 @@ export class Login {
         );
       },
     });
+  }
+
+  private redirectUser(role?: UserRole): void {
+    // Redirection selon le rôle (extensible quand les modules auront leurs pages dédiées)
+    switch (role) {
+      case 'ADMIN':
+      case 'CHEF_DEPARTEMENT':
+      case 'ENSEIGNANT':
+      case 'ETUDIANT':
+      default:
+        this.router.navigate(['/dashboard']);
+        break;
+    }
   }
 }
