@@ -1,5 +1,6 @@
 package ma.ump.deptinfo.backend;
 
+import ma.ump.deptinfo.backend.entities.Role;
 import ma.ump.deptinfo.backend.entities.User;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -16,20 +17,38 @@ public class DataInitializer {
             PasswordEncoder passwordEncoder) {
 
         return args -> {
-            String email = "test@pgdi.ma";
-            User user = userRepository.findByEmail(email).orElse(new User());
+            createOrUpdateUser(userRepository, passwordEncoder,
+                    "admin@pgdi.test", "Test@2026", "Amine", "Ghayout", Role.ADMIN);
 
-            user.setEmail(email);
-            user.setPasswordHash(passwordEncoder.encode("Test1234!"));
-            user.setFirstName("Test");
-            user.setLastName("User");
-            user.setEnabled(true);
+            createOrUpdateUser(userRepository, passwordEncoder,
+                    "chef.departement@pgdi.test", "Test@2026", "Karim", "El Fassi", Role.CHEF_DEPARTEMENT);
 
-            userRepository.save(user);
+            createOrUpdateUser(userRepository, passwordEncoder,
+                    "n.alami@pgdi.test", "Test@2026", "Nadia", "Alami", Role.ENSEIGNANT);
+
+            createOrUpdateUser(userRepository, passwordEncoder,
+                    "omar.tazi@etu.pgdi.test", "Test@2026", "Omar", "Tazi", Role.ETUDIANT);
+
+            createOrUpdateUser(userRepository, passwordEncoder,
+                    "test@pgdi.ma", "Test1234!", "Test", "User", Role.ADMIN);
 
             System.out.println("=================================================");
-            System.out.println(">>> MOT DE PASSE HACHE AVEC SUCCES PAR SPRING <<<");
+            System.out.println(">>> COMPTES DE TEST INITIALISÉS AVEC SUCCÈS   <<<");
+            System.out.println(">>> admin@pgdi.test / Test@2026 (ADMIN)       <<<");
             System.out.println("=================================================");
         };
+    }
+
+    private void createOrUpdateUser(UserRepository repo, PasswordEncoder encoder,
+                                    String email, String rawPassword,
+                                    String firstName, String lastName, Role role) {
+        User user = repo.findByEmail(email).orElse(new User());
+        user.setEmail(email);
+        user.setPasswordHash(encoder.encode(rawPassword));
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRole(role);
+        user.setEnabled(true);
+        repo.save(user);
     }
 }
