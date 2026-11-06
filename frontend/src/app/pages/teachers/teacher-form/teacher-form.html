@@ -1,0 +1,94 @@
+<section class="form-page">
+  <div class="page-header">
+    <div>
+      <a routerLink="/teachers" class="back-link">← Retour aux enseignants</a>
+      <h1>Ajouter un enseignant</h1>
+      <p>Créer un compte utilisateur et son profil enseignant.</p>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="message error">{{ error() }}</div>
+  }
+
+  @if (success()) {
+    <div class="message success">{{ success() }}</div>
+  }
+
+  <form (ngSubmit)="submitForm()">
+
+    <section class="form-section">
+      <h2>Informations personnelles</h2>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="firstName">Prénom *</label>
+          <input id="firstName" name="firstName" [(ngModel)]="firstName" required>
+        </div>
+
+        <div class="field">
+          <label for="lastName">Nom *</label>
+          <input id="lastName" name="lastName" [(ngModel)]="lastName" required>
+        </div>
+
+        <div class="field">
+          <label for="email">Adresse email *</label>
+          <input id="email" type="email" name="email" [(ngModel)]="email" required>
+        </div>
+
+        <div class="field">
+          <label for="password">Mot de passe *</label>
+          <input id="password" type="password" name="password" [(ngModel)]="password" required>
+        </div>
+
+        <div class="field">
+          <label for="phone">Téléphone</label>
+          <input id="phone" type="tel" name="phone" [(ngModel)]="phone">
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h2>Informations professionnelles</h2>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="employeeNumber">Matricule *</label>
+          <input id="employeeNumber" name="employeeNumber" [(ngModel)]="employeeNumber" required>
+        </div>
+
+        <div class="field">
+          <label for="academicTitle">Titre académique</label>
+          <input id="academicTitle" name="academicTitle" [(ngModel)]="academicTitle">
+        </div>
+
+        <div class="field">
+          <label for="specialty">Spécialité</label>
+          <input id="specialty" name="specialty" [(ngModel)]="specialty">
+        </div>
+
+        <div class="field">
+          <label for="office">Bureau</label>
+          <input id="office" name="office" [(ngModel)]="office">
+        </div>
+
+        <div class="field">
+          <label for="hireDate">Date de recrutement</label>
+          <input id="hireDate" type="date" name="hireDate" [(ngModel)]="hireDate">
+        </div>
+
+        <div class="field full-width">
+          <label for="bio">Biographie</label>
+          <textarea id="bio" name="bio" rows="4" [(ngModel)]="bio"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <a routerLink="/teachers" class="cancel-button">Annuler</a>
+      <button type="submit" [disabled]="loading()">
+        {{ loading() ? 'Enregistrement...' : 'Enregistrer l’enseignant' }}
+      </button>
+    </div>
+  </form>
+</section>
