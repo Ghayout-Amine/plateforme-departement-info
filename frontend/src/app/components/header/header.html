@@ -2,6 +2,8 @@
   <h1 class="logo">PGDI</h1>
   <nav>
     <a routerLink="/">Accueil</a>
+    <a routerLink="/filieres">Filières</a>
+    <a routerLink="/contact">Contact</a>
     @if (auth.isLoggedIn()) {
       <a routerLink="/dashboard">Tableau de bord</a>
       <a href="#" (click)="$event.preventDefault(); auth.logout()">Déconnexion</a>

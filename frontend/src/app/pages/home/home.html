@@ -1,0 +1,42 @@
+<section class="hero">
+  <h2>Département Informatique</h2>
+  <p class="slogan">Former les ingénieurs et les chercheurs de demain.</p>
+  <p class="vision">
+    Notre vision : une formation d’excellence en informatique, ouverte sur la recherche et
+    sur les besoins du monde professionnel. Cette plateforme centralise la gestion des filières,
+    des modules, des enseignants et des étudiants du département.
+  </p>
+  <div class="actions">
+    <a class="btn btn-primary" routerLink="/filieres">Découvrir les filières</a>
+    <a class="btn btn-secondary" routerLink="/contact">Nous contacter</a>
+  </div>
+</section>
+
+<section class="bloc">
+  <h3>Le département en chiffres</h3>
+  <div class="chiffres">
+    <div class="chiffre">
+      <span class="valeur">{{ nbFilieres() ?? '…' }}</span>
+      <span class="libelle">Filières</span>
+    </div>
+    @for (c of chiffres; track c.libelle) {
+      <div class="chiffre">
+        <span class="valeur">{{ c.valeur }}</span>
+        <span class="libelle">{{ c.libelle }}</span>
+      </div>
+    }
+  </div>
+</section>
+
+<section class="bloc">
+  <h3>Actualités</h3>
+  <div class="actualites">
+    @for (a of actualites; track a.titre) {
+      <article class="actu">
+        <time>{{ a.date }}</time>
+        <h4>{{ a.titre }}</h4>
+        <p>{{ a.texte }}</p>
+      </article>
+    }
+  </div>
+</section>
