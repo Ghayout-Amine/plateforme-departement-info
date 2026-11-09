@@ -1,4 +1,4 @@
-﻿import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { Home } from './pages/home/home';
 import { Login } from './pages/login/login';
 import { Dashboard } from './pages/dashboard/dashboard';
@@ -6,10 +6,14 @@ import { TeacherList } from './pages/teachers/teacher-list/teacher-list';
 import { TeacherForm } from './pages/teachers/teacher-form/teacher-form';
 import { TeacherProfile } from './pages/teachers/teacher-profile/teacher-profile';
 import { TeacherEdit } from './pages/teachers/teacher-edit/teacher-edit';
+import { Filieres } from './pages/filieres/filieres';
+import { Contact } from './pages/contact/contact';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: Home },
+  { path: 'filieres', component: Filieres },
+  { path: 'contact', component: Contact },
   { path: 'login', component: Login },
 
   {
