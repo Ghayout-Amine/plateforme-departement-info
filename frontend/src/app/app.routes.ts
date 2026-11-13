@@ -6,6 +6,8 @@ import { TeacherList } from './pages/teachers/teacher-list/teacher-list';
 import { TeacherForm } from './pages/teachers/teacher-form/teacher-form';
 import { TeacherProfile } from './pages/teachers/teacher-profile/teacher-profile';
 import { TeacherEdit } from './pages/teachers/teacher-edit/teacher-edit';
+import { StudentList } from './pages/students/student-list/student-list';
+import { StudentForm } from './pages/students/student-form/student-form';
 import { Filieres } from './pages/filieres/filieres';
 import { Contact } from './pages/contact/contact';
 import { authGuard } from './guards/auth.guard';
@@ -39,6 +41,21 @@ export const routes: Routes = [
   {
     path: 'teachers',
     component: TeacherList,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'students/new',
+    component: StudentForm,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'students/:id/edit',
+    component: StudentForm,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'students',
+    component: StudentList,
     canActivate: [authGuard]
   },
   { path: '**', redirectTo: '' }
