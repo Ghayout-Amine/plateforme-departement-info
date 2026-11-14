@@ -1,0 +1,49 @@
+@startuml
+title Créer un groupe (POST /api/groupes) — PGDI2026-44
+skinparam dpi 140
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 13
+skinparam sequenceArrowThickness 1.2
+skinparam ParticipantBackgroundColor #FAFAFA
+skinparam ParticipantBorderColor #607D8B
+autonumber
+actor "Chef de\ndépartement" as U
+participant "GroupeForm\n(Angular)" as F
+participant "JwtAuthenticationFilter\n+ @PreAuthorize" as S
+participant "GroupeController" as C
+participant "GroupeService" as GS
+participant "FiliereRepository" as FR
+participant "GroupeRepository" as GR
+database "MySQL" as DB
+U -> F : saisit nom, effectif, filière
+F -> S : POST /api/groupes {name, capacity, filiereId}\nAuthorization: Bearer <jeton>
+alt jeton absent ou invalide
+  S --> F : 401 Unauthorized
+else rôle ETUDIANT ou ENSEIGNANT
+  S --> F : 403 Forbidden
+else ADMIN ou CHEF_DEPARTEMENT
+  S -> C : createGroupe(@Valid dto)
+  alt nom vide, effectif < 1
+    C --> F : 400 Bad Request (errors par champ)
+  else données valides
+    C -> GS : createGroupe(dto)
+    GS -> FR : findById(filiereId)
+    FR -> DB : SELECT filieres
+    alt filière inexistante
+      GS --> F : 404 Not Found
+    else filière trouvée
+      GS -> GR : findByFiliereIdAndNameIgnoreCase(...)
+      alt nom déjà pris dans la filière
+        GS --> F : 409 Conflict
+      else nom libre
+        GS -> GR : save(groupe)
+        GR -> DB : INSERT INTO groupes
+        GS --> C : GroupeResponseDTO (+ code et nom de la filière)
+        C --> F : 201 Created
+        F --> U : retour à la liste des groupes
+      end
+    end
+  end
+end
+@enduml
