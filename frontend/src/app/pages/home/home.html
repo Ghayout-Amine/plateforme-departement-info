@@ -16,15 +16,21 @@
   <h3>Le département en chiffres</h3>
   <div class="chiffres">
     <div class="chiffre">
-      <span class="valeur">{{ nbFilieres() ?? '…' }}</span>
+      <span class="valeur">{{ stats()?.totalEtudiants ?? (statsError() ? '—' : '…') }}</span>
+      <span class="libelle">Étudiants</span>
+    </div>
+    <div class="chiffre">
+      <span class="valeur">{{ stats()?.totalEnseignants ?? (statsError() ? '—' : '…') }}</span>
+      <span class="libelle">Enseignants</span>
+    </div>
+    <div class="chiffre">
+      <span class="valeur">{{ stats()?.totalFilieres ?? (statsError() ? '—' : '…') }}</span>
       <span class="libelle">Filières</span>
     </div>
-    @for (c of chiffres; track c.libelle) {
-      <div class="chiffre">
-        <span class="valeur">{{ c.valeur }}</span>
-        <span class="libelle">{{ c.libelle }}</span>
-      </div>
-    }
+    <div class="chiffre">
+      <span class="valeur">{{ stats()?.totalModules ?? (statsError() ? '—' : '…') }}</span>
+      <span class="libelle">Modules</span>
+    </div>
   </div>
 </section>
 
