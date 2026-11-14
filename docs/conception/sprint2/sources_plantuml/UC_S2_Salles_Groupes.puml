@@ -1,0 +1,36 @@
+@startuml
+title Cas d'utilisation de PGDI2026-44 : salles et groupes
+skinparam dpi 140
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 14
+skinparam usecaseBackgroundColor #FFFDE7
+skinparam usecaseBorderColor #F9A825
+skinparam actorBackgroundColor #E3F2FD
+skinparam actorBorderColor #1565C0
+skinparam ArrowColor #455A64
+left to right direction
+actor "Administrateur" as A
+actor "Chef de\ndépartement" as R
+actor "Enseignant" as T
+actor "Étudiant" as E
+rectangle "PGDI — Structure pédagogique" {
+  usecase "Consulter les salles\n(filtrer par type, état)" as CS
+  usecase "Gérer les salles\n(créer, modifier,\nmettre hors service, supprimer)" as GSa
+  usecase "Consulter les groupes\nd'une filière" as CG
+  usecase "Gérer les groupes\n(créer, modifier, supprimer)" as GGr
+  usecase "S'authentifier (JWT)" as AUTH
+}
+A --> GSa
+A --> GGr
+R --> GSa
+R --> GGr
+T --> CS
+T --> CG
+E --> CS
+E --> CG
+GSa ..> AUTH : <<include>>
+GGr ..> AUTH : <<include>>
+CS ..> AUTH : <<include>>
+CG ..> AUTH : <<include>>
+@enduml

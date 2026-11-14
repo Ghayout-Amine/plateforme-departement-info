@@ -1,0 +1,122 @@
+<section class="list-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">STRUCTURE PÉDAGOGIQUE</span>
+      <h1>Gestion des groupes</h1>
+      <p>Groupes d'étudiants de chaque filière du département.</p>
+    </div>
+
+    <a routerLink="/groupes/new" class="add-button">
+      <span>＋</span> Ajouter un groupe
+    </a>
+  </div>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-icon blue">◫</div>
+      <div>
+        <span>Groupes affichés</span>
+        <strong>{{ groupes().length }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon teal">▤</div>
+      <div>
+        <span>Filières concernées</span>
+        <strong>{{ filieresCount() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon violet">♙</div>
+      <div>
+        <span>Effectif maximal cumulé</span>
+        <strong>{{ totalCapacity() }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <div class="content-card">
+    <div class="table-heading">
+      <div>
+        <h2>Liste des groupes</h2>
+        <p>{{ filteredGroupes().length }} groupe(s) affiché(s)</p>
+      </div>
+
+      <div class="filters">
+        <select
+          class="type-select"
+          aria-label="Filtrer par filière"
+          [ngModel]="selectedFiliereId()"
+          (ngModelChange)="onFiliereChange($event)"
+        >
+          <option [ngValue]="null">Toutes les filières</option>
+          @for (filiere of filieres(); track filiere.id) {
+            <option [ngValue]="filiere.id">{{ filiere.code }} — {{ filiere.nom }}</option>
+          }
+        </select>
+
+        <label class="search-box">
+          <span>⌕</span>
+          <input
+            type="search"
+            placeholder="Rechercher un groupe..."
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+          />
+        </label>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="state-message">
+        <div class="loader"></div>
+        <p>Chargement des groupes...</p>
+      </div>
+    } @else if (error()) {
+      <div class="state-message error-state">
+        <strong>{{ error() }}</strong>
+        <button class="retry-button" (click)="loadGroupes()">Réessayer</button>
+      </div>
+    } @else if (filteredGroupes().length === 0) {
+      <div class="state-message">
+        <div class="empty-icon">◫</div>
+        <h3>Aucun groupe trouvé</h3>
+        <p>Choisissez une autre filière ou ajoutez un nouveau groupe.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>GROUPE</th>
+              <th>FILIÈRE</th>
+              <th>EFFECTIF MAXIMAL</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (groupe of filteredGroupes(); track groupe.id) {
+              <tr>
+                <td><strong class="main-text">{{ groupe.name }}</strong></td>
+                <td>
+                  <span class="code-badge">{{ groupe.filiereCode }}</span>
+                  <span class="filiere-name">{{ groupe.filiereNom }}</span>
+                </td>
+                <td>{{ groupe.capacity ? groupe.capacity + ' étudiants' : '—' }}</td>
+                <td>
+                  <div class="actions">
+                    <a [routerLink]="['/groupes', groupe.id, 'edit']" class="action-button edit" title="Modifier">Modifier</a>
+                    <button class="action-button delete" (click)="deleteGroupe(groupe)" title="Supprimer">Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>

@@ -1,0 +1,131 @@
+<section class="list-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">STRUCTURE PÉDAGOGIQUE</span>
+      <h1>Gestion des salles</h1>
+      <p>Amphithéâtres, salles de cours et salles de TP du département.</p>
+    </div>
+
+    <a routerLink="/salles/new" class="add-button">
+      <span>＋</span> Ajouter une salle
+    </a>
+  </div>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-icon blue">▦</div>
+      <div>
+        <span>Total salles</span>
+        <strong>{{ salles().length }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon teal">✓</div>
+      <div>
+        <span>Salles disponibles</span>
+        <strong>{{ activeCount() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon violet">♙</div>
+      <div>
+        <span>Places disponibles</span>
+        <strong>{{ totalCapacity() }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <div class="content-card">
+    <div class="table-heading">
+      <div>
+        <h2>Liste des salles</h2>
+        <p>{{ filteredSalles().length }} salle(s) affichée(s)</p>
+      </div>
+
+      <div class="filters">
+        <select
+          class="type-select"
+          aria-label="Filtrer par type"
+          [ngModel]="typeFilter()"
+          (ngModelChange)="typeFilter.set($event)"
+        >
+          <option value="">Tous les types</option>
+          @for (type of roomTypes; track type) {
+            <option [value]="type">{{ typeLabels[type] }}</option>
+          }
+        </select>
+
+        <label class="search-box">
+          <span>⌕</span>
+          <input
+            type="search"
+            placeholder="Rechercher une salle..."
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+          />
+        </label>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="state-message">
+        <div class="loader"></div>
+        <p>Chargement des salles...</p>
+      </div>
+    } @else if (error()) {
+      <div class="state-message error-state">
+        <strong>{{ error() }}</strong>
+        <button class="retry-button" (click)="loadSalles()">Réessayer</button>
+      </div>
+    } @else if (filteredSalles().length === 0) {
+      <div class="state-message">
+        
+        <h3>Aucune salle trouvée</h3>
+        <p>Modifiez votre recherche ou ajoutez une nouvelle salle.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>CODE</th>
+              <th>NOM</th>
+              <th>BÂTIMENT</th>
+              <th>TYPE</th>
+              <th>CAPACITÉ</th>
+              <th>ÉTAT</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (salle of filteredSalles(); track salle.id) {
+              <tr>
+                <td><span class="code-badge">{{ salle.code }}</span></td>
+                <td><strong class="main-text">{{ salle.name }}</strong></td>
+                <td>{{ salle.building || '—' }}</td>
+                <td><span [class]="'type-badge type-' + salle.roomType">{{ typeLabels[salle.roomType] }}</span></td>
+                <td>{{ salle.capacity }} places</td>
+                <td>
+                  @if (salle.isActive) {
+                    <span class="status active">Disponible</span>
+                  } @else {
+                    <span class="status inactive">Hors service</span>
+                  }
+                </td>
+                <td>
+                  <div class="actions">
+                    <a [routerLink]="['/salles', salle.id, 'edit']" class="action-button edit" title="Modifier">Modifier</a>
+                    <button class="action-button delete" (click)="deleteSalle(salle)" title="Supprimer">Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>

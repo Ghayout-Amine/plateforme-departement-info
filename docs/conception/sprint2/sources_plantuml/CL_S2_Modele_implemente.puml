@@ -1,0 +1,101 @@
+@startuml
+title Modèle de classes implémenté à la fin du Sprint 2 (code develop + PGDI2026-44)
+skinparam dpi 140
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 13
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #455A64
+skinparam classBorderColor #607D8B
+skinparam classBackgroundColor #FAFAFA
+skinparam classBackgroundColor<<Sprint2>> #E3F2FD
+skinparam classBorderColor<<Sprint2>> #1565C0
+skinparam classBackgroundColor<<PGDI2026_44>> #FFE9D6
+skinparam classBorderColor<<PGDI2026_44>> #E07A2F
+skinparam stereotypeCBackgroundColor #FFFFFF
+hide empty methods
+left to right direction
+
+abstract class BaseEntity {
+  - id : Long
+  - createdAt : LocalDateTime
+  - updatedAt : LocalDateTime
+}
+class User {
+  - email : String
+  - passwordHash : String
+  - firstName, lastName : String
+  - role : Role
+  - enabled : Boolean
+  - deletedAt : LocalDateTime
+}
+enum Role {
+  ADMIN
+  CHEF_DEPARTEMENT
+  ENSEIGNANT
+  ETUDIANT
+}
+class Filiere {
+  - code : String
+  - nom : String
+  - niveau : String
+}
+class ModuleCours {
+  - code : String
+  - nom : String
+  - semestre : String
+  - volumeHoraire : Integer
+}
+class Student <<Sprint2>> {
+  - studentNumber : String
+  - cne : String
+  - birthDate : LocalDate
+  - gender : Gender
+}
+class Teacher <<Sprint2>> {
+  - employeeNumber : String
+  - academicTitle : String
+  - specialty : String
+  - office : String
+}
+class ContactMessage <<Sprint2>> {
+  - fullName, email : String
+  - subject, message : String
+  - status : MessageStatus
+}
+class Salle <<PGDI2026_44>> {
+  - code : String {unique}
+  - name : String
+  - building : String
+  - capacity : Integer
+  - roomType : RoomType
+  - active : boolean
+}
+enum RoomType <<PGDI2026_44>> {
+  AMPHI
+  CLASSROOM
+  LAB
+  OTHER
+}
+class Groupe <<PGDI2026_44>> {
+  - name : String {unique par filière}
+  - capacity : Integer
+}
+
+BaseEntity <|-- Student
+BaseEntity <|-- Teacher
+BaseEntity <|-- ContactMessage
+BaseEntity <|-- Salle
+BaseEntity <|-- Groupe
+User --> Role
+Student "0..1" -- "1" User : compte
+Teacher "0..1" -- "1" User : compte
+Filiere "0..*" -- "0..1" User : responsable
+ModuleCours "0..*" -- "1" Filiere
+ModuleCours "0..*" -- "0..1" User : enseignant
+Groupe "0..*" -- "1" Filiere : se divise en
+Salle --> RoomType
+legend right
+  gris : Sprint 1 · bleu : Sprint 2 (équipe) · orange : PGDI2026-44
+endlegend
+@enduml

@@ -9,6 +9,10 @@ import { TeacherEdit } from './pages/teachers/teacher-edit/teacher-edit';
 import { StudentList } from './pages/students/student-list/student-list';
 import { StudentForm } from './pages/students/student-form/student-form';
 import { Filieres } from './pages/filieres/filieres';
+import { SalleList } from './pages/salles/salle-list/salle-list';
+import { SalleForm } from './pages/salles/salle-form/salle-form';
+import { GroupeList } from './pages/groupes/groupe-list/groupe-list';
+import { GroupeForm } from './pages/groupes/groupe-form/groupe-form';
 import { Contact } from './pages/contact/contact';
 import { authGuard } from './guards/auth.guard';
 
@@ -58,5 +62,12 @@ export const routes: Routes = [
     component: StudentList,
     canActivate: [authGuard]
   },
+  // PGDI2026-44 : salles et groupes
+  { path: 'salles/new', component: SalleForm, canActivate: [authGuard] },
+  { path: 'salles/:id/edit', component: SalleForm, canActivate: [authGuard] },
+  { path: 'salles', component: SalleList, canActivate: [authGuard] },
+  { path: 'groupes/new', component: GroupeForm, canActivate: [authGuard] },
+  { path: 'groupes/:id/edit', component: GroupeForm, canActivate: [authGuard] },
+  { path: 'groupes', component: GroupeList, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

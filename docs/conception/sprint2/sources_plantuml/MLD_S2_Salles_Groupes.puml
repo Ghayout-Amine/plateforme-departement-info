@@ -1,0 +1,47 @@
+@startuml
+title Tables créées par PGDI2026-44 (générées par Hibernate, MySQL)
+skinparam dpi 140
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 13
+skinparam ArrowColor #455A64
+skinparam classBorderColor #607D8B
+skinparam classBackgroundColor #FAFAFA
+skinparam classBackgroundColor<<new>> #FFE9D6
+skinparam classBorderColor<<new>> #E07A2F
+hide circle
+hide methods
+hide stereotype
+left to right direction
+
+entity "salles" as salles <<new>> {
+  * id : BIGINT <<PK>>
+  --
+  * code : VARCHAR(20) <<UNIQUE>>
+  * name : VARCHAR(100)
+    building : VARCHAR(100)
+  * capacity : INT
+  * room_type : VARCHAR(20)
+  * is_active : BIT
+    created_at, updated_at : DATETIME
+}
+entity "groupes" as groupes <<new>> {
+  * id : BIGINT <<PK>>
+  --
+  * name : VARCHAR(50)
+    capacity : INT
+  * filiere_id : BIGINT <<FK>>
+    created_at, updated_at : DATETIME
+  ..
+  UNIQUE (filiere_id, name)
+}
+entity "filieres" as filieres {
+  * id : BIGINT <<PK>>
+  --
+  * code : VARCHAR(30) <<UNIQUE>>
+  * nom : VARCHAR(150)
+  * niveau : VARCHAR(50)
+    responsable_id : BIGINT <<FK>>
+}
+groupes }o--|| filieres : filiere_id
+@enduml

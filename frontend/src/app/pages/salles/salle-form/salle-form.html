@@ -1,0 +1,74 @@
+<section class="form-page">
+  <div class="page-header">
+    <div>
+      <a routerLink="/salles" class="back-link">← Retour aux salles</a>
+      <h1>{{ isEdit() ? 'Modifier une salle' : 'Ajouter une salle' }}</h1>
+      <p>
+        {{ isEdit()
+          ? 'Mettre à jour les informations de la salle.'
+          : 'Déclarer un amphithéâtre, une salle de cours ou une salle de TP.' }}
+      </p>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="message error">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Chargement des données...</div>
+  } @else {
+    <form (ngSubmit)="submitForm()">
+      <section class="form-section">
+        <h2>Informations de la salle</h2>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="code">Code * (ex : AMPHI_A, TP1)</label>
+            <input id="code" name="code" [(ngModel)]="code" maxlength="20" required>
+          </div>
+
+          <div class="field">
+            <label for="name">Nom *</label>
+            <input id="name" name="name" [(ngModel)]="name" maxlength="100" required>
+          </div>
+
+          <div class="field">
+            <label for="roomType">Type de salle *</label>
+            <select id="roomType" name="roomType" [(ngModel)]="roomType" required>
+              <option value="" disabled>— Choisir un type —</option>
+              @for (type of roomTypes; track type) {
+                <option [value]="type">{{ typeLabels[type] }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="capacity">Capacité * (nombre de places)</label>
+            <input id="capacity" type="number" name="capacity" [(ngModel)]="capacity" min="1" max="2000" required>
+          </div>
+
+          <div class="field">
+            <label for="building">Bâtiment</label>
+            <input id="building" name="building" [(ngModel)]="building" maxlength="100" placeholder="ex : Bloc Informatique">
+          </div>
+
+          <div class="field">
+            <label for="isActive">État</label>
+            <select id="isActive" name="isActive" [(ngModel)]="isActive">
+              <option [ngValue]="true">Disponible</option>
+              <option [ngValue]="false">Hors service</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <a routerLink="/salles" class="cancel-button">Annuler</a>
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement...' : (isEdit() ? 'Enregistrer les modifications' : 'Enregistrer la salle') }}
+        </button>
+      </div>
+    </form>
+  }
+</section>
