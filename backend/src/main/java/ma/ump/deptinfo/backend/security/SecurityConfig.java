@@ -2,6 +2,7 @@ package ma.ump.deptinfo.backend.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -42,6 +43,7 @@ public class SecurityConfig {
                     "/api/auth/login",
                     "/api/auth/test",
                     "/api/stats",
+                    "/api/contact",
                     "/error",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
