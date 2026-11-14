@@ -1,16 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FiliereService } from '../../services/filiere.service';
+import { StatsService } from '../../services/stats.service';
+import { Stats } from '../../models/stats.model';
 
 interface Actualite {
   date: string;
   titre: string;
   texte: string;
-}
-
-interface ChiffreCle {
-  valeur: string;
-  libelle: string;
 }
 
 @Component({
@@ -20,16 +16,11 @@ interface ChiffreCle {
   styleUrl: './home.css',
 })
 export class Home {
-  private readonly filiereService = inject(FiliereService);
+  private readonly statsService = inject(StatsService);
 
-  readonly nbFilieres = signal<number | null>(null);
-
-  // Valeurs de démonstration : à remplacer par des données du backend quand un endpoint de statistiques existera.
-  readonly chiffres: ChiffreCle[] = [
-    { valeur: '350', libelle: 'Étudiants' },
-    { valeur: '24', libelle: 'Enseignants' },
-    { valeur: '60', libelle: 'Modules' },
-  ];
+  // Chiffres réels lus dans la base via GET /api/stats ; null tant que la réponse n'est pas arrivée
+  readonly stats = signal<Stats | null>(null);
+  readonly statsError = signal(false);
 
   readonly actualites: Actualite[] = [
     {
@@ -50,6 +41,9 @@ export class Home {
   ];
 
   constructor() {
-    this.filiereService.getFilieresPubliques().subscribe((res) => this.nbFilieres.set(res.filieres.length));
+    this.statsService.getStats().subscribe({
+      next: (data) => this.stats.set(data),
+      error: () => this.statsError.set(true),
+    });
   }
 }
