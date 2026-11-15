@@ -1,0 +1,120 @@
+<section class="form-page">
+  <div class="page-header">
+    <div>
+      <a routerLink="/students" class="back-link">← Retour aux étudiants</a>
+      <h1>{{ isEdit() ? 'Modifier un étudiant' : 'Ajouter un étudiant' }}</h1>
+      <p>
+        {{ isEdit()
+          ? 'Mettre à jour les informations de l’étudiant.'
+          : 'Créer le compte utilisateur et le profil étudiant en une seule fois.' }}
+      </p>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="message error">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Chargement des données...</div>
+  } @else {
+    <form (ngSubmit)="submitForm()">
+
+      <section class="form-section">
+        <h2>Compte utilisateur</h2>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="firstName">Prénom *</label>
+            <input id="firstName" name="firstName" [(ngModel)]="firstName" required>
+          </div>
+
+          <div class="field">
+            <label for="lastName">Nom *</label>
+            <input id="lastName" name="lastName" [(ngModel)]="lastName" required>
+          </div>
+
+          <div class="field">
+            <label for="email">Adresse email {{ isEdit() ? '' : '*' }}</label>
+            <input id="email" type="email" name="email" [(ngModel)]="email"
+                   [disabled]="isEdit()" required>
+          </div>
+
+          @if (!isEdit()) {
+            <div class="field">
+              <label for="password">Mot de passe * (8 caractères minimum)</label>
+              <input id="password" type="password" name="password" [(ngModel)]="password" required>
+            </div>
+          }
+
+          <div class="field">
+            <label for="phone">Téléphone</label>
+            <input id="phone" type="tel" name="phone" [(ngModel)]="phone">
+          </div>
+
+          @if (isEdit()) {
+            <div class="field">
+              <label for="enabled">Statut du compte</label>
+              <select id="enabled" name="enabled" [(ngModel)]="enabled">
+                <option [ngValue]="true">Actif</option>
+                <option [ngValue]="false">Désactivé</option>
+              </select>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Informations étudiant</h2>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="studentNumber">Numéro étudiant * (ex : ETU2026-001)</label>
+            <input id="studentNumber" name="studentNumber" [(ngModel)]="studentNumber" required>
+          </div>
+
+          <div class="field">
+            <label for="cne">CNE</label>
+            <input id="cne" name="cne" [(ngModel)]="cne">
+          </div>
+
+          <div class="field">
+            <label for="birthDate">Date de naissance</label>
+            <input id="birthDate" type="date" name="birthDate" [(ngModel)]="birthDate">
+          </div>
+
+          <div class="field">
+            <label for="birthPlace">Lieu de naissance</label>
+            <input id="birthPlace" name="birthPlace" [(ngModel)]="birthPlace">
+          </div>
+
+          <div class="field">
+            <label for="gender">Genre</label>
+            <select id="gender" name="gender" [(ngModel)]="gender">
+              <option value="">— Non renseigné —</option>
+              <option value="FEMALE">Femme</option>
+              <option value="MALE">Homme</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="city">Ville</label>
+            <input id="city" name="city" [(ngModel)]="city">
+          </div>
+
+          <div class="field full-width">
+            <label for="address">Adresse</label>
+            <input id="address" name="address" [(ngModel)]="address">
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <a routerLink="/students" class="cancel-button">Annuler</a>
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement...' : (isEdit() ? 'Enregistrer les modifications' : 'Enregistrer l’étudiant') }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

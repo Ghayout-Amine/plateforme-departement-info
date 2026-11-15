@@ -1,0 +1,135 @@
+<section class="students-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">GESTION PÉDAGOGIQUE</span>
+      <h1>Gestion des étudiants</h1>
+      <p>Consultez et gérez les étudiants du département informatique.</p>
+    </div>
+
+    <a routerLink="/students/new" class="add-button">
+      <span>＋</span> Ajouter un étudiant
+    </a>
+  </div>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-icon blue">♙</div>
+      <div>
+        <span>Total étudiants</span>
+        <strong>{{ totalElements() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon teal">▤</div>
+      <div>
+        <span>Page</span>
+        <strong>{{ totalPages() === 0 ? 0 : page() + 1 }} / {{ totalPages() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon violet">◷</div>
+      <div>
+        <span>Résultats affichés</span>
+        <strong>{{ students().length }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <div class="content-card">
+    <div class="table-heading">
+      <div>
+        <h2>Liste des étudiants</h2>
+        <p>Recherche par nom, prénom, email, numéro étudiant ou CNE</p>
+      </div>
+
+      <label class="search-box">
+        <span>⌕</span>
+        <input
+          type="search"
+          placeholder="Rechercher un étudiant..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearch($event)"
+        />
+      </label>
+    </div>
+
+    @if (loading()) {
+      <div class="state-message">
+        <div class="loader"></div>
+        <p>Chargement des étudiants...</p>
+      </div>
+    } @else if (error()) {
+      <div class="state-message error-state">
+        <strong>{{ error() }}</strong>
+        <button class="retry-button" (click)="loadStudents()">Réessayer</button>
+      </div>
+    } @else if (students().length === 0) {
+      <div class="state-message">
+        <div class="empty-icon">♙</div>
+        <h3>Aucun étudiant trouvé</h3>
+        <p>Modifiez votre recherche ou ajoutez un nouvel étudiant.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ÉTUDIANT</th>
+              <th>N° ÉTUDIANT</th>
+              <th>CNE</th>
+              <th>GENRE</th>
+              <th>VILLE</th>
+              <th>STATUT</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (student of students(); track student.id) {
+              <tr>
+                <td>
+                  <div class="student-cell">
+                    <div class="avatar">{{ getInitials(student) }}</div>
+                    <div class="student-info">
+                      <strong>{{ student.firstName }} {{ student.lastName }}</strong>
+                      <span>{{ student.email }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <td><span class="student-number">{{ student.studentNumber }}</span></td>
+                <td>{{ student.cne || '—' }}</td>
+                <td>{{ genderLabel(student) }}</td>
+                <td>{{ student.city || '—' }}</td>
+                <td>
+                  <span class="status" [class.inactive]="!student.enabled">
+                    {{ student.enabled ? 'Actif' : 'Désactivé' }}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="actions">
+                    <a [routerLink]="['/students', student.id, 'edit']" class="action-button edit" title="Modifier">Modifier</a>
+                    <button class="action-button delete" (click)="deleteStudent(student)" title="Supprimer">Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <span>{{ totalElements() }} étudiant(s) au total</span>
+
+        <div class="pagination">
+          <button (click)="goToPage(page() - 1)" [disabled]="page() === 0">← Précédent</button>
+          <span>Page {{ page() + 1 }} sur {{ totalPages() }}</span>
+          <button (click)="goToPage(page() + 1)" [disabled]="page() + 1 >= totalPages()">Suivant →</button>
+        </div>
+      </div>
+    }
+  </div>
+</section>

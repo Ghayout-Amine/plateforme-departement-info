@@ -1,0 +1,56 @@
+<section class="form-page">
+  <div class="page-header">
+    <div>
+      <a routerLink="/groupes" class="back-link">← Retour aux groupes</a>
+      <h1>{{ isEdit() ? 'Modifier un groupe' : 'Ajouter un groupe' }}</h1>
+      <p>
+        {{ isEdit()
+          ? 'Mettre à jour le nom, l’effectif ou la filière du groupe.'
+          : 'Créer un groupe d’étudiants dans une filière.' }}
+      </p>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="message error">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Chargement des données...</div>
+  } @else {
+    <form (ngSubmit)="submitForm()">
+      <section class="form-section">
+        <h2>Informations du groupe</h2>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="name">Nom du groupe * (ex : Groupe 1 - GL)</label>
+            <input id="name" name="name" [(ngModel)]="name" maxlength="50" required>
+          </div>
+
+          <div class="field">
+            <label for="filiereId">Filière *</label>
+            <select id="filiereId" name="filiereId" [(ngModel)]="filiereId" required>
+              <option [ngValue]="null" disabled>— Choisir une filière —</option>
+              @for (filiere of filieres(); track filiere.id) {
+                <option [ngValue]="filiere.id">{{ filiere.code }} — {{ filiere.nom }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="capacity">Effectif maximal</label>
+            <input id="capacity" type="number" name="capacity" [(ngModel)]="capacity" min="1" max="500" placeholder="ex : 30">
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <a routerLink="/groupes" class="cancel-button">Annuler</a>
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement...' : (isEdit() ? 'Enregistrer les modifications' : 'Enregistrer le groupe') }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

@@ -1,0 +1,36 @@
+<section class="page">
+  <h2>Nos filières</h2>
+  <p class="intro">Consultez les formations du département, sans avoir besoin de vous connecter.</p>
+
+  @if (loading()) {
+    <p>Chargement des filières…</p>
+  } @else {
+    @if (demo()) {
+      <p class="note">Données de démonstration : la liste en ligne n’est pas disponible pour le moment.</p>
+    }
+
+    <div class="filtres">
+      @for (n of niveaux(); track n) {
+        <button type="button" [class.actif]="n === niveauChoisi()" (click)="choisir(n)">{{ n }}</button>
+      }
+    </div>
+
+    <div class="grille">
+      @for (f of filieresAffichees(); track f.id) {
+        <article class="carte">
+          <span class="badge">{{ f.niveau }}</span>
+          <h3>{{ f.nom }}</h3>
+          <p class="code">{{ f.code }}</p>
+          @if (f.description) {
+            <p>{{ f.description }}</p>
+          }
+          @if (f.responsableNomComplet) {
+            <p class="resp">Responsable : {{ f.responsableNomComplet }}</p>
+          }
+        </article>
+      } @empty {
+        <p>Aucune filière à afficher.</p>
+      }
+    </div>
+  }
+</section>

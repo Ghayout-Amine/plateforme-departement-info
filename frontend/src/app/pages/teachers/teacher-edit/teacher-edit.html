@@ -1,0 +1,88 @@
+﻿<section class="edit-page">
+  <a routerLink="/teachers" class="back-link">← Retour à la liste</a>
+
+  <div class="form-card">
+    <div class="form-heading">
+      <span class="eyebrow">GESTION PÉDAGOGIQUE</span>
+      <h1>Modifier un enseignant</h1>
+      <p>Mettre à jour les informations professionnelles de l’enseignant.</p>
+    </div>
+
+    @if (loading()) {
+      <p class="message">Chargement des données...</p>
+    } @else {
+      @if (error()) {
+        <div class="error-message">{{ error() }}</div>
+      }
+
+      <form (ngSubmit)="submitForm()">
+        <h2>Informations professionnelles</h2>
+
+        <div class="form-grid">
+          <label>
+            Matricule *
+            <input
+              type="text"
+              name="employeeNumber"
+              [(ngModel)]="employeeNumber"
+              required
+            />
+          </label>
+
+          <label>
+            Titre académique
+            <input
+              type="text"
+              name="academicTitle"
+              [(ngModel)]="academicTitle"
+            />
+          </label>
+
+          <label>
+            Spécialité
+            <input
+              type="text"
+              name="specialty"
+              [(ngModel)]="specialty"
+            />
+          </label>
+
+          <label>
+            Bureau
+            <input
+              type="text"
+              name="office"
+              [(ngModel)]="office"
+            />
+          </label>
+
+          <label>
+            Date de recrutement
+            <input
+              type="date"
+              name="hireDate"
+              [(ngModel)]="hireDate"
+            />
+          </label>
+        </div>
+
+        <label class="bio-label">
+          Biographie
+          <textarea
+            name="bio"
+            rows="5"
+            [(ngModel)]="bio"
+          ></textarea>
+        </label>
+
+        <div class="form-actions">
+          <a routerLink="/teachers" class="cancel-button">Annuler</a>
+
+          <button type="submit" [disabled]="saving()">
+            {{ saving() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</section>

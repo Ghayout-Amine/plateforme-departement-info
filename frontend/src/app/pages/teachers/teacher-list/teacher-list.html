@@ -1,0 +1,124 @@
+﻿<section class="teachers-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">GESTION PÉDAGOGIQUE</span>
+      <h1>Gestion des enseignants</h1>
+      <p>Consultez et gérez les enseignants du département informatique.</p>
+    </div>
+
+    <a routerLink="/teachers/new" class="add-button">
+      <span>＋</span> Ajouter un enseignant
+    </a>
+  </div>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-icon blue">♙</div>
+      <div>
+        <span>Total enseignants</span>
+        <strong>{{ teachers().length }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon teal">▤</div>
+      <div>
+        <span>Spécialités</span>
+        <strong>{{ specialtiesCount() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon violet">◷</div>
+      <div>
+        <span>Résultats affichés</span>
+        <strong>{{ filteredTeachers().length }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <div class="content-card">
+    <div class="table-heading">
+      <div>
+        <h2>Liste des enseignants</h2>
+        <p>Répertoire des enseignants du département</p>
+      </div>
+
+      <label class="search-box">
+        <span>⌕</span>
+        <input
+          type="search"
+          placeholder="Rechercher un enseignant..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+        />
+      </label>
+    </div>
+
+    @if (loading()) {
+      <div class="state-message">
+        <div class="loader"></div>
+        <p>Chargement des enseignants...</p>
+      </div>
+    } @else if (error()) {
+      <div class="state-message error-state">
+        <strong>{{ error() }}</strong>
+        <button class="retry-button" (click)="loadTeachers()">Réessayer</button>
+      </div>
+    } @else if (filteredTeachers().length === 0) {
+      <div class="state-message">
+        <div class="empty-icon">♙</div>
+        <h3>Aucun enseignant trouvé</h3>
+        <p>Modifiez votre recherche ou ajoutez un nouvel enseignant.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ENSEIGNANT</th>
+              <th>MATRICULE</th>
+              <th>SPÉCIALITÉ</th>
+              <th>TITRE ACADÉMIQUE</th>
+              <th>BUREAU</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (teacher of filteredTeachers(); track teacher.id) {
+              <tr>
+                <td>
+                  <div class="teacher-cell">
+                    <div class="avatar">{{ getInitials(teacher) }}</div>
+                    <div class="teacher-info">
+                      <strong>{{ teacher.firstName }} {{ teacher.lastName }}</strong>
+                      <span>{{ teacher.userEmail }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <td><span class="employee-number">{{ teacher.employeeNumber }}</span></td>
+                <td>{{ teacher.specialty || 'Non renseignée' }}</td>
+                <td>{{ teacher.academicTitle || '—' }}</td>
+                <td>{{ teacher.office || '—' }}</td>
+
+                <td>
+                  <div class="actions">
+                    <a [routerLink]="['/teachers', teacher.id]" class="action-button view" title="Consulter">Voir</a>
+                    <a [routerLink]="['/teachers', teacher.id, 'edit']" class="action-button edit" title="Modifier">Modifier</a>
+                    <button class="action-button delete" (click)="deleteTeacher(teacher)" title="Supprimer">Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        {{ filteredTeachers().length }} enseignant(s) affiché(s)
+      </div>
+    }
+  </div>
+</section>

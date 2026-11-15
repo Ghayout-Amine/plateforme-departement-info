@@ -1,5 +1,5 @@
 -- =============================================================================
---  PGDI2026-18 : jeu de données de test (Sprint 1)
+--  PGDI2026-18 : jeu de données de test (Sprint 1, complété au Sprint 2 par PGDI2026-44)
 --  Aligné sur les entités JPA de la branche develop : User, Filiere, ModuleCours
 --  (tables users / filieres / modules générées par Hibernate, ddl-auto=update).
 --
@@ -62,3 +62,28 @@ INSERT INTO modules (id, code, nom, semestre, volume_horaire, filiere_id, enseig
 ON DUPLICATE KEY UPDATE
   code = VALUES(code), nom = VALUES(nom), semestre = VALUES(semestre), volume_horaire = VALUES(volume_horaire),
   filiere_id = VALUES(filiere_id), enseignant_id = VALUES(enseignant_id), updated_at = NOW();
+
+-- ---------------------------------------------------------------------
+-- PGDI2026-44 (Sprint 2) : salles (ids 1 à 6) et groupes (ids 1 à 5)
+-- Salle 6 hors service (is_active = 0) pour tester le filtre ?active=false
+-- Groupes : M2I-ISI 2 groupes | M2I-IA 1 | LSI-GL 2 (le nom est unique par filière)
+-- ---------------------------------------------------------------------
+INSERT INTO salles (id, code, name, building, capacity, room_type, is_active, created_at, updated_at) VALUES
+  (1, 'AMPHI_A', 'Amphithéâtre Al-Khawarizmi', 'Bloc Informatique', 150, 'AMPHI',     1, NOW(), NOW()),
+  (2, 'AMPHI_B', 'Amphithéâtre Ibn Sina',      'Bloc Central',      120, 'AMPHI',     1, NOW(), NOW()),
+  (3, 'S12',     'Salle de cours 12',          'Bloc Informatique',  40, 'CLASSROOM', 1, NOW(), NOW()),
+  (4, 'TP1',     'Salle TP Réseaux',           'Bloc Informatique',  24, 'LAB',       1, NOW(), NOW()),
+  (5, 'TP2',     'Salle TP Développement',     'Bloc Informatique',  24, 'LAB',       1, NOW(), NOW()),
+  (6, 'SR1',     'Salle de réunion',           'Bloc Administratif', 12, 'OTHER',     0, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  code = VALUES(code), name = VALUES(name), building = VALUES(building), capacity = VALUES(capacity),
+  room_type = VALUES(room_type), is_active = VALUES(is_active), updated_at = NOW();
+
+INSERT INTO groupes (id, name, capacity, filiere_id, created_at, updated_at) VALUES
+  (1, 'Groupe 1 - ISI', 30, 1, NOW(), NOW()),
+  (2, 'Groupe 2 - ISI', 30, 1, NOW(), NOW()),
+  (3, 'Groupe 1 - IA',  25, 2, NOW(), NOW()),
+  (4, 'Groupe A - GL',  40, 3, NOW(), NOW()),
+  (5, 'Groupe B - GL',  40, 3, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name), capacity = VALUES(capacity), filiere_id = VALUES(filiere_id), updated_at = NOW();

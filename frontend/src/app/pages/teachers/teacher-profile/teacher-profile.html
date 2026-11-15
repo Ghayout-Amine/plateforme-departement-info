@@ -1,0 +1,57 @@
+﻿<section class="profile-page">
+  <a routerLink="/teachers" class="back-link">← Retour à la liste</a>
+
+  @if (loading()) {
+    <div class="message">Chargement du profil...</div>
+  } @else if (error()) {
+    <div class="message error">{{ error() }}</div>
+  } @else if (teacher(); as t) {
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="avatar">{{ getInitials(t) }}</div>
+        <div>
+          <span class="eyebrow">PROFIL ENSEIGNANT</span>
+          <h1>{{ t.firstName }} {{ t.lastName }}</h1>
+          <p>{{ t.userEmail }}</p>
+        </div>
+      </div>
+
+      <div class="profile-details">
+        <div class="detail">
+          <span>Matricule</span>
+          <strong>{{ t.employeeNumber }}</strong>
+        </div>
+
+        <div class="detail">
+          <span>Spécialité</span>
+          <strong>{{ t.specialty || 'Non renseignée' }}</strong>
+        </div>
+
+        <div class="detail">
+          <span>Titre académique</span>
+          <strong>{{ t.academicTitle || 'Non renseigné' }}</strong>
+        </div>
+
+        <div class="detail">
+          <span>Bureau</span>
+          <strong>{{ t.office || 'Non renseigné' }}</strong>
+        </div>
+
+        <div class="detail">
+          <span>Date de recrutement</span>
+          <strong>{{ t.hireDate || 'Non renseignée' }}</strong>
+        </div>
+
+        <div class="detail">
+          <span>Téléphone</span>
+          <strong>Non disponible</strong>
+        </div>
+      </div>
+
+      <div class="bio-section">
+        <h2>Biographie</h2>
+        <p>{{ t.bio || 'Aucune biographie renseignée.' }}</p>
+      </div>
+    </div>
+  }
+</section>

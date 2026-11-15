@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "7a4093ff-c2ed-5a83-923c-0c5607070b0d",
-    "name": "PGDI2026 - Tests d'intégration API (PGDI2026-18)",
+    "name": "PGDI2026 - Tests d'intégration API (PGDI2026-18, complété par PGDI2026-44)",
     "description": "Tests d'intégration du backend Spring Boot (branche develop, Sprint 1).\n\nPré-requis : backend lancé avec le profil test (charge db/testdata/data-test.sql).\n  cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=test\n\nDossiers 00 à 05 : doivent être 100 % verts. Ils sont rejouables sans redémarrer.\nDossier 99 : anomalies connues, rouge tant qu'elles ne sont pas corrigées.\n\nnewman run tests/api/PGDI2026-18.postman_collection.json -e tests/api/PGDI2026-local.postman_environment.json --folder \"00 - Disponibilité\" --folder \"01 - Authentification\" --folder \"02 - Protection des endpoints (JWT)\" --folder \"03 - Utilisateurs (/api/users)\" --folder \"04 - Filières (/api/filieres)\" --folder \"05 - Modules (/api/modules)\"",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -2119,6 +2119,889 @@
                 {
                   "key": "token",
                   "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Salles et groupes (/api/salles, /api/groupes)",
+      "description": "PGDI2026-44 (Sprint 2) : CRUD des salles et des groupes, filtres, doublons (409), validation (400), droits (401/403). Les données créées sont supprimées à la fin du dossier.",
+      "item": [
+        {
+          "name": "Lister les salles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/salles",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('Les 6 salles du jeu de données sont présentes', function () { pm.expect(l.map(function (s) { return s.code; })).to.include.members(['AMPHI_A','AMPHI_B','S12','TP1','TP2','SR1']); });",
+                  "pm.test('Triées par code', function () { const codes = l.map(function (s) { return s.code; }); pm.expect(codes).to.eql(codes.slice().sort()); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrer les salles de TP (?type=LAB)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/salles?type=LAB",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('TP1 et TP2 présentes', function () { pm.expect(l.map(function (s) { return s.code; })).to.include.members(['TP1','TP2']); });",
+                  "u.allHave(l, 'roomType', 'LAB');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrer les salles hors service (?active=false)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/salles?active=false",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('SR1 est hors service', function () { pm.expect(l.map(function (s) { return s.code; })).to.include('SR1'); });",
+                  "u.allHave(l, 'isActive', false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consulter une salle (id 1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/salles/1",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('AMPHI_A, 150 places, amphithéâtre actif', function () { pm.expect(u.body()).to.include({ code: 'AMPHI_A', capacity: 150, roomType: 'AMPHI', isActive: true }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - salle inexistante (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/salles/999999",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer une salle (chef de département)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/salles",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newSalleCodeLower}}\",\n  \"name\": \"Salle de test Postman\",\n  \"building\": \"Bloc Informatique\",\n  \"capacity\": 48,\n  \"roomType\": \"LAB\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const n = Math.floor(Math.random() * 900000) + 100000;",
+                  "pm.collectionVariables.set('newSalleCodeLower', 'pm_' + n);",
+                  "pm.collectionVariables.set('newSalleCode', 'PM_' + n);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "if (u.status(201)) { u.save('newSalleId', u.idOf()); }",
+                  "pm.test('Code mis en majuscules et salle active par défaut', function () { pm.expect(u.body()).to.include({ code: pm.collectionVariables.get('newSalleCode'), isActive: true, roomType: 'LAB', capacity: 48 }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - code de salle déjà utilisé (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/salles",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newSalleCode}}\",\n  \"name\": \"Salle de test Postman\",\n  \"building\": \"Bloc Informatique\",\n  \"capacity\": 48,\n  \"roomType\": \"LAB\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - capacité 0 refusée (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/salles",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"PM_ZERO\",\n  \"name\": \"Salle de test Postman\",\n  \"building\": \"Bloc Informatique\",\n  \"capacity\": 0,\n  \"roomType\": \"LAB\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Erreur sur le champ capacity', function () { pm.expect(u.body().errors).to.have.property('capacity'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - un étudiant ne peut pas créer de salle (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/salles",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"PM_ETU\",\n  \"name\": \"Salle de test Postman\",\n  \"building\": \"Bloc Informatique\",\n  \"capacity\": 48,\n  \"roomType\": \"LAB\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(403);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - sans jeton (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/salles",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier la salle : 60 places, hors service",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/salles/{{newSalleId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newSalleCode}}\",\n  \"name\": \"Salle de test Postman\",\n  \"building\": \"Bloc Informatique\",\n  \"capacity\": 60,\n  \"roomType\": \"LAB\",\n  \"isActive\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Capacité 60 et salle hors service', function () { pm.expect(u.body()).to.include({ capacity: 60, isActive: false }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer la salle créée (administrateur)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/salles/{{newSalleId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier la suppression de la salle (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/salles/{{newSalleId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Groupes de la filière M2I-ISI (?filiereId=1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/groupes?filiereId=1",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('Groupe 1 et Groupe 2 - ISI', function () { pm.expect(l.map(function (g) { return g.name; })).to.include.members(['Groupe 1 - ISI','Groupe 2 - ISI']); });",
+                  "u.allHave(l, 'filiereId', 1);",
+                  "u.allHave(l, 'filiereCode', 'M2I-ISI');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Groupes de la filière LSI-GL (/filiere/3)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/groupes/filiere/3",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Groupe A et Groupe B - GL', function () { pm.expect(u.list().map(function (g) { return g.name; })).to.include.members(['Groupe A - GL','Groupe B - GL']); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - groupes d'une filière inexistante (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/groupes?filiereId=999999",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer un groupe dans M2I-IA (chef de département)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/groupes",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newGroupeName}}\",\n  \"capacity\": 25,\n  \"filiereId\": 2\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('newGroupeName', 'Groupe Postman ' + (Math.floor(Math.random() * 9000) + 1000));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "if (u.status(201)) { u.save('newGroupeId', u.idOf()); }",
+                  "pm.test('Groupe rattaché à M2I-IA', function () { pm.expect(u.body()).to.include({ name: pm.collectionVariables.get('newGroupeName'), capacity: 25, filiereId: 2, filiereCode: 'M2I-IA' }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - même nom dans la même filière (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/groupes",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newGroupeName}}\",\n  \"capacity\": 25,\n  \"filiereId\": 2\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Même nom accepté dans une autre filière (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/groupes",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newGroupeName}}\",\n  \"capacity\": 30,\n  \"filiereId\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "if (u.status(201)) { u.save('newGroupeId2', u.idOf()); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - filière inexistante (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/groupes",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Groupe orphelin\",\n  \"capacity\": 20,\n  \"filiereId\": 999999\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Échec - nom de groupe vide (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/groupes",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"capacity\": 20,\n  \"filiereId\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Erreur sur le champ name', function () { pm.expect(u.body().errors).to.have.property('name'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier le groupe : effectif 28",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/groupes/{{newGroupeId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newGroupeName}}\",\n  \"capacity\": 28,\n  \"filiereId\": 2\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Effectif 28', function () { pm.expect(u.body().capacity).to.eql(28); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer le groupe créé (M2I-IA)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/groupes/{{newGroupeId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer le second groupe créé (M2I-ISI)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/groupes/{{newGroupeId2}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
                   "type": "string"
                 }
               ]
