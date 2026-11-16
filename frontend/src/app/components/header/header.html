@@ -10,6 +10,10 @@
       <a routerLink="/students">Étudiants</a>
       <a routerLink="/salles">Salles</a>
       <a routerLink="/groupes">Groupes</a>
+      @if (auth.currentRole() === 'ADMIN' || auth.currentRole() === 'CHEF_DEPARTEMENT') {
+        <a routerLink="/admin/users">Utilisateurs</a>
+      }
+      <a routerLink="/profile">Mon Profil</a>
       <a href="#" (click)="$event.preventDefault(); auth.logout()">Déconnexion</a>
     } @else {
       <a routerLink="/login">Connexion</a>

@@ -51,6 +51,7 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html"
                 ).permitAll()
+                .requestMatchers("/api/users/profile", "/api/users/change-password").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(

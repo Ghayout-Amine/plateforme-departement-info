@@ -18,5 +18,7 @@ public class UserResponseDTO {
     private String phone;
     private Role role;
     private Boolean enabled;
+    private String avatarUrl;
     private LocalDateTime createdAt;
+    private LocalDateTime lastLoginAt;
 }

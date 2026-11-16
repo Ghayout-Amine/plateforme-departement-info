@@ -1,17 +1,21 @@
 package ma.ump.deptinfo.backend.services;
 
-import ma.ump.deptinfo.backend.dtos.UserCreateDTO;
-import ma.ump.deptinfo.backend.dtos.UserResponseDTO;
-import ma.ump.deptinfo.backend.dtos.UserUpdateDTO;
+import ma.ump.deptinfo.backend.dtos.*;
 import ma.ump.deptinfo.backend.entities.Role;
 import ma.ump.deptinfo.backend.entities.User;
 import ma.ump.deptinfo.backend.exceptions.ConflictException;
 import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,21 +29,33 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Récupérer tous les utilisateurs
+    // ─── ADMIN : Lister tous les utilisateurs (avec filtres + pagination) ────
     public List<UserResponseDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    // Récupérer un utilisateur par son identifiant
+    public Map<String, Object> getUsersWithFilters(Role role, Boolean enabled, String search, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("lastName").ascending());
+        Page<User> userPage = userRepository.findWithFilters(role, enabled, search, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("users", userPage.getContent().stream().map(this::toResponseDTO).collect(Collectors.toList()));
+        response.put("currentPage", userPage.getNumber());
+        response.put("totalItems", userPage.getTotalElements());
+        response.put("totalPages", userPage.getTotalPages());
+        return response;
+    }
+
+    // ─── ADMIN : Récupérer un utilisateur par son identifiant ────────────────
     public UserResponseDTO getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + id));
         return toResponseDTO(user);
     }
 
-    // Créer un utilisateur avec vérification et hachage du mot de passe
+    // ─── ADMIN : Créer un utilisateur ────────────────────────────────────────
     public UserResponseDTO createUser(UserCreateDTO dto) {
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             throw new ConflictException("Un utilisateur avec cet email existe déjà !");
@@ -58,7 +74,7 @@ public class UserService {
         return toResponseDTO(saved);
     }
 
-    // Mettre à jour les informations d'un utilisateur
+    // ─── ADMIN : Mettre à jour un utilisateur ────────────────────────────────
     public UserResponseDTO updateUser(Long id, UserUpdateDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + id));
@@ -78,7 +94,23 @@ public class UserService {
         return toResponseDTO(updated);
     }
 
-    // Supprimer un utilisateur
+    // ─── ADMIN : Activer / Désactiver un compte ───────────────────────────────
+    public UserResponseDTO toggleUserStatus(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + id));
+        user.setEnabled(!user.getEnabled());
+        return toResponseDTO(userRepository.save(user));
+    }
+
+    // ─── ADMIN : Changer le rôle d'un utilisateur ────────────────────────────
+    public UserResponseDTO changeUserRole(Long id, Role newRole) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + id));
+        user.setRole(newRole);
+        return toResponseDTO(userRepository.save(user));
+    }
+
+    // ─── ADMIN : Supprimer un utilisateur ────────────────────────────────────
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + id);
@@ -86,8 +118,41 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    // Méthode de conversion entité -> DTO de réponse
-    private UserResponseDTO toResponseDTO(User user) {
+    // ─── PROFIL : Consulter mon profil (utilisateur connecté) ────────────────
+    public UserResponseDTO getMyProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
+        return toResponseDTO(user);
+    }
+
+    // ─── PROFIL : Mettre à jour mon profil ───────────────────────────────────
+    public UserResponseDTO updateMyProfile(String email, UpdateProfileDTO dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setPhone(dto.getPhone());
+        if (dto.getAvatarUrl() != null) {
+            user.setAvatarUrl(dto.getAvatarUrl());
+        }
+        return toResponseDTO(userRepository.save(user));
+    }
+
+    // ─── PROFIL : Changer mon mot de passe ───────────────────────────────────
+    public void changePassword(String email, ChangePasswordDTO dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPasswordHash())) {
+            throw new ConflictException("L'ancien mot de passe est incorrect.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    // ─── Conversion entité → DTO de réponse ──────────────────────────────────
+    public UserResponseDTO toResponseDTO(User user) {
         return new UserResponseDTO(
                 user.getId(),
                 user.getEmail(),
@@ -96,7 +161,9 @@ public class UserService {
                 user.getPhone(),
                 user.getRole(),
                 user.getEnabled(),
-                user.getCreatedAt()
+                user.getAvatarUrl(),
+                user.getCreatedAt(),
+                user.getLastLoginAt()
         );
     }
 }
