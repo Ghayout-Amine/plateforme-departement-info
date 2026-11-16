@@ -22,16 +22,14 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Make Maven wrapper executable
-        run: chmod +x backend/mvnw
-
       - name: Run Backend Tests & Coverage with JaCoCo
         run: |
           cd backend
-          ./mvnw clean test
+          mvn clean test
 
       - name: Upload JaCoCo Coverage Report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: jacoco-coverage-report
           path: backend/target/site/jacoco/
@@ -45,17 +43,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          node-version: '22'
 
       - name: Install Frontend Dependencies
         run: |
           cd frontend
-          npm ci
+          npm install
 
       - name: Build Frontend
         run: |
