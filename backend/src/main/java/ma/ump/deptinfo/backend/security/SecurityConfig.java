@@ -44,11 +44,14 @@ public class SecurityConfig {
                     "/api/auth/test",
                     "/api/stats",
                     "/api/contact",
+                    "/actuator/health",
+                    "/actuator/info",
                     "/error",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html"
                 ).permitAll()
+                .requestMatchers("/api/users/profile", "/api/users/change-password").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(
