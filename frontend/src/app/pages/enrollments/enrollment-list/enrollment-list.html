@@ -1,0 +1,219 @@
+<section class="list-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">SCOLARITÉ</span>
+      <h1>Inscriptions pédagogiques</h1>
+      <p>Inscrire les étudiants dans une filière pour l’année universitaire, puis les affecter à un groupe de TD/TP.</p>
+    </div>
+
+    <div class="year-picker">
+      <label for="year">Année universitaire</label>
+      <div class="year-row">
+        <select id="year" class="type-select" [ngModel]="selectedYearId()" (ngModelChange)="onYearChange($event)">
+          @for (year of years(); track year.id) {
+            <option [ngValue]="year.id">{{ year.label }}{{ year.current ? ' (en cours)' : '' }}</option>
+          }
+        </select>
+        <button type="button" class="link-button" (click)="showYearForm.set(!showYearForm())">
+          {{ showYearForm() ? 'Annuler' : '＋ Nouvelle année' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (showYearForm()) {
+    <div class="content-card form-card">
+      <h2>Nouvelle année universitaire</h2>
+      @if (years().length === 0) {
+        <p class="hint">Aucune année n’existe encore : créez-en une pour pouvoir inscrire des étudiants.</p>
+      }
+      @if (yearError()) {
+        <div class="message error">{{ yearError() }}</div>
+      }
+      <form class="inline-form" (ngSubmit)="createYear()">
+        <div class="field">
+          <label for="yearLabel">Libellé *</label>
+          <input id="yearLabel" name="yearLabel" placeholder="2026-2027" [(ngModel)]="yearLabel">
+        </div>
+        <div class="field">
+          <label for="yearStart">Début *</label>
+          <input id="yearStart" name="yearStart" type="date" [(ngModel)]="yearStart">
+        </div>
+        <div class="field">
+          <label for="yearEnd">Fin *</label>
+          <input id="yearEnd" name="yearEnd" type="date" [(ngModel)]="yearEnd">
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" name="yearCurrent" [(ngModel)]="yearCurrent"> Année en cours
+        </label>
+        <button type="submit" class="primary-button">Créer l’année</button>
+      </form>
+    </div>
+  }
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-icon blue">♙</div>
+      <div>
+        <span>Étudiants inscrits</span>
+        <strong>{{ enrollments().length }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon teal">◫</div>
+      <div>
+        <span>Sans groupe</span>
+        <strong>{{ withoutGroupe() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon violet">＋</div>
+      <div>
+        <span>Étudiants à inscrire</span>
+        <strong>{{ availableStudents().length }}</strong>
+      </div>
+    </article>
+  </div>
+
+  @if (selectedYearId()) {
+    <div class="content-card form-card">
+      <h2>Inscrire un étudiant</h2>
+      @if (formError()) {
+        <div class="message error">{{ formError() }}</div>
+      }
+      <form class="inline-form" (ngSubmit)="enroll()">
+        <div class="field grow">
+          <label for="student">Étudiant *</label>
+          <select id="student" name="student" [(ngModel)]="formStudentId">
+            <option [ngValue]="null">— Choisir un étudiant —</option>
+            @for (s of availableStudents(); track s.id) {
+              <option [ngValue]="s.id">{{ s.lastName }} {{ s.firstName }} · {{ s.studentNumber }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="filiere">Filière *</label>
+          <select id="filiere" name="filiere" [ngModel]="formFiliereId" (ngModelChange)="onFormFiliereChange($event)">
+            <option [ngValue]="null">— Choisir —</option>
+            @for (f of filieres(); track f.id) {
+              <option [ngValue]="f.id">{{ f.code }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="groupe">Groupe TD/TP</label>
+          <select id="groupe" name="groupe" [(ngModel)]="formGroupeId" [disabled]="!formFiliereId">
+            <option [ngValue]="null">Plus tard</option>
+            @for (g of formGroupes(); track g.id) {
+              <option [ngValue]="g.id">{{ g.name }}{{ g.capacity ? ' (' + g.capacity + ' max)' : '' }}</option>
+            }
+          </select>
+        </div>
+        <button type="submit" class="primary-button" [disabled]="saving()">
+          {{ saving() ? 'Inscription...' : 'Inscrire' }}
+        </button>
+      </form>
+    </div>
+  }
+
+  <div class="content-card">
+    <div class="table-heading">
+      <div>
+        <h2>Étudiants inscrits</h2>
+        <p>Changez le groupe ou le statut directement dans le tableau.</p>
+      </div>
+
+      <div class="filters">
+        <select class="type-select" aria-label="Filtrer par filière"
+                [ngModel]="filterFiliereId()" (ngModelChange)="onFilterFiliereChange($event)">
+          <option [ngValue]="null">Toutes les filières</option>
+          @for (f of filieres(); track f.id) {
+            <option [ngValue]="f.id">{{ f.code }} — {{ f.nom }}</option>
+          }
+        </select>
+        <select class="type-select" aria-label="Filtrer par groupe"
+                [ngModel]="filterGroupeId()" (ngModelChange)="onFilterGroupeChange($event)">
+          <option [ngValue]="null">Tous les groupes</option>
+          @for (g of filterGroupes(); track g.id) {
+            <option [ngValue]="g.id">{{ g.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (notice()) {
+      <div class="message success">{{ notice() }}</div>
+    }
+
+    @if (loading()) {
+      <div class="state-message">
+        <div class="loader"></div>
+        <p>Chargement des inscriptions...</p>
+      </div>
+    } @else if (error()) {
+      <div class="state-message error-state">
+        <strong>{{ error() }}</strong>
+        <button class="retry-button" (click)="loadEnrollments()">Réessayer</button>
+      </div>
+    } @else if (enrollments().length === 0) {
+      <div class="state-message">
+        <div class="empty-icon">♙</div>
+        <h3>Aucune inscription</h3>
+        <p>Utilisez le formulaire ci-dessus pour inscrire un premier étudiant.</p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ÉTUDIANT</th>
+              <th>N° ÉTUDIANT</th>
+              <th>FILIÈRE</th>
+              <th>GROUPE TD/TP</th>
+              <th>STATUT</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of enrollments(); track e.id) {
+              <tr>
+                <td>
+                  <div class="student-cell">
+                    <div class="avatar">{{ initials(e) }}</div>
+                    <strong class="main-text">{{ e.studentFirstName }} {{ e.studentLastName }}</strong>
+                  </div>
+                </td>
+                <td><span class="code-badge">{{ e.studentNumber }}</span></td>
+                <td><span class="filiere-name">{{ e.filiereCode }}</span></td>
+                <td>
+                  <select class="row-select" [class.missing]="!e.groupeId" [attr.aria-label]="'Groupe de ' + e.studentLastName"
+                          [ngModel]="e.groupeId ?? null" (ngModelChange)="changeGroupe(e, $event)">
+                    <option [ngValue]="null">Non affecté</option>
+                    @for (g of groupesOf(e); track g.id) {
+                      <option [ngValue]="g.id">{{ g.name }}</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <select class="row-select" [attr.aria-label]="'Statut de ' + e.studentLastName"
+                          [ngModel]="e.status" (ngModelChange)="changeStatus(e, $event)">
+                    @for (s of statuses; track s) {
+                      <option [ngValue]="s">{{ statusLabels[s] }}</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <div class="actions">
+                    <button class="action-button delete" (click)="deleteEnrollment(e)">Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>
