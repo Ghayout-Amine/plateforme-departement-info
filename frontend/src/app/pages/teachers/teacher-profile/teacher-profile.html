@@ -1,4 +1,4 @@
-﻿<section class="profile-page">
+<section class="profile-page">
   <a routerLink="/teachers" class="back-link">← Retour à la liste</a>
 
   @if (loading()) {
@@ -8,7 +8,7 @@
   } @else if (teacher(); as t) {
     <div class="profile-card">
       <div class="profile-header">
-        <div class="avatar">{{ getInitials(t) }}</div>
+        <app-teacher-photo [teacherId]="t.id" [initials]="getInitials(t)" />
         <div>
           <span class="eyebrow">PROFIL ENSEIGNANT</span>
           <h1>{{ t.firstName }} {{ t.lastName }}</h1>

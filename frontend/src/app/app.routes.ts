@@ -1,3 +1,5 @@
+import { GradeEntry } from './pages/grades/grade-entry';
+import { AbsenceManagement } from './pages/absences/absence-management';
 import { Routes } from '@angular/router';
 import { Home } from './pages/home/home';
 import { Login } from './pages/login/login';
@@ -53,5 +55,8 @@ export const routes: Routes = [
   { path: 'admin/users', component: UserList, canActivate: [authGuard] },
   { path: 'profile', component: UserProfile, canActivate: [authGuard] },
 
+  // PGDI2026-70 / PGDI2026-71 : notes et absences
+  { path: 'grades', component: GradeEntry, canActivate: [authGuard] },
+  { path: 'absences', component: AbsenceManagement, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

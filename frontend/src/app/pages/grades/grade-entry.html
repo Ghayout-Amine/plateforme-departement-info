@@ -1,0 +1,108 @@
+<section class="grade-page">
+  <h1>Saisie des notes</h1>
+  <p>Enregistrez une note en brouillon, puis publiez-la.</p>
+
+    @if (auth.currentRole() === 'ENSEIGNANT') {
+  <form (ngSubmit)="save()" #gradeForm="ngForm">
+    <label for="studentId">Identifiant etudiant</label>
+    <input id="studentId" type="number" name="studentId"
+           [(ngModel)]="form.studentId" min="1" required />
+
+    <label for="moduleId">Identifiant module</label>
+    <input id="moduleId" type="number" name="moduleId"
+           [(ngModel)]="form.moduleId" min="1" required />
+
+    <label for="score">Note / 20</label>
+    <input id="score" type="number" name="score"
+           [(ngModel)]="form.score" min="0" max="20" step="0.01" required />
+
+    <label for="type">Type d'evaluation</label>
+    <select id="type" name="type" [(ngModel)]="form.type" required>
+      @for (type of types; track type) {
+        <option [value]="type">{{ type }}</option>
+      }
+    </select>
+
+    <label for="coefficient">Coefficient</label>
+    <input id="coefficient" type="number" name="coefficient"
+           [(ngModel)]="form.coefficient" min="0.01"
+           max="999.99" step="0.01" required />
+
+    <label for="sessionDate">Date de l'evaluation</label>
+    <input id="sessionDate" type="date" name="sessionDate"
+           [(ngModel)]="form.sessionDate" required />
+
+    <button type="submit" [disabled]="loading() || gradeForm.invalid">
+      {{ loading() ? 'Enregistrement...' : 'Enregistrer le brouillon' }}
+    </button>
+  </form>
+  }
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  @if (success()) {
+    <p class="success" role="status">{{ success() }}</p>
+  }
+
+  @if (auth.currentRole() === 'ENSEIGNANT') {
+  @if (createdGrade(); as grade) {
+    <section class="result">
+      <h2>Note enregistree</h2>
+      <p>Etudiant : {{ grade.studentId }}</p>
+      <p>Module : {{ grade.moduleId }}</p>
+      <p>Note : {{ grade.score }}/20</p>
+      <p>Statut : {{ grade.status }}</p>
+
+      @if (grade.status === 'DRAFT') {
+        <button type="button" (click)="publish()" [disabled]="loading()">
+          Publier la note
+        </button>
+      }
+    </section>
+  }
+  }
+
+  @if (auth.currentRole() === 'ETUDIANT') {
+    <section class="result">
+      <h2>Mes notes publiees</h2>
+      <button type="button"
+              (click)="loadMyGrades()"
+              [disabled]="loading()">
+        Actualiser mes notes
+      </button>
+
+      @if (myGradesLoaded()) {
+        @if (myGrades().length === 0) {
+          <p>Aucune note publiee pour le moment.</p>
+        } @else {
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Type</th>
+                  <th>Note / 20</th>
+                  <th>Coefficient</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (grade of myGrades(); track grade.id) {
+                  <tr>
+                    <td>{{ grade.moduleId }}</td>
+                    <td>{{ grade.type }}</td>
+                    <td>{{ grade.score }}</td>
+                    <td>{{ grade.coefficient }}</td>
+                    <td>{{ grade.sessionDate }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </section>
+  }
+</section>

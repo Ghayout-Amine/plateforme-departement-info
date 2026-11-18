@@ -1,4 +1,4 @@
-﻿<header class="header">
+<header class="header">
   <h1 class="logo">PGDI</h1>
   <nav>
     <a routerLink="/">Accueil</a>
@@ -13,6 +13,14 @@
       @if (auth.currentRole() === 'ADMIN' || auth.currentRole() === 'CHEF_DEPARTEMENT') {
         <a routerLink="/inscriptions">Inscriptions</a>
         <a routerLink="/admin/users">Utilisateurs</a>
+      }
+      @if (auth.currentRole() === 'ENSEIGNANT') {
+        <a routerLink="/grades">Saisie des notes</a>
+        <a routerLink="/absences">Gestion des absences</a>
+      }
+      @if (auth.currentRole() === 'ETUDIANT') {
+        <a routerLink="/grades">Mes notes</a>
+        <a routerLink="/absences">Mes absences</a>
       }
       <a routerLink="/profile">Mon Profil</a>
       <a href="#" (click)="$event.preventDefault(); auth.logout()">Déconnexion</a>

@@ -1,0 +1,60 @@
+.absence-page {
+  max-width: 850px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.panel {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+input:not([type="checkbox"]), textarea {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+textarea {
+  min-height: 75px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+button {
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #155eef;
+  color: white;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error { color: #b42318; }
+.success { color: #067647; }
+.hint { color: #667085; }
+
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  padding: 0.7rem;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}

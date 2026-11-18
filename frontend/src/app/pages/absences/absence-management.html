@@ -1,0 +1,129 @@
+<section class="absence-page">
+  <h1>Gestion des absences</h1>
+  <p>Enregistrement et suivi des absences des etudiants.</p>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  @if (success()) {
+    <p class="success" role="status">{{ success() }}</p>
+  }
+
+  @if (auth.currentRole() === 'ENSEIGNANT') {
+  <section class="panel">
+    <h2>Saisir une absence</h2>
+    <p class="hint">Reserve aux enseignants responsables du module.</p>
+
+    <form (ngSubmit)="save()" #absenceForm="ngForm">
+      <label for="studentId">Identifiant etudiant</label>
+      <input id="studentId" type="number" name="studentId"
+             [(ngModel)]="form.studentId" min="1" step="1" required />
+
+      <label for="moduleId">Identifiant module</label>
+      <input id="moduleId" type="number" name="moduleId"
+             [(ngModel)]="form.moduleId" min="1" step="1" required />
+
+      <label for="date">Date de la seance</label>
+      <input id="date" type="date" name="date"
+             [(ngModel)]="form.date" required />
+
+      <label for="sessionTime">Horaire de la seance</label>
+      <input id="sessionTime" type="text" name="sessionTime"
+             placeholder="Ex. 08:30-10:30"
+             [(ngModel)]="form.sessionTime"
+             maxlength="50" required />
+
+      <label class="check">
+        <input type="checkbox" name="justified"
+               [(ngModel)]="form.justified" />
+        Absence deja justifiee
+      </label>
+
+      @if (form.justified) {
+        <label for="motif">Motif de justification</label>
+        <textarea id="motif" name="motif"
+                  [(ngModel)]="form.motif"
+                  maxlength="500" required></textarea>
+      }
+
+      <button type="submit" [disabled]="loading() || absenceForm.invalid">
+        Enregistrer l'absence
+      </button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Justifier une absence existante</h2>
+
+    <form (ngSubmit)="justify()" #justifyForm="ngForm">
+      <label for="absenceId">Identifiant de l'absence</label>
+      <input id="absenceId" type="number" name="absenceId"
+             [(ngModel)]="justificationId" min="1" step="1" required />
+
+      <label for="justificationMotif">Motif</label>
+      <textarea id="justificationMotif" name="justificationMotif"
+                [(ngModel)]="justificationMotif"
+                maxlength="500" required></textarea>
+
+      <button type="submit" [disabled]="loading() || justifyForm.invalid">
+        Justifier
+      </button>
+    </form>
+  </section>
+
+  @if (lastAbsence(); as absence) {
+    <section class="panel">
+      <h2>Derniere operation</h2>
+      <p>Absence #{{ absence.id }}</p>
+      <p>Etudiant #{{ absence.studentId }}</p>
+      <p>Date : {{ absence.date }}</p>
+      <p>Seance : {{ absence.sessionTime }}</p>
+      <p>Justifiee : {{ absence.justified ? 'Oui' : 'Non' }}</p>
+    </section>
+  }
+
+  }
+
+  @if (auth.currentRole() === 'ETUDIANT') {
+  <section class="panel">
+    <h2>Mes absences</h2>
+    <p class="hint">Consultation reservee aux etudiants connectes.</p>
+
+    <button type="button" (click)="loadMyAbsences()" [disabled]="loading()">
+      Actualiser mes absences
+    </button>
+
+    @if (myAbsencesLoaded()) {
+      @if (myAbsences().length === 0) {
+        <p>Aucune absence enregistree.</p>
+      } @else {
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Module</th>
+                <th>Seance</th>
+                <th>Justifiee</th>
+                <th>Motif</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (absence of myAbsences(); track absence.id) {
+                <tr>
+                  <td>{{ absence.date }}</td>
+                  <td>{{ absence.moduleId }}</td>
+                  <td>{{ absence.sessionTime }}</td>
+                  <td>{{ absence.justified ? 'Oui' : 'Non' }}</td>
+                  <td>{{ absence.motif || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </section>
+  }
+</section>
