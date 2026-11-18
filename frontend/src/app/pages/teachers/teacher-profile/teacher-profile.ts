@@ -1,12 +1,13 @@
-﻿import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TeacherService } from '../../../services/teacher.service';
 import { Teacher } from '../../../models/teacher.model';
+import { TeacherPhoto } from '../teacher-photo/teacher-photo';
 
 @Component({
   selector: 'app-teacher-profile',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TeacherPhoto],
   templateUrl: './teacher-profile.html',
   styleUrl: './teacher-profile.css'
 })
