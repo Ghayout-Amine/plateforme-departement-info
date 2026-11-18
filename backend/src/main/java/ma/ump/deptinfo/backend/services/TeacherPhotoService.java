@@ -29,7 +29,7 @@ import java.util.UUID;
 @Service
 public class TeacherPhotoService {
 
-    private static final long MAX_BYTES = 2L * 1024 * 1024;
+    private static final long MAX_BYTES = 5L * 1024 * 1024;
 
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
@@ -76,6 +76,43 @@ public class TeacherPhotoService {
             throw new AccessDeniedException("Modification non autorisee");
         }
 
+        String filename = sanitizeAndSave(file);
+        Path target = getStorageDirectory().resolve(filename);
+
+        String avatarUrl = "/api/teachers/"
+                + teacherId + "/photo";
+
+        try {
+            owner.setAvatarUrl(avatarUrl + "?v=" + filename);
+            userRepository.save(owner);
+        } catch (RuntimeException ex) {
+            Files.deleteIfExists(target);
+            throw ex;
+        }
+
+        return owner.getAvatarUrl();
+    }
+
+    @Transactional
+    public String uploadUserPhoto(User user, MultipartFile file) throws IOException {
+        String filename = sanitizeAndSave(file);
+        Path target = getStorageDirectory().resolve(filename);
+
+        String avatarUrl = "/api/users/"
+                + user.getId() + "/photo";
+
+        try {
+            user.setAvatarUrl(avatarUrl + "?v=" + filename);
+            userRepository.save(user);
+        } catch (RuntimeException ex) {
+            Files.deleteIfExists(target);
+            throw ex;
+        }
+
+        return user.getAvatarUrl();
+    }
+
+    private String sanitizeAndSave(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()
                 || file.getSize() > MAX_BYTES) {
             throw new ResponseStatusException(
@@ -170,18 +207,7 @@ public class TeacherPhotoService {
         Files.write(target, output.toByteArray(),
                 StandardOpenOption.CREATE_NEW);
 
-        String avatarUrl = "/api/teachers/"
-                + teacherId + "/photo";
-
-        try {
-            owner.setAvatarUrl(avatarUrl + "?v=" + filename);
-            userRepository.save(owner);
-        } catch (RuntimeException ex) {
-            Files.deleteIfExists(target);
-            throw ex;
-        }
-
-        return owner.getAvatarUrl();
+        return filename;
     }
 
     public record PhotoData(
@@ -190,39 +216,12 @@ public class TeacherPhotoService {
     }
 
     @Transactional(readOnly = true)
-    public PhotoData getPhoto(
-            Long teacherId,
-            String authenticatedEmail) throws IOException {
-
-        if (authenticatedEmail == null || authenticatedEmail.isBlank()) {
-            throw new AccessDeniedException("Authentification requise");
-        }
-
-        User actor = userRepository.findByEmail(authenticatedEmail)
-                .orElseThrow(() ->
-                        new AccessDeniedException("Utilisateur non autorise"));
-
-        if (!Boolean.TRUE.equals(actor.getEnabled())
-                || actor.getDeletedAt() != null) {
-            throw new AccessDeniedException("Compte inactif");
-        }
-
+    public PhotoData getPhoto(Long teacherId) throws IOException {
         Teacher teacher = teacherRepository.findById(teacherId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Enseignant introuvable"));
 
         User owner = teacher.getUser();
-
-        boolean manager = actor.getRole() == Role.ADMIN
-                || actor.getRole() == Role.CHEF_DEPARTEMENT;
-
-        boolean self = actor.getRole() == Role.ENSEIGNANT
-                && actor.getId().equals(owner.getId());
-
-        if (!manager && !self) {
-            throw new AccessDeniedException("Consultation non autorisee");
-        }
-
         String avatarUrl = owner.getAvatarUrl();
         String prefix = "/api/teachers/" + teacherId + "/photo?v=";
 
@@ -232,6 +231,45 @@ public class TeacherPhotoService {
 
         String filename = avatarUrl.substring(prefix.length());
 
+        if (!filename.matches(
+                "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+              + "[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.(jpg|png)")) {
+            throw new ResourceNotFoundException("Photo introuvable");
+        }
+
+        Path directory = getStorageDirectory();
+        Path target = directory.resolve(filename);
+
+        if (!Files.isRegularFile(target)) {
+            throw new ResourceNotFoundException("Photo introuvable");
+        }
+
+        org.springframework.http.MediaType type =
+                filename.endsWith(".png")
+                ? org.springframework.http.MediaType.IMAGE_PNG
+                : org.springframework.http.MediaType.IMAGE_JPEG;
+
+        return new PhotoData(Files.readAllBytes(target), type);
+    }
+
+    @Transactional(readOnly = true)
+    public PhotoData getPhoto(
+            Long teacherId,
+            String authenticatedEmail) throws IOException {
+        return getPhoto(teacherId);
+    }
+
+    @Transactional(readOnly = true)
+    public PhotoData getUserPhoto(Long userId) throws IOException {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
+
+        String avatarUrl = user.getAvatarUrl();
+        if (avatarUrl == null || !avatarUrl.contains("?v=")) {
+            throw new ResourceNotFoundException("Photo introuvable");
+        }
+
+        String filename = avatarUrl.substring(avatarUrl.indexOf("?v=") + 3);
         if (!filename.matches(
                 "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
               + "[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.(jpg|png)")) {

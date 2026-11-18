@@ -6,6 +6,7 @@ import ma.ump.deptinfo.backend.entities.User;
 import ma.ump.deptinfo.backend.exceptions.ConflictException;
 import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
+import ma.ump.deptinfo.backend.repositories.TeacherRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,12 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private TeacherRepository teacherRepository;
+
+    @Mock
+    private TeacherPhotoService teacherPhotoService;
 
     @InjectMocks
     private UserService userService;

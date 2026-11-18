@@ -5,7 +5,16 @@
 
     <!-- En-tête profil -->
     <div class="profile-header">
-      <div class="avatar-large">{{ getInitials() }}</div>
+      <div class="avatar-wrapper" (click)="photoInput.click()" title="Cliquer pour changer la photo">
+        @if (p.avatarUrl) {
+          <img [src]="p.avatarUrl" [alt]="p.firstName" class="avatar-large avatar-img" (error)="$any($event.target).style.display='none'; fallbackEl.style.display='flex'" />
+          <div #fallbackEl class="avatar-large" style="display:none">{{ getInitials() }}</div>
+        } @else {
+          <div class="avatar-large">{{ getInitials() }}</div>
+        }
+        <div class="avatar-overlay">📷 Modifier</div>
+      </div>
+      <input #photoInput type="file" (change)="onPhotoSelected($event)" accept="image/jpeg,image/png" style="display:none" />
       <div>
         <h1>{{ p.firstName }} {{ p.lastName }}</h1>
         <p class="role-label">{{ getRoleLabel(p.role) }}</p>

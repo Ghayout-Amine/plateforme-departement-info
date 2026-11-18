@@ -3,13 +3,17 @@ package ma.ump.deptinfo.backend.controllers;
 import jakarta.validation.Valid;
 import ma.ump.deptinfo.backend.dtos.*;
 import ma.ump.deptinfo.backend.entities.Role;
+import ma.ump.deptinfo.backend.services.TeacherPhotoService;
 import ma.ump.deptinfo.backend.services.UserService;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -106,5 +110,25 @@ public class UserController {
                                                                @Valid @RequestBody ChangePasswordDTO dto) {
         userService.changePassword(auth.getName(), dto);
         return ResponseEntity.ok(Map.of("message", "Mot de passe modifié avec succès."));
+    }
+
+    // ─── PROFIL : Téléverser ma photo de profil ──────────────────────────────
+    @PostMapping(value = "/profile/photo", consumes = "multipart/form-data")
+    public ResponseEntity<Map<String, String>> uploadProfilePhoto(
+            @RequestParam("file") MultipartFile file,
+            Authentication auth) throws IOException {
+        String avatarUrl = userService.uploadProfilePhoto(auth.getName(), file);
+        return ResponseEntity.ok(Map.of("avatarUrl", avatarUrl));
+    }
+
+    // ─── PHOTO : Consulter la photo d'un utilisateur ─────────────────────────
+    @GetMapping("/{id}/photo")
+    public ResponseEntity<byte[]> getUserPhoto(@PathVariable Long id) throws IOException {
+        TeacherPhotoService.PhotoData photo = userService.getUserPhoto(id);
+        return ResponseEntity.ok()
+                .contentType(photo.contentType())
+                .cacheControl(CacheControl.noStore())
+                .header("X-Content-Type-Options", "nosniff")
+                .body(photo.bytes());
     }
 }

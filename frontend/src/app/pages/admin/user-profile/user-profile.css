@@ -1,7 +1,11 @@
 .profile-container { padding: 2rem; max-width: 700px; margin: 0 auto; }
 
 .profile-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; padding: 1.5rem; background: white; border-radius: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.avatar-wrapper { position: relative; width: 72px; height: 72px; border-radius: 50%; cursor: pointer; flex-shrink: 0; overflow: hidden; }
+.avatar-wrapper:hover .avatar-overlay { opacity: 1; }
 .avatar-large { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; flex-shrink: 0; }
+.avatar-large.avatar-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; display: block; }
+.avatar-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; opacity: 0; transition: opacity 0.2s; text-align: center; }
 .profile-header h1 { margin: 0; font-size: 1.5rem; color: #1e293b; }
 .role-label { margin: 0.25rem 0 0; color: #3b82f6; font-weight: 600; font-size: 0.95rem; }
 .email-label { margin: 0.2rem 0 0; color: #64748b; font-size: 0.9rem; }

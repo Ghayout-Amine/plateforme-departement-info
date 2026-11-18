@@ -69,4 +69,11 @@ export class UserService {
   changePassword(data: ChangePassword): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.apiUrl}/change-password`, data);
   }
+
+  // ─── PROFIL : Téléverser ma photo de profil ───────────────────────────────
+  uploadProfilePhoto(file: File): Observable<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ avatarUrl: string }>(`${this.apiUrl}/profile/photo`, formData);
+  }
 }

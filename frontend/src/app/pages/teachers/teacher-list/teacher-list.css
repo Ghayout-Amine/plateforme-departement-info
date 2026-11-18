@@ -209,6 +209,11 @@ tbody tr:hover {
   font-weight: 750;
 }
 
+.avatar.avatar-img {
+  object-fit: cover;
+  display: block;
+}
+
 .teacher-info strong,
 .teacher-info span {
   display: block;

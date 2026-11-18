@@ -3,8 +3,10 @@ package ma.ump.deptinfo.backend.services;
 import ma.ump.deptinfo.backend.dtos.*;
 import ma.ump.deptinfo.backend.entities.Role;
 import ma.ump.deptinfo.backend.entities.User;
+import ma.ump.deptinfo.backend.entities.Teacher;
 import ma.ump.deptinfo.backend.exceptions.ConflictException;
 import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
+import ma.ump.deptinfo.backend.repositories.TeacherRepository;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,10 +14,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,10 +28,17 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TeacherRepository teacherRepository;
+    private final TeacherPhotoService teacherPhotoService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       TeacherRepository teacherRepository,
+                       TeacherPhotoService teacherPhotoService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.teacherRepository = teacherRepository;
+        this.teacherPhotoService = teacherPhotoService;
     }
 
     // ─── ADMIN : Lister tous les utilisateurs (avec filtres + pagination) ────
@@ -149,6 +161,24 @@ public class UserService {
 
         user.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
+    }
+
+    // ─── PROFIL : Téléverser ma photo de profil ──────────────────────────────
+    public String uploadProfilePhoto(String email, MultipartFile file) throws IOException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
+
+        Optional<Teacher> teacherOpt = teacherRepository.findByUserId(user.getId());
+        if (teacherOpt.isPresent()) {
+            return teacherPhotoService.upload(teacherOpt.get().getId(), file, email);
+        }
+
+        return teacherPhotoService.uploadUserPhoto(user, file);
+    }
+
+    // ─── PROFIL : Consulter la photo d'un utilisateur ────────────────────────
+    public TeacherPhotoService.PhotoData getUserPhoto(Long userId) throws IOException {
+        return teacherPhotoService.getUserPhoto(userId);
     }
 
     // ─── Conversion entité → DTO de réponse ──────────────────────────────────

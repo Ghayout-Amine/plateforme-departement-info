@@ -10,4 +10,6 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long> {
     Optional<Teacher> findByEmployeeNumber(String employeeNumber);
 
     boolean existsByUserId(Long userId);
+
+    Optional<Teacher> findByUserId(Long userId);
 }

@@ -53,7 +53,12 @@
             <tr [class.disabled-row]="!user.enabled">
               <td>
                 <div class="user-info">
-                  <div class="avatar">{{ user.firstName[0] }}{{ user.lastName[0] }}</div>
+                  @if (user.avatarUrl) {
+                    <img [src]="user.avatarUrl" [alt]="user.firstName" class="avatar avatar-img" (error)="$any($event.target).style.display='none'; fallbackEl.style.display='flex'" />
+                    <div #fallbackEl class="avatar" style="display:none">{{ user.firstName[0] }}{{ user.lastName[0] }}</div>
+                  } @else {
+                    <div class="avatar">{{ user.firstName[0] }}{{ user.lastName[0] }}</div>
+                  }
                   <span>{{ user.firstName }} {{ user.lastName }}</span>
                 </div>
               </td>

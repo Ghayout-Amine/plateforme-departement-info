@@ -62,6 +62,44 @@ export class UserProfile implements OnInit {
     });
   }
 
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.errorMsg.set('');
+    this.successMsg.set('');
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      this.errorMsg.set('Veuillez choisir une image JPEG ou PNG.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size === 0 || file.size > 5 * 1024 * 1024) {
+      this.errorMsg.set('La photo doit faire au maximum 5 Mo.');
+      input.value = '';
+      return;
+    }
+
+    this.userService.uploadProfilePhoto(file).subscribe({
+      next: () => {
+        this.successMsg.set('Photo de profil mise à jour avec succès !');
+        this.loadProfile();
+        input.value = '';
+        setTimeout(() => this.successMsg.set(''), 4000);
+      },
+      error: (err) => {
+        this.errorMsg.set(
+          err.status === 413
+            ? 'La photo dépasse la taille autorisée (2 Mo).'
+            : 'Impossible de téléverser la photo.'
+        );
+        input.value = '';
+      }
+    });
+  }
+
   savePassword(): void {
     this.passwordError = '';
     this.errorMsg.set('');

@@ -55,8 +55,8 @@ export class TeacherPhoto implements OnInit, OnDestroy {
       return;
     }
 
-    if (file.size === 0 || file.size > 2 * 1024 * 1024) {
-      this.error.set('La photo doit faire entre 1 octet et 2 Mo.');
+    if (file.size === 0 || file.size > 5 * 1024 * 1024) {
+      this.error.set('La photo doit faire entre 1 octet et 5 Mo.');
       input.value = '';
       return;
     }

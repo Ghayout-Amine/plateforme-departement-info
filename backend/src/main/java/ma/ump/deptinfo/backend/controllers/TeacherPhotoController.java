@@ -40,14 +40,11 @@ public class TeacherPhotoController {
     }
 
     @GetMapping("/{id}/photo")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> getPhoto(
-            @PathVariable Long id,
-            Authentication authentication) throws IOException {
+            @PathVariable Long id) throws IOException {
 
         TeacherPhotoService.PhotoData photo =
-                photoService.getPhoto(
-                        id, authentication.getName());
+                photoService.getPhoto(id);
 
         return ResponseEntity.ok()
                 .contentType(photo.contentType())

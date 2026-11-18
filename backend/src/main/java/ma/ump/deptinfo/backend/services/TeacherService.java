@@ -150,7 +150,8 @@ public class TeacherService {
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
-                teacher.getCreatedAt()
+                teacher.getCreatedAt(),
+                user.getAvatarUrl()
         );
     }
 }

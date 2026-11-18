@@ -11,6 +11,7 @@
   firstName: string;
   lastName: string;
   createdAt?: string;
+  avatarUrl?: string;
 }
 
 export interface TeacherRequest {
