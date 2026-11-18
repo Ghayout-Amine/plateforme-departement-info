@@ -4,13 +4,11 @@ WORKDIR /app
 
 # Cache dependencies
 COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw .
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 
 # Build artifact
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 # Stage 2: Minimal runtime image
 FROM eclipse-temurin:17-jre-alpine
