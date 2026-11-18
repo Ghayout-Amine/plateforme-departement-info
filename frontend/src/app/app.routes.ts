@@ -16,6 +16,7 @@ import { GroupeForm } from './pages/groupes/groupe-form/groupe-form';
 import { Contact } from './pages/contact/contact';
 import { UserList } from './pages/admin/user-list/user-list';
 import { UserProfile } from './pages/admin/user-profile/user-profile';
+import { EnrollmentList } from './pages/enrollments/enrollment-list/enrollment-list';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -44,6 +45,9 @@ export const routes: Routes = [
   { path: 'groupes/new', component: GroupeForm, canActivate: [authGuard] },
   { path: 'groupes/:id/edit', component: GroupeForm, canActivate: [authGuard] },
   { path: 'groupes', component: GroupeList, canActivate: [authGuard] },
+
+  // PGDI2026-60 (US26) : inscriptions pédagogiques
+  { path: 'inscriptions', component: EnrollmentList, canActivate: [authGuard] },
 
   // ─── Admin : Gestion des utilisateurs [PGDI2026-50] ──────────────────────
   { path: 'admin/users', component: UserList, canActivate: [authGuard] },

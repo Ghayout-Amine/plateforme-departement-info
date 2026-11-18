@@ -11,6 +11,7 @@
       <a routerLink="/salles">Salles</a>
       <a routerLink="/groupes">Groupes</a>
       @if (auth.currentRole() === 'ADMIN' || auth.currentRole() === 'CHEF_DEPARTEMENT') {
+        <a routerLink="/inscriptions">Inscriptions</a>
         <a routerLink="/admin/users">Utilisateurs</a>
       }
       <a routerLink="/profile">Mon Profil</a>
