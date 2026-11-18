@@ -164,15 +164,7 @@ public class TeacherPhotoService {
 
         String filename = UUID.randomUUID() + extension;
 
-        String localAppData = System.getenv("LOCALAPPDATA");
-        if (localAppData == null || localAppData.isBlank()) {
-            throw new IllegalStateException(
-                    "LOCALAPPDATA non configure");
-        }
-
-        Path directory = Path.of(localAppData, "PGDI", "teacher-photos");
-        Files.createDirectories(directory);
-
+        Path directory = getStorageDirectory();
         Path target = directory.resolve(filename);
 
         Files.write(target, output.toByteArray(),
@@ -246,16 +238,7 @@ public class TeacherPhotoService {
             throw new ResourceNotFoundException("Photo introuvable");
         }
 
-        String localAppData = System.getenv("LOCALAPPDATA");
-
-        if (localAppData == null || localAppData.isBlank()) {
-            throw new IllegalStateException(
-                    "LOCALAPPDATA non configure");
-        }
-
-        Path directory = Path.of(
-                localAppData, "PGDI", "teacher-photos");
-
+        Path directory = getStorageDirectory();
         Path target = directory.resolve(filename);
 
         if (!Files.isRegularFile(target)) {
@@ -268,5 +251,23 @@ public class TeacherPhotoService {
                 : org.springframework.http.MediaType.IMAGE_JPEG;
 
         return new PhotoData(Files.readAllBytes(target), type);
+    }
+
+    private Path getStorageDirectory() throws IOException {
+        String customPath = System.getenv("TEACHER_PHOTOS_DIR");
+        Path directory;
+        if (customPath != null && !customPath.isBlank()) {
+            directory = Path.of(customPath);
+        } else {
+            String localAppData = System.getenv("LOCALAPPDATA");
+            if (localAppData != null && !localAppData.isBlank()) {
+                directory = Path.of(localAppData, "PGDI", "teacher-photos");
+            } else {
+                String userHome = System.getProperty("user.home", "/app");
+                directory = Path.of(userHome, ".pgdi", "teacher-photos");
+            }
+        }
+        Files.createDirectories(directory);
+        return directory;
     }
 }
