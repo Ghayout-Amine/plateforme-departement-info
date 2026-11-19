@@ -1,0 +1,116 @@
+<section class="page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">CYCLE ACADÉMIQUE</span>
+      <h1>Emploi du temps</h1>
+      <p>Séances de la semaine par groupe, par enseignant ou par salle.</p>
+    </div>
+    @if (canManage()) {
+      <a routerLink="/emploi-du-temps/seances/new" class="add-button"><span>＋</span> Planifier une séance</a>
+    }
+  </div>
+
+  <div class="toolbar">
+    <div class="tabs" role="tablist" aria-label="Afficher l’emploi du temps">
+      @if (hasPersonalView()) {
+        <button type="button" [class.active]="view() === 'me'" (click)="changeView('me')">Mon emploi du temps</button>
+      }
+      <button type="button" [class.active]="view() === 'groupe'" (click)="changeView('groupe')">Par groupe</button>
+      @if (canManage()) {
+        <button type="button" [class.active]="view() === 'teacher'" (click)="changeView('teacher')">Par enseignant</button>
+      }
+      <button type="button" [class.active]="view() === 'salle'" (click)="changeView('salle')">Par salle</button>
+    </div>
+
+    @if (view() !== 'me') {
+      <select aria-label="Choisir" [ngModel]="selectedId()" (ngModelChange)="changeSelection($event)">
+        @for (option of options(); track option.id) {
+          <option [ngValue]="option.id">{{ option.label }}</option>
+        }
+      </select>
+    }
+
+    <div class="week-nav">
+      <button type="button" (click)="moveWeek(-1)" aria-label="Semaine précédente">‹</button>
+      <button type="button" class="today" (click)="moveWeek(0)">Cette semaine</button>
+      <button type="button" (click)="moveWeek(1)" aria-label="Semaine suivante">›</button>
+      <strong>{{ weekLabel() }}</strong>
+    </div>
+  </div>
+
+  <div class="summary">
+    <span><b>{{ activeSessions().length }}</b> séance(s)</span>
+    <span><b>{{ totalHours() }}</b> h de cours</span>
+    @if (cancelledCount()) {
+      <span class="muted"><b>{{ cancelledCount() }}</b> annulée(s)</span>
+    }
+    <span class="legend"><i class="CM"></i>CM <i class="TD"></i>TD <i class="TP"></i>TP</span>
+  </div>
+
+  @if (error()) {
+    <div class="message error">{{ error() }}</div>
+  }
+
+  <div class="calendar" [class.loading]="loading()">
+    <div class="hours">
+      <div class="corner"></div>
+      <div class="hour-body" [style.height.px]="gridHeight">
+        @for (hour of hours; track hour) {
+          <span [style.top.px]="(hour - 8) * 60">{{ hour }}:00</span>
+        }
+      </div>
+    </div>
+
+    @for (day of days(); track day.date) {
+      <div class="day" [class.today]="day.isToday">
+        <div class="day-head">{{ day.label }} <small>{{ day.date.substring(8) }}/{{ day.date.substring(5, 7) }}</small></div>
+        <div class="day-body" [class.clickable]="canManage()" [style.height.px]="gridHeight"
+             (click)="newAt(day, $event)" [title]="canManage() ? 'Cliquer pour planifier une séance' : ''">
+          @for (p of day.sessions; track p.session.id) {
+            <button type="button"
+                    [class]="'session ' + p.session.sessionType"
+                    [class.cancelled]="p.session.status === 'CANCELLED'"
+                    [class.selected]="selected()?.id === p.session.id"
+                    [style.top.px]="p.top" [style.height.px]="p.height"
+                    [style.left.%]="p.left" [style.width.%]="p.width"
+                    (click)="select(p.session, $event)">
+              <span class="time">{{ hhmm(p.session.startTime) }} – {{ hhmm(p.session.endTime) }}</span>
+              <strong>{{ p.session.moduleCode }} · {{ p.session.sessionType }}</strong>
+              <span>{{ p.session.salleCode }} · {{ view() === 'groupe' || view() === 'me' ? p.session.teacherName : p.session.groupeName }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (!loading() && !error() && sessions().length === 0) {
+    <p class="empty">Aucune séance cette semaine{{ canManage() ? ' : cliquez dans la grille pour en planifier une.' : '.' }}</p>
+  }
+
+  @if (selected(); as s) {
+    <aside class="details">
+      <div>
+        <span [class]="'badge ' + s.sessionType">{{ typeLabels[s.sessionType] }}</span>
+        @if (s.status === 'CANCELLED') { <span class="badge off">Annulée</span> }
+        <h2>{{ s.moduleCode }} — {{ s.moduleNom }}</h2>
+        <p>{{ day(s) }} · {{ hhmm(s.startTime) }} – {{ hhmm(s.endTime) }}</p>
+        <dl>
+          <dt>Groupe</dt><dd>{{ s.groupeName }} ({{ s.filiereCode }})</dd>
+          <dt>Enseignant</dt><dd>{{ s.teacherName }}</dd>
+          <dt>Salle</dt><dd>{{ s.salleCode }} — {{ s.salleName }}</dd>
+          @if (s.notes) { <dt>Remarque</dt><dd>{{ s.notes }}</dd> }
+        </dl>
+      </div>
+      @if (canManage()) {
+        <div class="actions">
+          <a [routerLink]="['/emploi-du-temps/seances', s.id, 'edit']" class="edit">Modifier</a>
+          @if (s.status === 'PLANNED') {
+            <button type="button" class="warn" (click)="cancelSession(s)">Annuler la séance</button>
+          }
+          <button type="button" class="delete" (click)="deleteSession(s)">Supprimer</button>
+        </div>
+      }
+    </aside>
+  }
+</section>

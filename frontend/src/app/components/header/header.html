@@ -10,6 +10,8 @@
       <a routerLink="/students">Étudiants</a>
       <a routerLink="/salles">Salles</a>
       <a routerLink="/groupes">Groupes</a>
+      <a routerLink="/emploi-du-temps">Emploi du temps</a>
+      <a routerLink="/examens">Examens</a>
       @if (auth.currentRole() === 'ADMIN' || auth.currentRole() === 'CHEF_DEPARTEMENT') {
         <a routerLink="/inscriptions">Inscriptions</a>
         <a routerLink="/admin/users">Utilisateurs</a>

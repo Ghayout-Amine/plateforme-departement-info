@@ -87,3 +87,74 @@ INSERT INTO groupes (id, name, capacity, filiere_id, created_at, updated_at) VAL
   (5, 'Groupe B - GL',  40, 3, NOW(), NOW())
 ON DUPLICATE KEY UPDATE
   name = VALUES(name), capacity = VALUES(capacity), filiere_id = VALUES(filiere_id), updated_at = NOW();
+
+-- ---------------------------------------------------------------------
+-- PGDI2026-75 (Sprint 3) : emploi du temps et examens
+--   Année 2026-2027 en cours, 4 enseignants (comptes 3 à 6),
+--   3 étudiants inscrits (Omar et Salma : Groupe 1 - ISI, Mehdi : Groupe 1 - IA).
+--   Les identifiants des enseignants, étudiants et de l'année sont retrouvés
+--   par leurs clés naturelles (email, numéro, libellé) pour rester compatibles
+--   avec des données déjà saisies dans la base de test.
+--   Les séances sont placées dans la SEMAINE EN COURS (lundi = @lundi) et les
+--   examens la semaine suivante : la démonstration fonctionne quel que soit le jour.
+-- ---------------------------------------------------------------------
+SET @lundi = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY);
+
+INSERT INTO academic_years (label, start_date, end_date, is_current, created_at, updated_at) VALUES
+  ('2026-2027', '2026-09-01', '2027-07-15', 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE start_date = VALUES(start_date), end_date = VALUES(end_date), is_current = 1, updated_at = NOW();
+
+-- Une seule année « en cours » : utilisée par défaut pour planifier un examen
+UPDATE academic_years SET is_current = 0 WHERE label <> '2026-2027';
+
+INSERT INTO teachers (employee_number, academic_title, specialty, office, user_id, created_at, updated_at) VALUES
+  ('ENS-2026-003', 'Professeure', 'Génie logiciel',             'B12', 3, NOW(), NOW()),
+  ('ENS-2026-004', 'Professeur',  'Bases de données',           'B14', 4, NOW(), NOW()),
+  ('ENS-2026-005', 'Professeur',  'Développement et sécurité',  'B15', 5, NOW(), NOW()),
+  ('ENS-2026-006', 'Professeure', 'Intelligence artificielle',  'B21', 6, NOW(), NOW())
+ON DUPLICATE KEY UPDATE employee_number = VALUES(employee_number), academic_title = VALUES(academic_title),
+  specialty = VALUES(specialty), office = VALUES(office), updated_at = NOW();
+
+INSERT INTO students (student_number, user_id, created_at, updated_at) VALUES
+  ('ETU-2026-007', 7, NOW(), NOW()),
+  ('ETU-2026-008', 8, NOW(), NOW()),
+  ('ETU-2026-009', 9, NOW(), NOW())
+ON DUPLICATE KEY UPDATE student_number = VALUES(student_number), updated_at = NOW();
+
+INSERT INTO enrollments (status, student_id, filiere_id, academic_year_id, groupe_id, created_at, updated_at) VALUES
+  ('ACTIVE', (SELECT id FROM students WHERE user_id = 7), 1, (SELECT id FROM academic_years WHERE label = '2026-2027'), 1, NOW(), NOW()),
+  ('ACTIVE', (SELECT id FROM students WHERE user_id = 8), 1, (SELECT id FROM academic_years WHERE label = '2026-2027'), 1, NOW(), NOW()),
+  ('ACTIVE', (SELECT id FROM students WHERE user_id = 9), 2, (SELECT id FROM academic_years WHERE label = '2026-2027'), 3, NOW(), NOW())
+ON DUPLICATE KEY UPDATE status = VALUES(status), filiere_id = VALUES(filiere_id), groupe_id = VALUES(groupe_id), updated_at = NOW();
+
+-- Séances (ids 1 à 12) : DATE_ADD(@lundi, INTERVAL n DAY) = lundi + n jours, enseignant retrouvé par son compte
+-- La séance 12 est annulée : elle s'affiche barrée et ne bloque plus le créneau.
+INSERT INTO plannings (id, session_type, status, session_date, start_time, end_time, notes, teacher_id, module_id, groupe_id, salle_id, created_at, updated_at) VALUES
+  ( 1, 'CM', 'PLANNED', DATE_ADD(@lundi, INTERVAL 0 DAY), '08:30:00', '10:30:00', NULL, (SELECT id FROM teachers WHERE user_id = 3), 1, 1, 1, NOW(), NOW()),
+  ( 2, 'TD', 'PLANNED', DATE_ADD(@lundi, INTERVAL 0 DAY), '10:45:00', '12:45:00', NULL, (SELECT id FROM teachers WHERE user_id = 4), 2, 1, 3, NOW(), NOW()),
+  ( 3, 'CM', 'PLANNED', DATE_ADD(@lundi, INTERVAL 0 DAY), '14:30:00', '16:30:00', NULL, (SELECT id FROM teachers WHERE user_id = 6), 5, 3, 2, NOW(), NOW()),
+  ( 4, 'TP', 'PLANNED', DATE_ADD(@lundi, INTERVAL 1 DAY), '08:30:00', '10:30:00', 'Apporter son ordinateur portable', (SELECT id FROM teachers WHERE user_id = 5), 3, 1, 3, NOW(), NOW()),
+  ( 5, 'CM', 'PLANNED', DATE_ADD(@lundi, INTERVAL 1 DAY), '10:45:00', '12:45:00', NULL, (SELECT id FROM teachers WHERE user_id = 5), 4, 1, 1, NOW(), NOW()),
+  ( 6, 'TD', 'PLANNED', DATE_ADD(@lundi, INTERVAL 1 DAY), '14:30:00', '16:30:00', NULL, (SELECT id FROM teachers WHERE user_id = 6), 6, 3, 3, NOW(), NOW()),
+  ( 7, 'TD', 'PLANNED', DATE_ADD(@lundi, INTERVAL 2 DAY), '08:30:00', '10:30:00', NULL, (SELECT id FROM teachers WHERE user_id = 3), 1, 2, 3, NOW(), NOW()),
+  ( 8, 'TD', 'PLANNED', DATE_ADD(@lundi, INTERVAL 2 DAY), '10:45:00', '12:45:00', NULL, (SELECT id FROM teachers WHERE user_id = 3), 1, 1, 3, NOW(), NOW()),
+  ( 9, 'CM', 'PLANNED', DATE_ADD(@lundi, INTERVAL 3 DAY), '08:30:00', '10:30:00', NULL, (SELECT id FROM teachers WHERE user_id = 4), 2, 1, 1, NOW(), NOW()),
+  (10, 'CM', 'PLANNED', DATE_ADD(@lundi, INTERVAL 3 DAY), '14:30:00', '16:30:00', NULL, (SELECT id FROM teachers WHERE user_id = 4), 7, 4, 2, NOW(), NOW()),
+  (11, 'TP', 'PLANNED', DATE_ADD(@lundi, INTERVAL 4 DAY), '08:30:00', '10:30:00', NULL, (SELECT id FROM teachers WHERE user_id = 6), 5, 3, 3, NOW(), NOW()),
+  (12, 'CM', 'CANCELLED', DATE_ADD(@lundi, INTERVAL 4 DAY), '10:45:00', '12:45:00', 'Séance annulée (jury)', (SELECT id FROM teachers WHERE user_id = 5), 3, 2, 2, NOW(), NOW())
+ON DUPLICATE KEY UPDATE session_type = VALUES(session_type), status = VALUES(status), session_date = VALUES(session_date),
+  start_time = VALUES(start_time), end_time = VALUES(end_time), notes = VALUES(notes), teacher_id = VALUES(teacher_id),
+  module_id = VALUES(module_id), groupe_id = VALUES(groupe_id), salle_id = VALUES(salle_id), updated_at = NOW();
+
+-- Examens (ids 1 à 4) la semaine suivante, l'examen 3 occupe deux salles de TP (48 places pour 30 étudiants)
+INSERT INTO examens (id, title, exam_type, exam_date, start_time, end_time, notes, module_id, groupe_id, academic_year_id, created_at, updated_at) VALUES
+  (1, 'Contrôle continu Génie Logiciel', 'CC', DATE_ADD(@lundi, INTERVAL 7 DAY), '09:00:00', '11:00:00', NULL, 1, 1, (SELECT id FROM academic_years WHERE label = '2026-2027'), NOW(), NOW()),
+  (2, 'Contrôle continu Machine Learning', 'CC', DATE_ADD(@lundi, INTERVAL 8 DAY), '09:00:00', '10:30:00', NULL, 5, 3, (SELECT id FROM academic_years WHERE label = '2026-2027'), NOW(), NOW()),
+  (3, 'Examen final Bases de Données', 'FINAL', DATE_ADD(@lundi, INTERVAL 9 DAY), '14:00:00', '16:00:00', NULL, 2, 1, (SELECT id FROM academic_years WHERE label = '2026-2027'), NOW(), NOW()),
+  (4, 'Examen final Génie Logiciel', 'FINAL', DATE_ADD(@lundi, INTERVAL 9 DAY), '14:00:00', '16:00:00', NULL, 1, 2, (SELECT id FROM academic_years WHERE label = '2026-2027'), NOW(), NOW())
+ON DUPLICATE KEY UPDATE title = VALUES(title), exam_type = VALUES(exam_type), exam_date = VALUES(exam_date),
+  start_time = VALUES(start_time), end_time = VALUES(end_time), module_id = VALUES(module_id),
+  groupe_id = VALUES(groupe_id), academic_year_id = VALUES(academic_year_id), updated_at = NOW();
+
+INSERT IGNORE INTO exam_salles (examen_id, salle_id) VALUES
+  (1, 1), (2, 3), (3, 4), (3, 5), (4, 3);

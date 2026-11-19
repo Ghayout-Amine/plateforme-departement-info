@@ -1,0 +1,47 @@
+.form-page { max-width: 1000px; margin: 35px auto; padding: 0 24px 40px; color: #1f2937; }
+.back-link { display: inline-block; margin-bottom: 15px; color: #2563eb; font-size: 14px; text-decoration: none; }
+h1 { margin: 0 0 8px; font-size: 28px; }
+.lead { margin: 0 0 22px; color: #6b7280; }
+
+.form-section { margin-bottom: 20px; padding: 25px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+.form-section h2 { margin: 0 0 20px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; font-size: 18px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.form-grid.three { grid-template-columns: 2fr 1fr 1fr; }
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field label { font-size: 14px; font-weight: 600; }
+.field label small { color: #6b7280; font-weight: 400; }
+.field input, .field select { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid #d1d5db; border-radius: 7px; background: white; font: inherit; outline: none; }
+.field input:focus, .field select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px #2563eb1a; }
+.field select:disabled { background: #f3f4f6; color: #9ca3af; }
+.field small { color: #6b7280; font-size: 12px; }
+.capitalize { text-transform: capitalize; }
+
+.repeat { margin-top: 20px; }
+.inline { display: flex; align-items: center; gap: 12px; color: #6b7280; font-size: 13px; }
+.inline input { width: 90px; }
+
+.hint { margin: 12px 0 0; font-size: 13px; }
+.warn { color: #b45309 !important; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; }
+.cancel-button, .form-actions button { padding: 11px 20px; border-radius: 7px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.cancel-button { border: 1px solid #d1d5db; color: #374151; }
+.form-actions button { border: none; background: #2563eb; color: white; }
+.form-actions button:disabled { opacity: .6; cursor: not-allowed; }
+
+.message { margin-bottom: 18px; padding: 13px 16px; border-radius: 7px; background: #f3f4f6; }
+.message.error { background: #fee2e2; color: #991b1b; }
+
+@media (max-width: 650px) {
+  .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+  .form-section { padding: 18px; }
+}
+
+/* Formulaire d'examen (même feuille de style) : choix des salles */
+.form-section h2 .count { margin-left: 8px; color: #16836f; font-size: 13px; font-weight: 600; }
+.rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.room { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.room span { color: #6b7280; font-size: 12px; }
+.room.checked { border-color: #2563eb; background: #eff4ff; }
+.notes { margin-top: 20px; }

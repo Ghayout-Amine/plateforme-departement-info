@@ -1,0 +1,56 @@
+@startuml
+title Planifier une séance (POST /api/plannings) — détection des conflits, PGDI2026-75
+skinparam dpi 140
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 13
+skinparam sequenceArrowThickness 1.2
+skinparam ParticipantBackgroundColor #FAFAFA
+skinparam ParticipantBorderColor #607D8B
+skinparam maxMessageSize 230
+autonumber
+actor "Chef de\ndépartement" as U
+participant "SeanceForm\n(Angular)" as F
+participant "JwtAuthenticationFilter\n+ @PreAuthorize" as S
+participant "PlanningController" as C
+participant "PlanningService" as PS
+participant "Teacher / Module /\nGroupe / Salle\nRepositories" as RR
+participant "PlanningRepository" as PR
+participant "ExamenRepository" as ER
+database "MySQL" as DB
+
+U -> F : choisit date, horaire, groupe,\nmodule, enseignant, salle
+F -> S : POST /api/plannings + Bearer <jeton>
+alt jeton absent ou invalide
+  S --> F : 401 Unauthorized
+else rôle ETUDIANT ou ENSEIGNANT
+  S --> F : 403 Forbidden
+else ADMIN ou CHEF_DEPARTEMENT
+  S -> C : createPlanning(@Valid dto)
+  alt champ manquant
+    C --> F : 400 + erreurs par champ
+  else
+    C -> PS : createPlanning(dto)
+    PS -> RR : findById(enseignant, module, groupe, salle)
+    alt une référence n'existe pas
+      PS --> F : 404 Not Found
+    else fin ≤ début, module hors filière, salle hors service ou trop petite
+      PS --> F : 400 Bad Request (message métier)
+    else
+      PS -> PR : findOverlapping(date, début, fin, PLANNED)
+      PR -> DB : SELECT ... WHERE start_time < :fin AND end_time > :début
+      PS -> ER : findOverlapping(date, début, fin)
+      ER -> DB : SELECT examens du même créneau
+      alt même salle, même enseignant ou même groupe
+        PS --> F : 409 Conflict « la salle S12 est déjà occupée 08:30-10:30 (GL501) »
+        F --> U : affiche le conflit à corriger
+      else créneau libre
+        PS -> PR : save(séance PLANNED)
+        PR -> DB : INSERT INTO plannings
+        C --> F : 201 Created + séance (libellés compris)
+        F --> U : retour à la grille, sur la semaine de la séance
+      end
+    end
+  end
+end
+@enduml

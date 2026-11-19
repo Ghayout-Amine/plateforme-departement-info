@@ -1,0 +1,92 @@
+<section class="page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">CYCLE ACADÉMIQUE</span>
+      <h1>Calendrier des examens</h1>
+      <p>Sessions d’examens par groupe et par salle.</p>
+    </div>
+    @if (canManage()) {
+      <a routerLink="/examens/new" class="add-button"><span>＋</span> Planifier un examen</a>
+    }
+  </div>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-icon blue">✎</div>
+      <div><span>Examens affichés</span><strong>{{ examens().length }}</strong></div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-icon teal">⏱</div>
+      <div>
+        <span>Prochain examen</span>
+        <strong>{{ daysUntilNext() === null ? '—' : daysUntilNext() === 0 ? 'Aujourd’hui' : 'Dans ' + daysUntilNext() + ' j' }}</strong>
+      </div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-icon violet">▦</div>
+      <div><span>Salles mobilisées</span><strong>{{ salleCount() }}</strong></div>
+    </article>
+  </div>
+
+  <div class="filters">
+    @if (hasPersonalView()) {
+      <div class="tabs">
+        <button type="button" [class.active]="mine()" (click)="setMine(true)">Mes examens</button>
+        <button type="button" [class.active]="!mine()" (click)="setMine(false)">Tous les examens</button>
+      </div>
+    }
+    @if (!mine()) {
+      <select aria-label="Filtrer par groupe" [ngModel]="groupeId()" (ngModelChange)="groupeId.set($event); load()">
+        <option [ngValue]="null">Tous les groupes</option>
+        @for (g of groupes(); track g.id) { <option [ngValue]="g.id">{{ g.name }} ({{ g.filiereCode }})</option> }
+      </select>
+      <select aria-label="Filtrer par salle" [ngModel]="salleId()" (ngModelChange)="salleId.set($event); load()">
+        <option [ngValue]="null">Toutes les salles</option>
+        @for (s of salles(); track s.id) { <option [ngValue]="s.id">{{ s.code }} — {{ s.name }}</option> }
+      </select>
+    }
+    <label class="check">
+      <input type="checkbox" [ngModel]="upcomingOnly()" (ngModelChange)="upcomingOnly.set($event); load()"> À venir uniquement
+    </label>
+  </div>
+
+  @if (loading()) {
+    <div class="state"><div class="loader"></div><p>Chargement du calendrier...</p></div>
+  } @else if (error()) {
+    <div class="state error"><strong>{{ error() }}</strong><button type="button" (click)="load()">Réessayer</button></div>
+  } @else if (days().length === 0) {
+    <div class="state"><h3>Aucun examen</h3><p>Aucune session d’examen ne correspond à ces filtres.</p></div>
+  } @else {
+    @for (day of days(); track day.date) {
+      <div class="day">
+        <h2>{{ day.label }}</h2>
+        @for (e of day.examens; track e.id) {
+          <article class="exam">
+            <div class="time">
+              <strong>{{ hhmm(e.startTime) }}</strong>
+              <span>{{ hhmm(e.endTime) }}</span>
+            </div>
+            <div class="body">
+              <div class="title-row">
+                <span [class]="'type type-' + e.examType">{{ typeLabels[e.examType] }}</span>
+                <h3>{{ e.title }}</h3>
+              </div>
+              <p>{{ e.moduleCode }} — {{ e.moduleNom }} · <b>{{ e.groupeName }}</b> ({{ e.filiereCode }})</p>
+              <div class="rooms">
+                @for (code of e.salleCodes; track code) { <span class="room">{{ code }}</span> }
+                <span class="places">{{ e.totalCapacity }} places{{ e.groupeCapacity ? ' pour ' + e.groupeCapacity + ' étudiants' : '' }}</span>
+              </div>
+              @if (e.notes) { <p class="notes">{{ e.notes }}</p> }
+            </div>
+            @if (canManage()) {
+              <div class="actions">
+                <a [routerLink]="['/examens', e.id, 'edit']" class="edit">Modifier</a>
+                <button type="button" class="delete" (click)="deleteExamen(e)">Supprimer</button>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+  }
+</section>
