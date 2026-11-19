@@ -1,0 +1,107 @@
+<section class="form-page">
+  <a routerLink="/emploi-du-temps" class="back-link">← Retour à l’emploi du temps</a>
+  <h1>{{ isEdit() ? 'Modifier une séance' : 'Planifier une séance' }}</h1>
+  <p class="lead">Le serveur vérifie que la salle, l’enseignant et le groupe sont libres sur ce créneau.</p>
+
+  @if (error()) {
+    <div class="message error" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Chargement de la séance...</div>
+  } @else {
+    <form (ngSubmit)="submitForm()">
+      <section class="form-section">
+        <h2>Quand ?</h2>
+        <div class="form-grid three">
+          <div class="field">
+            <label for="sessionDate">Date *</label>
+            <input id="sessionDate" type="date" name="sessionDate" [ngModel]="sessionDate()" (ngModelChange)="sessionDate.set($event)" required>
+            <small class="capitalize">{{ dateLabel() }}</small>
+          </div>
+          <div class="field">
+            <label for="startTime">Début *</label>
+            <input id="startTime" type="time" name="startTime" step="900" [ngModel]="startTime()" (ngModelChange)="startTime.set($event)" required>
+          </div>
+          <div class="field">
+            <label for="endTime">Fin *</label>
+            <input id="endTime" type="time" name="endTime" step="900" [ngModel]="endTime()" (ngModelChange)="endTime.set($event)" required>
+          </div>
+        </div>
+        @if (timeWarning()) { <p class="hint warn">{{ timeWarning() }}</p> }
+
+        @if (!isEdit()) {
+          <div class="field repeat">
+            <label for="weeks">Répéter chaque semaine pendant</label>
+            <div class="inline">
+              <input id="weeks" type="number" name="weeks" min="1" max="16" [ngModel]="weeks()" (ngModelChange)="weeks.set($event)">
+              <span>semaine(s) — tout ou rien : un seul conflit annule toute la série</span>
+            </div>
+          </div>
+        }
+      </section>
+
+      <section class="form-section">
+        <h2>Quoi et qui ?</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="groupeId">Groupe *</label>
+            <select id="groupeId" name="groupeId" [ngModel]="groupeId()" (ngModelChange)="onGroupeChange($event)" required>
+              <option [ngValue]="null" disabled>— Choisir un groupe —</option>
+              @for (g of groupes(); track g.id) {
+                <option [ngValue]="g.id">{{ g.name }} ({{ g.filiereCode }}{{ g.capacity ? ', ' + g.capacity + ' étudiants' : '' }})</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="moduleId">Module * <small>(de la filière du groupe)</small></label>
+            <select id="moduleId" name="moduleId" [ngModel]="moduleId()" (ngModelChange)="onModuleChange($event)" [disabled]="!groupe()" required>
+              <option [ngValue]="null" disabled>{{ groupe() ? '— Choisir un module —' : 'Choisissez d’abord un groupe' }}</option>
+              @for (m of groupeModules(); track m.id) {
+                <option [ngValue]="m.id">{{ m.code }} — {{ m.nom }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="sessionType">Type de séance *</label>
+            <select id="sessionType" name="sessionType" [ngModel]="sessionType()" (ngModelChange)="sessionType.set($event)">
+              @for (t of sessionTypes; track t) {
+                <option [ngValue]="t">{{ t }} — {{ typeLabels[t] }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="teacherId">Enseignant * <small>(proposé d’après le module)</small></label>
+            <select id="teacherId" name="teacherId" [ngModel]="teacherId()" (ngModelChange)="teacherId.set($event)" required>
+              <option [ngValue]="null" disabled>— Choisir un enseignant —</option>
+              @for (t of teachers(); track t.id) {
+                <option [ngValue]="t.id">{{ t.firstName }} {{ t.lastName }}{{ t.specialty ? ' — ' + t.specialty : '' }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="salleId">Salle *</label>
+            <select id="salleId" name="salleId" [ngModel]="salleId()" (ngModelChange)="salleId.set($event)" required>
+              <option [ngValue]="null" disabled>— Choisir une salle —</option>
+              @for (s of activeSalles(); track s.id) {
+                <option [ngValue]="s.id">{{ s.code }} — {{ s.name }} ({{ s.capacity }} places)</option>
+              }
+            </select>
+            @if (capacityWarning()) { <small class="warn">{{ capacityWarning() }}</small> }
+          </div>
+          <div class="field">
+            <label for="notes">Remarque</label>
+            <input id="notes" name="notes" [(ngModel)]="notes" maxlength="255" placeholder="ex : apporter son ordinateur">
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <a routerLink="/emploi-du-temps" class="cancel-button">Annuler</a>
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Vérification des conflits...' : (isEdit() ? 'Enregistrer les modifications' : 'Planifier la séance') }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "7a4093ff-c2ed-5a83-923c-0c5607070b0d",
-    "name": "PGDI2026 - Tests d'intégration API (PGDI2026-18, complété par PGDI2026-44)",
+    "name": "PGDI2026 - Tests d'intégration API (PGDI2026-18, complété par PGDI2026-44 et PGDI2026-75)",
     "description": "Tests d'intégration du backend Spring Boot (branche develop, Sprint 1).\n\nPré-requis : backend lancé avec le profil test (charge db/testdata/data-test.sql).\n  cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=test\n\nDossiers 00 à 05 : doivent être 100 % verts. Ils sont rejouables sans redémarrer.\nDossier 99 : anomalies connues, rouge tant qu'elles ne sont pas corrigées.\n\nnewman run tests/api/PGDI2026-18.postman_collection.json -e tests/api/PGDI2026-local.postman_environment.json --folder \"00 - Disponibilité\" --folder \"01 - Authentification\" --folder \"02 - Protection des endpoints (JWT)\" --folder \"03 - Utilisateurs (/api/users)\" --folder \"04 - Filières (/api/filieres)\" --folder \"05 - Modules (/api/modules)\"",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -3002,6 +3002,1608 @@
                 {
                   "key": "token",
                   "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Emploi du temps et examens (/api/plannings, /api/examens)",
+      "description": "PGDI2026-75 (Sprint 3) : emploi du temps (US36) et calendrier des examens (US49). Lecture par rôle, « mon emploi du temps », conflits de salle / enseignant / groupe (409), règles métier (400), droits (401/403), annulation, série hebdomadaire. Les données créées sont supprimées à la fin du dossier.",
+      "item": [
+        {
+          "name": "Préparation - dates et enseignants du jeu de test",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/teachers",
+            "description": "Calcule les dates (semaine en cours, semaine de test) et récupère les ids des enseignants créés par data-test.sql.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Semaine en cours (données du jeu de test) et une semaine de test choisie au hasard",
+                  "// entre +3 et +25 semaines : les données créées ici ne gênent pas celles de la démonstration.",
+                  "function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }",
+                  "function plus(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }",
+                  "const now = new Date();",
+                  "const monday = plus(now, -((now.getDay() + 6) % 7));",
+                  "const offset = 7 * (3 + Math.floor(Math.random() * 23));",
+                  "pm.collectionVariables.set('lundi', iso(monday));",
+                  "pm.collectionVariables.set('lundiPlus13', iso(plus(monday, 13)));",
+                  "pm.collectionVariables.set('testMonday', iso(plus(monday, offset)));",
+                  "pm.collectionVariables.set('testTuesday', iso(plus(monday, offset + 1)));",
+                  "pm.collectionVariables.set('testThursday', iso(plus(monday, offset + 3)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "function idOf(num) { const t = l.find(function (x) { return x.employeeNumber === num; }); return t ? t.id : undefined; }",
+                  "pm.test('Enseignants Nadia Alami et Youssef Bennani présents (data-test.sql)', function () {",
+                  "  pm.expect(idOf('ENS-2026-003'), 'ENS-2026-003').to.be.a('number');",
+                  "  pm.expect(idOf('ENS-2026-004'), 'ENS-2026-004').to.be.a('number');",
+                  "});",
+                  "u.save('teacherNadiaId', idOf('ENS-2026-003'));",
+                  "u.save('teacherYoussefId', idOf('ENS-2026-004'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Emploi du temps du Groupe 1 - ISI (semaine en cours)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings?semaine={{lundi}}&groupeId=1",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "u.save('groupe1Count', l.length);",
+                  "pm.test('Au moins les 6 séances du jeu de test', function () { pm.expect(l.length).to.be.at.least(6); });",
+                  "u.allHave(l, 'groupeId', 1);",
+                  "pm.test('Triées par date puis par heure', function () { const k = l.map(function (p) { return p.sessionDate + 'T' + p.startTime; }); pm.expect(k).to.eql(k.slice().sort()); });",
+                  "pm.test('Libellés présents (enseignant, module, salle)', function () { pm.expect(l[0]).to.include.keys('teacherName', 'moduleCode', 'salleCode', 'dayOfWeek'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Occupation de la salle S12 (lecture autorisée à un étudiant)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings?semaine={{lundi}}&salleId=3",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "u.allHave(u.list(), 'salleCode', 'S12');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mon emploi du temps - étudiant Omar Tazi (Groupe 1 - ISI)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/me?semaine={{lundi}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "u.allHave(l, 'groupeName', 'Groupe 1 - ISI');",
+                  "pm.test('Mêmes séances que l\\'emploi du temps du groupe', function () { pm.expect(l.length).to.eql(Number(pm.collectionVariables.get('groupe1Count'))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mon emploi du temps - enseignante Nadia Alami",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/me?semaine={{lundi}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('Au moins ses 3 séances', function () { pm.expect(l.length).to.be.at.least(3); });",
+                  "u.allHave(l, 'teacherName', 'Nadia Alami');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mon emploi du temps - refusé à l'administrateur (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/me",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(403);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Emploi du temps sans jeton (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(401);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer une séance (Nadia, GL501, Groupe 1, S12) → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"08:30\",\n  \"endTime\": \"10:30\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "if (u.status(201)) { u.save('newPlanningId', u.idOf()); }",
+                  "pm.test('Séance PLANNED du lundi', function () { pm.expect(u.body()).to.include({ status: 'PLANNED', dayOfWeek: 'MONDAY', salleCode: 'S12', teacherName: 'Nadia Alami' }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conflit - salle S12 déjà occupée (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherYoussefId}},\n  \"moduleId\": 2,\n  \"groupeId\": 2,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"11:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);",
+                  "pm.test('Le message cite la salle S12', function () { pm.expect(u.body().message).to.include('la salle S12'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conflit - enseignante déjà en cours dans une autre salle (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 2,\n  \"salleId\": 1,\n  \"sessionType\": \"CM\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);",
+                  "pm.test('Le message cite Nadia Alami', function () { pm.expect(u.body().message).to.include('Nadia Alami'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créneau bout à bout 10:30-12:30 accepté (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"10:30\",\n  \"endTime\": \"12:30\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "if (u.status(201)) { u.save('adjacentPlanningId', u.idOf()); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refus - salle TP1 trop petite pour 30 étudiants (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleId\": 4,\n  \"sessionType\": \"TP\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Message « trop petite »', function () { pm.expect(u.body().message).to.include('trop petite'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refus - salle SR1 hors service (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleId\": 6,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Message « hors service »', function () { pm.expect(u.body().message).to.include('hors service'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refus - module ML504 hors de la filière du groupe (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 5,\n  \"groupeId\": 1,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Message cite ML504', function () { pm.expect(u.body().message).to.include('ML504'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refus - fin avant le début (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"16:00\",\n  \"endTime\": \"14:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation - champs obligatoires manquants (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"incomplet\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Erreurs champ par champ', function () { pm.expect(u.body().errors).to.include.keys('teacherId', 'salleId', 'sessionDate', 'startTime'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Droits - un étudiant ne peut pas planifier (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(403);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Annuler la séance créée → CANCELLED",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/{{newPlanningId}}/annuler",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Statut CANCELLED', function () { pm.expect(u.body().status).to.eql('CANCELLED'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Le créneau libéré par l'annulation est de nouveau disponible (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherYoussefId}},\n  \"moduleId\": 2,\n  \"groupeId\": 2,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"08:30\",\n  \"endTime\": \"10:30\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "if (u.status(201)) { u.save('freedPlanningId', u.idOf()); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Série hebdomadaire sur 3 semaines (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings/serie",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherYoussefId}},\n  \"moduleId\": 2,\n  \"groupeId\": 2,\n  \"salleId\": 3,\n  \"sessionType\": \"CM\",\n  \"sessionDate\": \"{{testTuesday}}\",\n  \"startTime\": \"14:30\",\n  \"endTime\": \"16:30\",\n  \"weeks\": 3\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(201);",
+                  "const l = u.list();",
+                  "pm.test('3 séances à 7 jours d\\'intervalle', function () {",
+                  "  pm.expect(l.length).to.eql(3);",
+                  "  const d = l.map(function (p) { return Date.parse(p.sessionDate); });",
+                  "  pm.expect((d[1] - d[0]) / 86400000).to.eql(7);",
+                  "  pm.expect((d[2] - d[1]) / 86400000).to.eql(7);",
+                  "});",
+                  "l.forEach(function (p, i) { u.save('serieId' + (i + 1), p.id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier la séance bout à bout (11:00-13:00)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings/{{adjacentPlanningId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testMonday}}\",\n  \"startTime\": \"11:00\",\n  \"endTime\": \"13:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Nouvel horaire', function () { pm.expect(u.body().startTime).to.match(/^11:00/); pm.expect(u.body().endTime).to.match(/^13:00/); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Séance inexistante (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/999999",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calendrier des examens du Groupe 1 - ISI (2 semaines)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/examens?from={{lundi}}&to={{lundiPlus13}}&groupeId=1",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const l = u.list();",
+                  "pm.test('CC de Génie Logiciel et examen final de BDA', function () { pm.expect(l.map(function (e) { return e.title; })).to.include.members(['Contrôle continu Génie Logiciel', 'Examen final Bases de Données']); });",
+                  "u.allHave(l, 'groupeId', 1);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Examens dans la salle TP1 : un examen sur deux salles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/examens?from={{lundi}}&to={{lundiPlus13}}&salleId=4",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "const e = u.list().find(function (x) { return x.title === 'Examen final Bases de Données'; });",
+                  "pm.test('TP1 + TP2 = 48 places', function () { pm.expect(e.salleCodes).to.eql(['TP1', 'TP2']); pm.expect(e.totalCapacity).to.eql(48); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mes examens - étudiant Omar Tazi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/examens/me?from={{lundi}}&to={{lundiPlus13}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenStudent}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Au moins 2 examens', function () { pm.expect(u.list().length).to.be.at.least(2); });",
+                  "u.allHave(u.list(), 'groupeName', 'Groupe 1 - ISI');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mes examens - enseignante Nadia Alami (modules dont elle est responsable)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/examens/me?from={{lundi}}&to={{lundiPlus13}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "u.allHave(u.list(), 'moduleCode', 'GL501');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Planifier un examen (année en cours par défaut) → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/examens",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Contrôle Postman\",\n  \"examType\": \"CC\",\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleIds\": [\n    1\n  ],\n  \"examDate\": \"{{testThursday}}\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"11:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "if (u.status(201)) { u.save('newExamenId', u.idOf()); }",
+                  "pm.test('Année 2026-2027 et AMPHI_A', function () { pm.expect(u.body()).to.include({ academicYearLabel: '2026-2027', totalCapacity: 150 }); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conflit - AMPHI_A déjà réservé pour un examen (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/examens",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Contrôle Postman\",\n  \"examType\": \"CC\",\n  \"moduleId\": 1,\n  \"groupeId\": 2,\n  \"salleIds\": [\n    1\n  ],\n  \"examDate\": \"{{testThursday}}\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);",
+                  "pm.test('Le message cite AMPHI_A', function () { pm.expect(u.body().message).to.include('AMPHI_A'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conflit - cours du groupe pendant son examen (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/plannings",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": {{teacherNadiaId}},\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleId\": 3,\n  \"sessionType\": \"TD\",\n  \"sessionDate\": \"{{testThursday}}\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(409);",
+                  "pm.test('Le groupe passe un examen', function () { pm.expect(u.body().message).to.include('passe un examen'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refus - 24 places pour 30 étudiants (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/examens",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Contrôle Postman\",\n  \"examType\": \"CC\",\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleIds\": [\n    4\n  ],\n  \"examDate\": \"{{testThursday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Message sur les places', function () { pm.expect(u.body().message).to.include('24 places pour 30'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refus - date hors de l'année universitaire (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/examens",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Contrôle Postman\",\n  \"examType\": \"CC\",\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleIds\": [\n    1\n  ],\n  \"examDate\": \"2028-01-10\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"11:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation - aucune salle (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/examens",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Contrôle Postman\",\n  \"examType\": \"CC\",\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleIds\": [],\n  \"examDate\": \"{{testThursday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(400);",
+                  "pm.test('Erreur sur salleIds', function () { pm.expect(u.body().errors).to.have.property('salleIds'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Salle inexistante (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/examens",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Contrôle Postman\",\n  \"examType\": \"CC\",\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleIds\": [\n    999999\n  ],\n  \"examDate\": \"{{testThursday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Droits - un enseignant ne peut pas planifier un examen (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/examens",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenTeacher}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Contrôle Postman\",\n  \"examType\": \"CC\",\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleIds\": [\n    1\n  ],\n  \"examDate\": \"{{testThursday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(403);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modifier l'examen : examen final l'après-midi",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/examens/{{newExamenId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Examen Postman modifié\",\n  \"examType\": \"FINAL\",\n  \"moduleId\": 1,\n  \"groupeId\": 1,\n  \"salleIds\": [\n    1\n  ],\n  \"examDate\": \"{{testThursday}}\",\n  \"startTime\": \"14:00\",\n  \"endTime\": \"16:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(200);",
+                  "pm.test('Type FINAL à 14:00', function () { pm.expect(u.body().examType).to.eql('FINAL'); pm.expect(u.body().startTime).to.match(/^14:00/); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage - supprimer l'examen créé (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/examens/{{newExamenId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "L'examen supprimé n'existe plus (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/examens/{{newExamenId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(404);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage - supprimer la séance {{newPlanningId}} (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/{{newPlanningId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage - supprimer la séance {{adjacentPlanningId}} (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/{{adjacentPlanningId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage - supprimer la séance {{freedPlanningId}} (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/{{freedPlanningId}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage - supprimer la séance {{serieId1}} (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/{{serieId1}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage - supprimer la séance {{serieId2}} (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/{{serieId2}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const u = eval(pm.collectionVariables.get('helpers'));",
+                  "u.status(204);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage - supprimer la séance {{serieId3}} (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/plannings/{{serieId3}}",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenChef}}",
                   "type": "string"
                 }
               ]

@@ -1,0 +1,92 @@
+<section class="form-page">
+  <a routerLink="/examens" class="back-link">← Retour au calendrier des examens</a>
+  <h1>{{ isEdit() ? 'Modifier un examen' : 'Planifier un examen' }}</h1>
+  <p class="lead">L’examen est rattaché à l’année universitaire en cours. Le serveur vérifie que les salles et le groupe sont libres.</p>
+
+  @if (error()) {
+    <div class="message error" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="message">Chargement de l’examen...</div>
+  } @else {
+    <form (ngSubmit)="submitForm()">
+      <section class="form-section">
+        <h2>Épreuve</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="groupeId">Groupe *</label>
+            <select id="groupeId" name="groupeId" [ngModel]="groupeId()" (ngModelChange)="onGroupeChange($event)" required>
+              <option [ngValue]="null" disabled>— Choisir un groupe —</option>
+              @for (g of groupes(); track g.id) {
+                <option [ngValue]="g.id">{{ g.name }} ({{ g.filiereCode }}{{ g.capacity ? ', ' + g.capacity + ' étudiants' : '' }})</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="moduleId">Module *</label>
+            <select id="moduleId" name="moduleId" [ngModel]="moduleId()" (ngModelChange)="onModuleChange($event)" [disabled]="!groupe()" required>
+              <option [ngValue]="null" disabled>{{ groupe() ? '— Choisir un module —' : 'Choisissez d’abord un groupe' }}</option>
+              @for (m of groupeModules(); track m.id) {
+                <option [ngValue]="m.id">{{ m.code }} — {{ m.nom }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="examType">Type *</label>
+            <select id="examType" name="examType" [ngModel]="examType()" (ngModelChange)="examType.set($event)">
+              @for (t of examTypes; track t) { <option [ngValue]="t">{{ typeLabels[t] }}</option> }
+            </select>
+          </div>
+          <div class="field">
+            <label for="title">Titre *</label>
+            <input id="title" name="title" [(ngModel)]="title" maxlength="150" required placeholder="ex : Examen final Génie Logiciel">
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Date et horaire</h2>
+        <div class="form-grid three">
+          <div class="field">
+            <label for="examDate">Date *</label>
+            <input id="examDate" type="date" name="examDate" [ngModel]="examDate()" (ngModelChange)="examDate.set($event)" required>
+            <small class="capitalize">{{ dateLabel() }}</small>
+          </div>
+          <div class="field">
+            <label for="startTime">Début *</label>
+            <input id="startTime" type="time" name="startTime" step="900" [ngModel]="startTime()" (ngModelChange)="startTime.set($event)" required>
+          </div>
+          <div class="field">
+            <label for="endTime">Fin *</label>
+            <input id="endTime" type="time" name="endTime" step="900" [ngModel]="endTime()" (ngModelChange)="endTime.set($event)" required>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Salles <small class="count" [class.warn]="!enoughPlaces()">{{ places() }} places{{ groupe()?.capacity ? ' pour ' + groupe()?.capacity + ' étudiants' : '' }}</small></h2>
+        <div class="rooms">
+          @for (s of activeSalles(); track s.id) {
+            <label class="room" [class.checked]="salleIds().includes(s.id)">
+              <input type="checkbox" [checked]="salleIds().includes(s.id)" (change)="toggleSalle(s.id, $any($event.target).checked)">
+              <strong>{{ s.code }}</strong> <span>{{ s.capacity }} places</span>
+            </label>
+          }
+        </div>
+        @if (!enoughPlaces()) { <p class="hint warn">Pas assez de places : cochez une salle de plus.</p> }
+        <div class="field notes">
+          <label for="notes">Remarque</label>
+          <input id="notes" name="notes" [(ngModel)]="notes" maxlength="255" placeholder="ex : calculatrice autorisée">
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <a routerLink="/examens" class="cancel-button">Annuler</a>
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Vérification des conflits...' : (isEdit() ? 'Enregistrer les modifications' : 'Planifier l’examen') }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

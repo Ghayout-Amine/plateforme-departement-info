@@ -58,5 +58,20 @@ export const routes: Routes = [
   // PGDI2026-70 / PGDI2026-71 : notes et absences
   { path: 'grades', component: GradeEntry, canActivate: [authGuard] },
   { path: 'absences', component: AbsenceManagement, canActivate: [authGuard] },
+
+  // PGDI2026-75 (US36, US49) : emploi du temps et calendrier des examens
+  // Chargement à la demande (lazy loading) : ces pages ne grossissent pas le bundle initial
+  { path: 'emploi-du-temps/seances/new', canActivate: [authGuard],
+    loadComponent: () => import('./pages/emploi-du-temps/seance-form/seance-form').then(m => m.SeanceForm) },
+  { path: 'emploi-du-temps/seances/:id/edit', canActivate: [authGuard],
+    loadComponent: () => import('./pages/emploi-du-temps/seance-form/seance-form').then(m => m.SeanceForm) },
+  { path: 'emploi-du-temps', canActivate: [authGuard],
+    loadComponent: () => import('./pages/emploi-du-temps/emploi-du-temps').then(m => m.EmploiDuTemps) },
+  { path: 'examens/new', canActivate: [authGuard],
+    loadComponent: () => import('./pages/examens/examen-form/examen-form').then(m => m.ExamenForm) },
+  { path: 'examens/:id/edit', canActivate: [authGuard],
+    loadComponent: () => import('./pages/examens/examen-form/examen-form').then(m => m.ExamenForm) },
+  { path: 'examens', canActivate: [authGuard],
+    loadComponent: () => import('./pages/examens/examen-list/examen-list').then(m => m.ExamenList) },
   { path: '**', redirectTo: '' }
 ];
