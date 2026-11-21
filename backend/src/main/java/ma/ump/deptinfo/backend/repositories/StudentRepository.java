@@ -15,6 +15,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     Optional<Student> findByCne(String cne);
 
+    // Étudiant associé à un compte (email de connexion)
+    Optional<Student> findByUserEmail(String email);
+
     // Recherche par numéro, CNE, nom, prénom ou email (insensible à la casse)
     @Query("""
             SELECT s FROM Student s JOIN s.user u
