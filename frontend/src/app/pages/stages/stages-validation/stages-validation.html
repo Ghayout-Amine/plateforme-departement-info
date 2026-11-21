@@ -1,0 +1,79 @@
+<section class="validation-page">
+  <h2>Stages et conventions PFE</h2>
+  <p class="intro">Examinez les conventions déposées par les étudiants, puis validez-les ou refusez-les avec un motif.</p>
+
+  <div class="toolbar">
+    <label for="statusFilter">Statut</label>
+    <select id="statusFilter" [(ngModel)]="statusFilter" (ngModelChange)="load()">
+      <option value="">Tous</option>
+      @for (s of statuses; track s) {
+        <option [value]="s">{{ statusLabels[s] }}</option>
+      }
+    </select>
+  </div>
+
+  @if (error()) {
+    <p class="message error">{{ error() }}</p>
+  }
+  @if (notice()) {
+    <p class="message success">{{ notice() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Chargement…</p>
+  } @else {
+    @for (item of internships(); track item.id) {
+      <article class="card">
+        <div class="head">
+          <div>
+            <strong>{{ item.subject }}</strong>
+            <p class="meta">
+              {{ item.studentName }} ({{ item.studentNumber }}) · {{ typeLabels[item.internshipType] }}
+            </p>
+          </div>
+          <span class="badge" [class]="'badge status-' + item.status">{{ statusLabels[item.status] }}</span>
+        </div>
+        <p class="meta">
+          {{ item.companyName }}
+          @if (item.companyCity) { · {{ item.companyCity }} }
+          · du {{ item.startDate | date: 'dd/MM/yyyy' }} au {{ item.endDate | date: 'dd/MM/yyyy' }}
+        </p>
+        @if (item.companyTutorName) {
+          <p class="meta">
+            Tuteur : {{ item.companyTutorName }}
+            @if (item.companyTutorEmail) { · {{ item.companyTutorEmail }} }
+            @if (item.companyTutorPhone) { · {{ item.companyTutorPhone }} }
+          </p>
+        }
+        <p class="meta">Déclaré le {{ item.declaredAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+        @if (item.validationComment) {
+          <p class="comment">Commentaire : {{ item.validationComment }}</p>
+        }
+
+        <div class="actions">
+          <button type="button" class="link" (click)="openAgreement(item)">Voir la convention (PDF)</button>
+          @if (item.status === 'PENDING_VALIDATION') {
+            <button type="button" class="ok" (click)="approve(item)">Valider</button>
+            <button type="button" class="ko" (click)="startReject(item)">Refuser</button>
+          }
+        </div>
+
+        @if (rejectingId() === item.id) {
+          <div class="reject-box">
+            <label for="reason-{{ item.id }}">Motif du refus *</label>
+            <textarea id="reason-{{ item.id }}" rows="3" maxlength="500" [(ngModel)]="rejectReason"></textarea>
+            @if (rejectError()) {
+              <span class="field-error">{{ rejectError() }}</span>
+            }
+            <div class="actions">
+              <button type="button" class="ko" (click)="confirmReject(item)">Confirmer le refus</button>
+              <button type="button" class="link" (click)="cancelReject()">Annuler</button>
+            </div>
+          </div>
+        }
+      </article>
+    } @empty {
+      <p class="empty">Aucun dossier pour ce filtre.</p>
+    }
+  }
+</section>

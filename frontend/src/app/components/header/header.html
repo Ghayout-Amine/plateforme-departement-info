@@ -14,6 +14,7 @@
       <a routerLink="/examens">Examens</a>
       @if (auth.currentRole() === 'ADMIN' || auth.currentRole() === 'CHEF_DEPARTEMENT') {
         <a routerLink="/inscriptions">Inscriptions</a>
+        <a routerLink="/stages/validation">Stages / PFE</a>
         <a routerLink="/admin/users">Utilisateurs</a>
       }
       @if (auth.currentRole() === 'ENSEIGNANT') {
@@ -23,6 +24,7 @@
       @if (auth.currentRole() === 'ETUDIANT') {
         <a routerLink="/grades">Mes notes</a>
         <a routerLink="/absences">Mes absences</a>
+        <a routerLink="/stages">Mon stage / PFE</a>
       }
       <a routerLink="/profile">Mon Profil</a>
       <a href="#" (click)="$event.preventDefault(); auth.logout()">Déconnexion</a>

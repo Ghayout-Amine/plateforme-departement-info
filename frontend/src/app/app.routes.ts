@@ -73,5 +73,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/examens/examen-form/examen-form').then(m => m.ExamenForm) },
   { path: 'examens', canActivate: [authGuard],
     loadComponent: () => import('./pages/examens/examen-list/examen-list').then(m => m.ExamenList) },
+  // PGDI2026-80 (US66/US21) : stages et conventions PFE (chargement à la demande)
+  { path: 'stages/validation', canActivate: [authGuard],
+    loadComponent: () => import('./pages/stages/stages-validation/stages-validation').then(m => m.StagesValidation) },
+  { path: 'stages', canActivate: [authGuard],
+    loadComponent: () => import('./pages/stages/mes-stages/mes-stages').then(m => m.MesStages) },
   { path: '**', redirectTo: '' }
 ];
