@@ -6,17 +6,17 @@
     <a routerLink="/contact">Contact</a>
     @if (auth.isLoggedIn()) {
       <a routerLink="/dashboard">Tableau de bord</a>
-      <a routerLink="/teachers">Enseignants</a>
-      <a routerLink="/students">Étudiants</a>
-      <a routerLink="/salles">Salles</a>
-      <a routerLink="/groupes">Groupes</a>
-      <a routerLink="/emploi-du-temps">Emploi du temps</a>
-      <a routerLink="/examens">Examens</a>
       @if (auth.currentRole() === 'ADMIN' || auth.currentRole() === 'CHEF_DEPARTEMENT') {
+        <a routerLink="/teachers">Enseignants</a>
+        <a routerLink="/students">Étudiants</a>
+        <a routerLink="/salles">Salles</a>
+        <a routerLink="/groupes">Groupes</a>
         <a routerLink="/inscriptions">Inscriptions</a>
         <a routerLink="/stages/validation">Stages / PFE</a>
         <a routerLink="/admin/users">Utilisateurs</a>
       }
+      <a routerLink="/emploi-du-temps">Emploi du temps</a>
+      <a routerLink="/examens">Examens</a>
       @if (auth.currentRole() === 'ENSEIGNANT') {
         <a routerLink="/grades">Saisie des notes</a>
         <a routerLink="/absences">Gestion des absences</a>
