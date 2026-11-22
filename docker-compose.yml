@@ -36,8 +36,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       TEACHER_PHOTOS_DIR: /app/data/photos
+      CONVENTIONS_DIR: /app/data/conventions
     volumes:
       - photos-data:/app/data/photos
+      - conventions-data:/app/data/conventions
     ports:
       - "8080:8080"
     networks:
@@ -69,3 +71,4 @@ networks:
 volumes:
   mysql-data:
   photos-data:
+  conventions-data:
