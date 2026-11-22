@@ -168,9 +168,11 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
 
-        Optional<Teacher> teacherOpt = teacherRepository.findByUserId(user.getId());
-        if (teacherOpt.isPresent()) {
-            return teacherPhotoService.upload(teacherOpt.get().getId(), file, email);
+        if (user.getRole() == Role.ENSEIGNANT) {
+            Optional<Teacher> teacherOpt = teacherRepository.findByUserId(user.getId());
+            if (teacherOpt.isPresent()) {
+                return teacherPhotoService.upload(teacherOpt.get().getId(), file, email);
+            }
         }
 
         return teacherPhotoService.uploadUserPhoto(user, file);
