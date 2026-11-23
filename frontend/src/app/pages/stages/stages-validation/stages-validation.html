@@ -36,6 +36,7 @@
         <p class="meta">
           {{ item.companyName }}
           @if (item.companyCity) { · {{ item.companyCity }} }
+          @if (item.companyCountry) { ({{ getCountryName(item.companyCountry) }}) }
           · du {{ item.startDate | date: 'dd/MM/yyyy' }} au {{ item.endDate | date: 'dd/MM/yyyy' }}
         </p>
         @if (item.companyTutorName) {

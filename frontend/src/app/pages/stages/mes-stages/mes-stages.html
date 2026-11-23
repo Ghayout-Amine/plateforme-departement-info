@@ -39,11 +39,12 @@
           <input id="companyCity" type="text" formControlName="companyCity" />
         </div>
         <div class="field">
-          <label for="companyCountry">Pays (code à 2 lettres)</label>
-          <input id="companyCountry" type="text" maxlength="2" placeholder="MA" formControlName="companyCountry" />
-          @if (form.controls.companyCountry.invalid) {
-            <span class="field-error">Deux lettres, par exemple MA.</span>
-          }
+          <label for="companyCountry">Pays *</label>
+          <select id="companyCountry" formControlName="companyCountry">
+            @for (c of countries; track c.code) {
+              <option [value]="c.code">{{ c.name }} ({{ c.code }})</option>
+            }
+          </select>
         </div>
         <div class="field">
           <label for="startDate">Début *</label>
@@ -102,6 +103,7 @@
           <p class="meta">
             {{ typeLabels[item.internshipType] }} · {{ item.companyName }}
             @if (item.companyCity) { · {{ item.companyCity }} }
+            @if (item.companyCountry) { ({{ getCountryName(item.companyCountry) }}) }
             · du {{ item.startDate | date: 'dd/MM/yyyy' }} au {{ item.endDate | date: 'dd/MM/yyyy' }}
           </p>
           @if (item.validationComment) {

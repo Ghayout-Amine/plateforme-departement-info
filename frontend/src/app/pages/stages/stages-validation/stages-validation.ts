@@ -8,6 +8,7 @@ import {
   Internship,
   InternshipStatus,
 } from '../../../models/internship.model';
+import { getCountryName } from '../../../models/country.model';
 
 // PGDI2026-80 (US66/US21) : le département examine les conventions,
 // les valide ou les refuse (motif obligatoire en cas de refus).
@@ -23,6 +24,7 @@ export class StagesValidation implements OnInit {
   readonly statusLabels = INTERNSHIP_STATUS_LABELS;
   readonly typeLabels = INTERNSHIP_TYPE_LABELS;
   readonly statuses = Object.keys(INTERNSHIP_STATUS_LABELS) as InternshipStatus[];
+  readonly getCountryName = getCountryName;
 
   readonly internships = signal<Internship[]>([]);
   readonly loading = signal(true);

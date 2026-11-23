@@ -5,9 +5,14 @@
       <h1>Emploi du temps</h1>
       <p>Séances de la semaine par groupe, par enseignant ou par salle.</p>
     </div>
-    @if (canManage()) {
-      <a routerLink="/emploi-du-temps/seances/new" class="add-button"><span>＋</span> Planifier une séance</a>
-    }
+    <div class="heading-actions">
+      <button type="button" class="print-button" (click)="printSchedule()" title="Imprimer ou enregistrer en PDF">
+        <span>🖨️</span> Imprimer / PDF
+      </button>
+      @if (canManage()) {
+        <a routerLink="/emploi-du-temps/seances/new" class="add-button"><span>＋</span> Planifier une séance</a>
+      }
+    </div>
   </div>
 
   <div class="toolbar">

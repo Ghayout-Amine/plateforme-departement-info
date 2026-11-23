@@ -6,7 +6,11 @@
 .eyebrow { color: #2563eb; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
 .page-heading h1 { margin: 9px 0; color: #14264b; font-size: clamp(25px, 3vw, 32px); font-weight: 750; }
 .page-heading p { margin: 0; color: #78849a; font-size: 14px; }
-.add-button { display: inline-flex; gap: 9px; padding: 12px 18px; border-radius: 9px; background: #2455d6; color: white; font-size: 13px; font-weight: 650; text-decoration: none; }
+.heading-actions { display: flex; align-items: center; gap: 10px; }
+.add-button { display: inline-flex; align-items: center; gap: 9px; padding: 11px 18px; border-radius: 9px; background: #2455d6; color: white; font-size: 13px; font-weight: 650; text-decoration: none; transition: background .15s ease; }
+.add-button:hover { background: #1d4ed8; }
+.print-button { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border: 1px solid #cbd5e1; border-radius: 9px; background: white; color: #1e293b; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+.print-button:hover { background: #f8fafc; border-color: #94a3b8; }
 
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; }
 .tabs { display: flex; padding: 4px; border-radius: 10px; background: #eef2f8; }
@@ -69,4 +73,15 @@ select { padding: 9px 12px; border: 1px solid #dbe3ef; border-radius: 8px; backg
   .page-heading { flex-direction: column; align-items: flex-start; }
   .week-nav { margin-left: 0; flex-wrap: wrap; }
   .details { flex-direction: column; }
+}
+
+@media print {
+  @page { size: landscape; margin: 8mm; }
+  header, footer, app-header, .heading-actions, .tabs, select, .week-nav button, .details .actions { display: none !important; }
+  .page { padding: 0 !important; max-width: 100% !important; }
+  .page-heading { margin-bottom: 12px !important; }
+  .page-heading h1 { font-size: 22px !important; margin: 4px 0 !important; }
+  .toolbar { margin-bottom: 8px !important; }
+  .calendar { border: 1px solid #64748b !important; box-shadow: none !important; page-break-inside: avoid; }
+  .session { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

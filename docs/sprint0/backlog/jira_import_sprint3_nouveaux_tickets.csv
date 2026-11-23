@@ -1,0 +1,75 @@
+﻿Issue ID,Summary,Issue Type,Description,Priority,Story Points,Labels,Sprint,Parent
+US74,Connecteur API externe des offres de stages (Jooble / JSearch),Story,"En tant qu'étudiant, je veux rechercher et consulter des offres de stage PFE synchronisées depuis des API externes de recrutement afin de trouver un stage adapté sans quitter la plateforme.
+
+Critères d'acceptation :
+- Connecteur Spring Boot vers l'API externe (Jooble ou JSearch RapidAPI)
+- Endpoint : GET /api/stages/offres-externes?keyword=...&location=...
+- Mise en cache locale des résultats pour préserver les quotas de requêtes
+- Renvoyer titre, entreprise, ville, lien externe et résumé",High,5,membre5-pfe,PGDI - Sprint 3,E7
+US75,Affectation d'un enseignant encadrant à un stage validé (US51),Story,"En tant que chef de département, je veux affecter un enseignant encadrant à un stage dont la convention est validée afin de démarrer le suivi académique du PFE.
+
+Critères d'acceptation :
+- Endpoint : PATCH /api/stages/{id}/encadrant avec teacherId
+- L'enseignant doit appartenir à la liste des vrais enseignants
+- Le statut de la convention passe automatiquement de VALIDATED à IN_PROGRESS (En cours)
+- Notification ou affichage mis à jour pour l'étudiant",High,3,membre5-pfe,PGDI - Sprint 3,E7
+US76,Agrégation de veille technologique via flux RSS et API externe,Story,"En tant qu'étudiant ou enseignant, je veux consulter des flux d'actualités technologiques (Dev.to / Le Monde Informatique) afin de suivre les tendances du secteur.
+
+Critères d'acceptation :
+- Service Spring Boot de consommation de flux RSS / XML externe
+- Endpoint : GET /api/actualites/veille-externe
+- Parsing du titre, description, date de publication, lien source et image
+- Gestion des erreurs et timeout si le flux externe est inaccessible",High,5,membre4-pedagogie,PGDI - Sprint 3,E8
+US77,Gestion et publication des annonces officielles du département,Story,"En tant que chef de département, je veux publier, épingler et supprimer des avis officiels afin de communiquer les informations importantes (dates examens, soutenances, PFE).
+
+Critères d'acceptation :
+- CRUD des annonces (titre, contenu, date, priorité, épinglage)
+- Endpoint : GET /api/actualites/departement et POST /api/actualites/departement
+- Les annonces épinglées apparaissent toujours en tête du fil d'actualités",Medium,3,membre4-pedagogie,PGDI - Sprint 3,E8
+US78,Calcul de la moyenne générale semestrielle et relevé de notes,Story,"En tant qu'étudiant, je veux consulter mon relevé de notes semestriel avec la moyenne générale pondérée par coefficient afin de connaître mes résultats académiques officiels.
+
+Critères d'acceptation :
+- Service backend de calcul de la moyenne générale pondérée (GradeAverageCalculator)
+- Endpoint : GET /api/notes/releve/{studentId}?semester=S3
+- Attribution de la mention (Admis, Ajourné, Rattrapage) selon les règles pédagogiques
+- Export des données prêt pour la génération PDF",High,5,membre2-etudiants,PGDI - Sprint 3,E4
+US79,Dépôt et téléversement de justificatif médical d'absence (PDF),Story,"En tant qu'étudiant, je veux déposer un justificatif médical (PDF) pour une absence afin de régulariser ma situation auprès du département.
+
+Critères d'acceptation :
+- Endpoint : POST /api/absences/{id}/justificatif (Multipart PDF)
+- Validation stricte de l'en-tête binaire %PDF- et limite à 5 Mo
+- Stockage dans le volume Docker persistant avec nommage sécurisé par UUID
+- Statut de l'absence mis à jour en PENDING_JUSTIFICATION",Medium,3,membre2-etudiants,PGDI - Sprint 3,E4
+US80,Sécurisation du sélecteur d'enseignants dans l'emploi du temps,Story,"En tant que responsable de planification, je veux que la liste déroulante des professeurs n'affiche que les vrais enseignants afin d'éviter toute affectation erronée d'étudiants.
+
+Critères d'acceptation :
+- Endpoint : GET /api/teachers filtré exclusivement sur role = ROLE_ENSEIGNANT
+- Aucun étudiant ne doit apparaître dans le formulaire de création de séance
+- Test unitaire et vérification de régression sur le formulaire de cours",High,2,membre3-enseignants,PGDI - Sprint 3,E6
+US81,Interface de recherche et filtrage des offres de stage externes (Front),Story,"En tant qu'étudiant, je veux naviguer sur une page dédiée aux offres de stage avec des filtres et une présentation moderne afin de postuler facilement.
+
+Critères d'acceptation :
+- Nouvelle route Angular /stages/offres
+- Barre de recherche par mot-clé et sélecteur de ville
+- Cartes d'offres réactives avec badge entreprise, localisation et bouton 'Postuler'
+- Gestion des états de chargement (spinner) et d'absence de résultat",Highest,5,membre1-securite,PGDI - Sprint 3,E7
+US82,Sélecteur de pays dynamique avec autocomplétion pour les stages,Story,"En tant qu'étudiant, je veux choisir le pays de mon stage depuis une liste déroulante complète afin d'éviter les erreurs de saisie de codes à deux lettres.
+
+Critères d'acceptation :
+- Remplacement du champ texte 'Pays (code à 2 lettres)' par un sélecteur dynamique
+- Liste complète des pays avec nom complet en français et code ISO
+- Recherche prédictive dans la liste (Maroc, France, Canada...)
+- Validation automatique à la soumission du formulaire",Medium,2,membre1-securite,PGDI - Sprint 3,E7
+US83,Mur d'actualités unifié et fil de veille technologique (Front),Story,"En tant qu'utilisateur, je veux consulter la page /actualites affichant les annonces officielles du département et les articles de veille tech externe.
+
+Critères d'acceptation :
+- Nouvelle route Angular /actualites avec deux onglets ou sections unifiées
+- Mise en avant des annonces départementales épinglées
+- Cartes d'articles technologiques avec images, dates et liens sortants
+- Design System responsive cohérent",High,5,membre1-securite,PGDI - Sprint 3,E8
+US84,Export et impression propre de la grille de l'emploi du temps (Front),Story,"En tant qu'étudiant ou professeur, je veux exporter ou imprimer mon emploi du temps sous forme de grille propre sans les éléments de navigation.
+
+Critères d'acceptation :
+- Bouton 'Imprimer / Exporter' sur la page /emploi-du-temps
+- Styles d'impression CSS @media print masquant la navbar et les boutons d'action
+- Grille hebdomadaire parfaitement cadrée pour format A4 paysage",Medium,3,membre1-securite,PGDI - Sprint 3,E6

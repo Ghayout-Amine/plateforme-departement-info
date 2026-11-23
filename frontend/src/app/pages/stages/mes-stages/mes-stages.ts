@@ -8,6 +8,7 @@ import {
   Internship,
   InternshipRequest,
 } from '../../../models/internship.model';
+import { COUNTRIES, getCountryName } from '../../../models/country.model';
 
 // PGDI2026-80 (US66/US21) : l'étudiant déclare son stage/PFE avec la convention
 // et suit la décision du département.
@@ -23,6 +24,8 @@ export class MesStages implements OnInit {
 
   readonly statusLabels = INTERNSHIP_STATUS_LABELS;
   readonly typeLabels = INTERNSHIP_TYPE_LABELS;
+  readonly countries = COUNTRIES;
+  readonly getCountryName = getCountryName;
 
   readonly internships = signal<Internship[]>([]);
   readonly loading = signal(true);
@@ -37,7 +40,7 @@ export class MesStages implements OnInit {
     subject: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(255)]],
     companyName: ['', [Validators.required, Validators.maxLength(200)]],
     companyCity: [''],
-    companyCountry: ['', Validators.pattern(/^$|^[A-Za-z]{2}$/)],
+    companyCountry: ['MA', [Validators.required, Validators.pattern(/^[A-Za-z]{2}$/)]],
     startDate: ['', Validators.required],
     endDate: ['', Validators.required],
     companyTutorName: [''],
@@ -107,7 +110,7 @@ export class MesStages implements OnInit {
       next: () => {
         this.saving.set(false);
         this.success.set('Votre stage est déclaré. Le département va examiner la convention.');
-        this.form.reset({ internshipType: 'PFE' });
+        this.form.reset({ internshipType: 'PFE', companyCountry: 'MA' });
         this.file = null;
         this.load();
       },

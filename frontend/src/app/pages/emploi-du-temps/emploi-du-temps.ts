@@ -107,6 +107,10 @@ export class EmploiDuTemps implements OnInit {
     this.activeSessions().reduce((sum, s) => sum + (minutes(s.endTime) - minutes(s.startTime)) / 60, 0)
   );
 
+  printSchedule(): void {
+    window.print();
+  }
+
   ngOnInit(): void {
     const query = this.route.snapshot.queryParamMap;
     const semaine = query.get('semaine');
