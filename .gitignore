@@ -19,3 +19,5 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+# PGDI2026-86 : cles d API locales (JOOBLE_API_KEY, JSEARCH_API_KEY)
+.env
