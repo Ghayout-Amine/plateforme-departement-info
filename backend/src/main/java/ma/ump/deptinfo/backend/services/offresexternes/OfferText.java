@@ -22,6 +22,40 @@ final class OfferText {
         return text.substring(0, cut > maxLength / 2 ? cut : maxLength).trim() + "…";
     }
 
+    /**
+     * Résumé lisible : Jooble renvoie un extrait coupé (« ...) de Direction pour… … »).
+     * On retire la ponctuation orpheline au début et on remplace « ... » par « … ».
+     */
+    static String snippet(String html, int maxLength) {
+        String text = plain(html, maxLength + 20)
+                .replaceAll("\\.{3,}", "…")
+                .replaceAll("^[\\s…).,;:!?-]+", "")
+                .replaceAll("\\s*…\\s*…\\s*", " … ")
+                .trim();
+        if (text.isEmpty()) return "";
+        if (text.length() > maxLength) text = plain(text, maxLength);
+        return Character.toUpperCase(text.charAt(0)) + text.substring(1);
+    }
+
+    /** Titre en majuscules (« OFFRE DE STAGE - DATA ») remis en casse normale (« Offre de stage - Data »). */
+    static String title(String raw) {
+        String t = plain(raw, 200);
+        long letters = t.chars().filter(Character::isLetter).count();
+        long upper = t.chars().filter(Character::isUpperCase).count();
+        if (letters < 6 || upper < letters * 0.8) return t;
+        StringBuilder out = new StringBuilder();
+        for (String word : t.toLowerCase(java.util.Locale.FRENCH).split(" ")) {
+            if (out.length() > 0) out.append(' ');
+            // sigles courants gardés en majuscules
+            if (word.matches("(pfe|it|ia|ai|ui|ux|rh|bi|qa|sql|php|api|erp|sap|aws|soc|si|h/f|f/h|\\(h/f\\)|\\(f/h\\))")) {
+                out.append(word.toUpperCase(java.util.Locale.FRENCH));
+            } else {
+                out.append(word);
+            }
+        }
+        return Character.toUpperCase(out.charAt(0)) + out.substring(1);
+    }
+
     /** Valeur d'un champ JSON en texte ("" si absent ou null). */
     static String str(Map<?, ?> json, String key) {
         Object value = json == null ? null : json.get(key);

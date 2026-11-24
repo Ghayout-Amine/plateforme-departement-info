@@ -66,7 +66,7 @@ class ExternalOfferProvidersTest {
         JobOfferDto o = offers.get(0);
         assertEquals("jooble-123", o.getId());
         assertEquals("Stage PFE Java Spring", o.getTitle());
-        assertEquals("...stage de 6 mois en développement ...", o.getSnippet());
+        assertEquals("Stage de 6 mois en développement …", o.getSnippet(), "ponctuation orpheline retirée");
         assertEquals("https://ma.jooble.org/desc/123", o.getUrl());
         assertEquals("2026-11-20", o.getPostedDate());
         assertEquals("Jooble", o.getSource());
@@ -101,6 +101,17 @@ class ExternalOfferProvidersTest {
         assertTrue(JoobleProvider.parse(null).isEmpty());
         assertTrue(JoobleProvider.parse(Map.of("jobs", "pas une liste")).isEmpty());
         assertTrue(JSearchProvider.parse(Map.of("status", "ERROR")).isEmpty());
+    }
+
+    @Test
+    @DisplayName("titres en MAJUSCULES remis en casse normale, sigles gardés")
+    void uppercaseTitles() {
+        assertEquals("Offre de stage - assistant(e) de direction - marrakech",
+                OfferText.title("OFFRE DE STAGE - ASSISTANT(E) DE DIRECTION - MARRAKECH"));
+        assertEquals("Stage PFE - data & IA", OfferText.title("STAGE PFE - DATA & IA"));
+        assertEquals("Stage PFE Java Spring", OfferText.title("Stage PFE Java Spring"), "titre normal inchangé");
+        assertEquals("De Direction pour rejoindre notre équipe …",
+                OfferText.snippet("...) de Direction pour rejoindre notre équipe... ...", 400));
     }
 
     @Test

@@ -15,14 +15,15 @@ import java.util.Map;
 
 /**
  * PGDI2026-86 : connecteur Jooble (gratuit, clé obtenue par e-mail sur jooble.org/api/about).
- * POST https://ma.jooble.org/api/{clé}  corps : {"keywords": "...", "location": "...", "page": 1, "ResultOnPage": 20}
+ * POST https://ma.jooble.org/api/{clé}  corps : {"keywords": "...", "location": "...", "page": 1, "ResultOnPage": 50}
  * Attention : une clé est liée au site Jooble d'un pays ; l'URL doit être celle de ce site
  * (clé demandée sur ma.jooble.org → https://ma.jooble.org/api/, réglable avec JOOBLE_API_URL).
  */
 @Component
 public class JoobleProvider implements ExternalOfferProvider {
 
-    private static final int RESULTS_PER_PAGE = 20;
+    // 50 résultats par appel (1 seule requête sur le quota) : il en reste assez après le filtre « informatique »
+    private static final int RESULTS_PER_PAGE = 50;
 
     private final String apiKey;
     private final String baseUrl;
@@ -71,7 +72,7 @@ public class JoobleProvider implements ExternalOfferProvider {
         if (response == null || !(response.get("jobs") instanceof List<?> jobs)) return offers;
         for (Object item : jobs) {
             if (!(item instanceof Map<?, ?> job)) continue;
-            String title = OfferText.plain(OfferText.str(job, "title"), 200);
+            String title = OfferText.title(OfferText.str(job, "title"));
             String link = OfferText.str(job, "link");
             if (title.isEmpty() || !OfferText.isHttpLink(link)) continue;
             offers.add(JobOfferDto.builder()
@@ -80,7 +81,7 @@ public class JoobleProvider implements ExternalOfferProvider {
                     .company(OfferText.plain(OfferText.str(job, "company"), 150))
                     .location(OfferText.plain(OfferText.str(job, "location"), 150))
                     .url(link)
-                    .snippet(OfferText.plain(OfferText.str(job, "snippet"), 400))
+                    .snippet(OfferText.snippet(OfferText.str(job, "snippet"), 400))
                     .source("Jooble")
                     .postedDate(OfferText.isoDate(OfferText.str(job, "updated")))
                     .build());

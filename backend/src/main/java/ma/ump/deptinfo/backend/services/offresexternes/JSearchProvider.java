@@ -68,7 +68,7 @@ public class JSearchProvider implements ExternalOfferProvider {
         if (response == null || !(response.get("data") instanceof List<?> data)) return offers;
         for (Object item : data) {
             if (!(item instanceof Map<?, ?> job)) continue;
-            String title = OfferText.plain(OfferText.str(job, "job_title"), 200);
+            String title = OfferText.title(OfferText.str(job, "job_title"));
             String link = OfferText.str(job, "job_apply_link");
             if (title.isEmpty() || !OfferText.isHttpLink(link)) continue;
             String city = OfferText.str(job, "job_city");
@@ -80,7 +80,7 @@ public class JSearchProvider implements ExternalOfferProvider {
                     .company(OfferText.plain(OfferText.str(job, "employer_name"), 150))
                     .location(location)
                     .url(link)
-                    .snippet(OfferText.plain(OfferText.str(job, "job_description"), 400))
+                    .snippet(OfferText.snippet(OfferText.str(job, "job_description"), 400))
                     .source("JSearch")
                     .postedDate(OfferText.isoDate(OfferText.str(job, "job_posted_at_datetime_utc")))
                     .build());

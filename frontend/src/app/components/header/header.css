@@ -2,6 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   padding: 12px 24px;
   background-color: #1e3a8a;
   color: white;
@@ -9,11 +10,20 @@
 .logo {
   margin: 0;
   font-size: 1.4rem;
+  flex: none;
+}
+/* Menu sur plusieurs lignes si besoin, sans jamais couper un lien en deux (« Offres de / stage ») */
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px 16px;
 }
 nav a {
   color: white;
-  margin-left: 16px;
   text-decoration: none;
+  white-space: nowrap;
+  font-size: 0.95rem;
 }
 nav a:hover {
   text-decoration: underline;

@@ -3,6 +3,7 @@ package ma.ump.deptinfo.backend.services;
 import ma.ump.deptinfo.backend.dtos.JobOfferDto;
 import ma.ump.deptinfo.backend.exceptions.BadRequestException;
 import ma.ump.deptinfo.backend.services.offresexternes.ExternalOfferProvider;
+import ma.ump.deptinfo.backend.services.offresexternes.OfferRelevance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>cache local en mémoire (30 min par défaut) par couple mot-clé / lieu, pour préserver les quotas gratuits ;</li>
  *   <li>si une API échoue, le dernier résultat en cache est renvoyé, même périmé ;</li>
+ *   <li>seules les offres du domaine informatique, pour étudiants, sont gardées (voir {@link OfferRelevance}) ;</li>
  *   <li>sans aucune clé configurée, une courte liste d'exemples (source « Exemple ») avec un lien vers la recherche Jooble.</li>
  * </ul>
  */
@@ -91,7 +93,12 @@ public class JobOfferService {
             return cached != null ? cached.offers() : examples(kw, loc);
         }
 
-        List<JobOfferDto> result = deduplicate(merged);
+        List<JobOfferDto> result = deduplicate(merged).stream()
+                .filter(o -> OfferRelevance.isComputing(o.getTitle(), o.getSnippet()))
+                .toList();
+        if (merged.isEmpty()) {
+            return result;   // réponse vide : pas mise en cache, la prochaine recherche réinterroge l'API
+        }
         if (cache.size() >= MAX_CACHE_ENTRIES) cache.clear();
         cache.put(key, new CachedResult(result, clock.instant()));
         return result;
