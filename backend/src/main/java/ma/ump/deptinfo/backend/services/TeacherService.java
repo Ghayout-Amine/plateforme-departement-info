@@ -27,9 +27,15 @@ public class TeacherService {
         this.userRepository = userRepository;
     }
 
-    // Récupérer tous les enseignants
+    // Récupérer tous les enseignants (PGDI2026-92 : uniquement les comptes ENSEIGNANT non supprimés)
     public List<TeacherResponseDTO> getAllTeachers() {
-        return teacherRepository.findAll().stream()
+        return getAllTeachers(false);
+    }
+
+    // activeOnly = true : seulement les comptes actifs, pour les listes déroulantes (création de séance, examens)
+    @Transactional(readOnly = true)
+    public List<TeacherResponseDTO> getAllTeachers(boolean activeOnly) {
+        return teacherRepository.findByUserRole(Role.ENSEIGNANT, activeOnly).stream()
                 .map(this::toResponseDTO)
                 .toList();
     }

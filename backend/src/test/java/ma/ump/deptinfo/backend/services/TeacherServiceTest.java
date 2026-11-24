@@ -129,4 +129,31 @@ class TeacherServiceTest {
 
         verify(teacherRepository).deleteById(15L);
     }
+
+    // ---------- PGDI2026-92 : seuls les vrais enseignants ----------
+
+    @Test
+    @DisplayName("getAllTeachers - ne demande au dépôt que les comptes ENSEIGNANT")
+    void getAllTeachers_OnlyTeacherRole() {
+        Teacher teacher = new Teacher();
+        teacher.setEmployeeNumber("ENS-2026-001");
+        teacher.setUser(teacherUser);
+        when(teacherRepository.findByUserRole(Role.ENSEIGNANT, false)).thenReturn(List.of(teacher));
+
+        List<TeacherResponseDTO> result = teacherService.getAllTeachers();
+
+        assertEquals(1, result.size());
+        assertEquals("prof.tazi@pgdi.test", result.get(0).getUserEmail());
+        verify(teacherRepository).findByUserRole(Role.ENSEIGNANT, false);
+        verify(teacherRepository, never()).findAll();
+    }
+
+    @Test
+    @DisplayName("getAllTeachers(actifs) - filtre aussi les comptes désactivés pour le formulaire de séance")
+    void getAllTeachers_ActiveOnly() {
+        when(teacherRepository.findByUserRole(Role.ENSEIGNANT, true)).thenReturn(List.of());
+
+        assertTrue(teacherService.getAllTeachers(true).isEmpty());
+        verify(teacherRepository).findByUserRole(Role.ENSEIGNANT, true);
+    }
 }

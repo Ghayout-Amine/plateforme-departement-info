@@ -84,7 +84,8 @@ export class SeanceForm implements OnInit {
   ngOnInit(): void {
     this.groupeService.getAll().subscribe({ next: data => this.groupes.set(data) });
     this.planningService.getModules().subscribe({ next: data => this.modules.set(data) });
-    this.teacherService.getAll().subscribe({ next: data => this.teachers.set(data) });
+    // PGDI2026-92 : seuls les enseignants actifs peuvent recevoir une séance
+    this.teacherService.getAll(true).subscribe({ next: data => this.teachers.set(data) });
     this.salleService.getAll().subscribe({ next: data => this.salles.set(data) });
 
     const idParam = this.route.snapshot.paramMap.get('id');
