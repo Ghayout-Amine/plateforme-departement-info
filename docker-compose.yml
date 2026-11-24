@@ -39,6 +39,7 @@ services:
       CONVENTIONS_DIR: /app/data/conventions
       # PGDI2026-86 : cles d'API d'offres de stage (fichier .env a la racine, non commite)
       JOOBLE_API_KEY: ${JOOBLE_API_KEY:-}
+      JOOBLE_API_URL: ${JOOBLE_API_URL:-https://ma.jooble.org/api/}
       JSEARCH_API_KEY: ${JSEARCH_API_KEY:-}
     volumes:
       - photos-data:/app/data/photos

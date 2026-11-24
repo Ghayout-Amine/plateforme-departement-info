@@ -15,8 +15,9 @@ import java.util.Map;
 
 /**
  * PGDI2026-86 : connecteur Jooble (gratuit, clé obtenue par e-mail sur jooble.org/api/about).
- * POST https://jooble.org/api/{clé}  corps : {"keywords": "...", "location": "...", "page": 1, "ResultOnPage": 20}
- * Attention : une clé est liée au site Jooble d'un pays (ma.jooble.org → offres du Maroc).
+ * POST https://ma.jooble.org/api/{clé}  corps : {"keywords": "...", "location": "...", "page": 1, "ResultOnPage": 20}
+ * Attention : une clé est liée au site Jooble d'un pays ; l'URL doit être celle de ce site
+ * (clé demandée sur ma.jooble.org → https://ma.jooble.org/api/, réglable avec JOOBLE_API_URL).
  */
 @Component
 public class JoobleProvider implements ExternalOfferProvider {
@@ -28,7 +29,7 @@ public class JoobleProvider implements ExternalOfferProvider {
     private final RestClient http;
 
     public JoobleProvider(@Value("${app.offres-externes.jooble.api-key:}") String apiKey,
-                          @Value("${app.offres-externes.jooble.url:https://jooble.org/api/}") String baseUrl,
+                          @Value("${app.offres-externes.jooble.url:https://ma.jooble.org/api/}") String baseUrl,
                           @Value("${app.offres-externes.timeout-seconds:8}") int timeoutSeconds) {
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
