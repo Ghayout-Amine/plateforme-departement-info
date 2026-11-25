@@ -46,6 +46,13 @@ export class GradeService {
     return this.http.get<ReleveNotes>('/api/notes/releve/me', { params: { semester } });
   }
 
+  downloadMyRelevePdf(semester = 'S3'): Observable<Blob> {
+    return this.http.get('/api/notes/releve/me/pdf', {
+      params: { semester },
+      responseType: 'blob'
+    });
+  }
+
   getReleveByStudent(studentId: number, semester = 'S3'): Observable<ReleveNotes> {
     return this.http.get<ReleveNotes>(`/api/notes/releve/${studentId}`, { params: { semester } });
   }

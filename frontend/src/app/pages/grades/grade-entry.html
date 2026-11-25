@@ -87,8 +87,11 @@
             {{ releveLoading() ? 'Chargement...' : 'Actualiser' }}
           </button>
           @if (releve()) {
+            <button type="button" (click)="downloadPdf()" [disabled]="downloadingPdf()">
+              {{ downloadingPdf() ? 'Génération...' : '📥 Télécharger PDF' }}
+            </button>
             <button type="button" class="print-btn" (click)="printReleve()">
-              🖨️ Imprimer / PDF
+              🖨️ Imprimer
             </button>
           }
         </div>

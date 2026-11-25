@@ -26,6 +26,7 @@ export class GradeEntry implements OnInit {
   // PGDI2026-90 : Relevé de notes semestriel
   readonly releve = signal<ReleveNotes | null>(null);
   readonly releveLoading = signal(false);
+  readonly downloadingPdf = signal(false);
   readonly releveError = signal('');
   selectedSemester = 'S3';
   readonly semesters = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
@@ -168,5 +169,30 @@ export class GradeEntry implements OnInit {
 
   printReleve(): void {
     window.print();
+  }
+
+  downloadPdf(): void {
+    if (this.downloadingPdf()) return;
+    this.releveError.set('');
+    this.downloadingPdf.set(true);
+    const sem = this.selectedSemester;
+
+    this.gradeService.downloadMyRelevePdf(sem).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Releve_Notes_${sem}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+        this.downloadingPdf.set(false);
+      },
+      error: () => {
+        this.releveError.set('Impossible de telecharger le releve PDF.');
+        this.downloadingPdf.set(false);
+      }
+    });
   }
 }

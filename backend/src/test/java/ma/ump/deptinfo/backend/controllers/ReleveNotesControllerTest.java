@@ -8,6 +8,7 @@ import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import ma.ump.deptinfo.backend.security.JwtAuthenticationFilter;
 import ma.ump.deptinfo.backend.security.JwtService;
 import ma.ump.deptinfo.backend.security.SecurityConfig;
+import ma.ump.deptinfo.backend.services.ReleveNotesPdfService;
 import ma.ump.deptinfo.backend.services.ReleveNotesService;
 
 import jakarta.servlet.Filter;
@@ -65,6 +66,9 @@ class ReleveNotesControllerTest {
 
     @MockitoBean
     private ReleveNotesService releveNotesService;
+
+    @MockitoBean
+    private ReleveNotesPdfService releveNotesPdfService;
 
     @MockitoBean
     private UserDetailsService userDetailsService;
