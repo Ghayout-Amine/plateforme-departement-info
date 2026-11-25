@@ -1,3 +1,4 @@
+
 # Stage 1: Build application with Maven
 FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /app
@@ -16,7 +17,10 @@ WORKDIR /app
 
 # Run as non-root user for security best practices
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
-    mkdir -p /app/data/photos /app/data/conventions && chown -R appuser:appgroup /app
+    mkdir -p /app/data/photos /app/data/conventions /app/data/justificatifs && \
+    chown -R appuser:appgroup /app && \
+    chmod 700 /app/data/justificatifs
+
 USER appuser
 
 COPY --from=build /app/target/*.jar app.jar
