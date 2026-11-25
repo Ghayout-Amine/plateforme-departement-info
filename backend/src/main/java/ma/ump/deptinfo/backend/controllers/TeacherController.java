@@ -21,11 +21,13 @@ public class TeacherController {
         this.teacherService = teacherService;
     }
 
-    // GET /api/teachers
+    // GET /api/teachers            : enseignants (rôle ENSEIGNANT), comptes supprimés exclus (PGDI2026-92)
+    // GET /api/teachers?actifs=true : en plus, sans les comptes désactivés (formulaire de séance, examens)
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'CHEF_DEPARTEMENT')")
-    public ResponseEntity<List<TeacherResponseDTO>> getAllTeachers() {
-        return ResponseEntity.ok(teacherService.getAllTeachers());
+    public ResponseEntity<List<TeacherResponseDTO>> getAllTeachers(
+            @RequestParam(name = "actifs", defaultValue = "false") boolean actifs) {
+        return ResponseEntity.ok(teacherService.getAllTeachers(actifs));
     }
 
     // GET /api/teachers/{id}

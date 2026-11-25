@@ -10,8 +10,12 @@ export class TeacherService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/teachers';
 
-  getAll(): Observable<Teacher[]> {
-    return this.http.get<Teacher[]>(this.apiUrl);
+  // PGDI2026-92 : le serveur ne renvoie que les comptes ENSEIGNANT.
+  // actifs = true écarte aussi les comptes désactivés (listes déroulantes de planification).
+  getAll(actifs = false): Observable<Teacher[]> {
+    return actifs
+      ? this.http.get<Teacher[]>(this.apiUrl, { params: { actifs: 'true' } })
+      : this.http.get<Teacher[]>(this.apiUrl);
   }
 
   getById(id: number): Observable<Teacher> {

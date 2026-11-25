@@ -1,0 +1,108 @@
+<section class="offres-page">
+  <header class="hero">
+    <span class="eyebrow">Stages · PFE · Informatique</span>
+    <h2>Offres de stage externes</h2>
+    <p class="intro">Offres réelles récupérées en direct depuis Jooble et JSearch. Postulez directement sur le site de l’entreprise.</p>
+
+    <form class="search" (ngSubmit)="search()" role="search">
+      <div class="field grow">
+        <label for="keyword">Mot-clé</label>
+        <input id="keyword" name="keyword" [(ngModel)]="keyword" maxlength="80"
+               placeholder="ex. stage PFE Spring Boot, data, cybersécurité" />
+      </div>
+      <div class="field">
+        <label for="location">Lieu</label>
+        <input id="location" name="location" [(ngModel)]="location" maxlength="80" list="lieux" placeholder="Pays ou ville" />
+        <datalist id="lieux">
+          @for (l of locations; track l) { <option [value]="l"></option> }
+        </datalist>
+      </div>
+      <button class="primary" type="submit" [disabled]="loading()">{{ loading() ? 'Recherche…' : 'Rechercher' }}</button>
+    </form>
+
+    <div class="chips" aria-label="Recherches rapides">
+      @for (s of quickSearches; track s.keyword) {
+        <button type="button" class="chip" [class.active]="keyword === s.keyword" (click)="quickSearch(s.keyword)" [disabled]="loading()">
+          {{ s.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (onlyExamples()) {
+    <div class="message info">
+      <strong>Mode démonstration :</strong> aucune clé d’API n’est configurée sur le serveur (<code>JOOBLE_API_KEY</code>).
+      Les offres ci-dessous sont des exemples ; le bouton ouvre la vraie recherche sur Jooble.
+    </div>
+  }
+  @if (error()) {
+    <div class="message error">{{ error() }} <button type="button" class="link" (click)="search()">Réessayer</button></div>
+  }
+
+  @if (offers().length) {
+    <div class="toolbar">
+      <input class="filter" type="search" placeholder="Filtrer les résultats (titre, entreprise, ville…)"
+             [ngModel]="textFilter()" (ngModelChange)="textFilter.set($event)" aria-label="Filtrer les résultats" />
+      <select [ngModel]="sourceFilter()" (ngModelChange)="sourceFilter.set($event)" aria-label="Source">
+        <option value="">Toutes les sources</option>
+        @for (s of sources(); track s) { <option [value]="s">{{ s }}</option> }
+      </select>
+      <select [ngModel]="sort()" (ngModelChange)="sort.set($event)" aria-label="Tri">
+        <option value="recent">Plus récentes</option>
+        <option value="title">Titre (A → Z)</option>
+        <option value="company">Entreprise (A → Z)</option>
+      </select>
+    </div>
+    <p class="count">
+      <strong>{{ filtered().length }}</strong> offre(s)
+      @if (filtered().length !== offers().length) { sur {{ offers().length }} } pour « {{ lastSearch() }} »
+      @if (textFilter() || sourceFilter()) { · <button type="button" class="link" (click)="resetFilters()">effacer les filtres</button> }
+    </p>
+  }
+
+  @if (loading() && !offers().length) {
+    <div class="skeletons" aria-busy="true">
+      @for (i of [1, 2, 3]; track i) { <div class="card skeleton"></div> }
+    </div>
+  } @else if (searched() && !error() && !filtered().length) {
+    <div class="card empty">
+      <p class="big">🔎</p>
+      @if (offers().length) {
+        <p>Aucune offre ne correspond à ces filtres.</p>
+        <button type="button" class="link" (click)="resetFilters()">Effacer les filtres</button>
+      } @else {
+        <p>Aucune offre trouvée pour « {{ lastSearch() }} ».</p>
+        <p class="hint">Essayez un mot-clé plus large (ex. « stage informatique ») ou un autre lieu.</p>
+      }
+    </div>
+  }
+
+  <div class="list" [class.dim]="loading()">
+    @for (o of visible(); track o.id) {
+      <article class="card offer">
+        <div class="offer-head">
+          <span class="avatar" aria-hidden="true">{{ initials(o.company) }}</span>
+          <div class="offer-title">
+            <h3>{{ o.title }}</h3>
+            <p class="meta">
+              {{ o.company || 'Entreprise non précisée' }}
+              @if (o.location) { · 📍 {{ o.location }} }
+            </p>
+          </div>
+          <span class="badge" [class]="'badge src-' + o.source">{{ o.source }}</span>
+        </div>
+        @if (o.snippet) { <p class="snippet">{{ o.snippet }}</p> }
+        <div class="offer-foot">
+          <span class="date">{{ relativeDate(o.postedDate) || 'Date non précisée' }}</span>
+          <a class="primary small" [href]="o.url" target="_blank" rel="noopener noreferrer">
+            {{ o.source === 'Exemple' ? 'Voir la recherche Jooble ↗' : 'Voir l’offre ↗' }}
+          </a>
+        </div>
+      </article>
+    }
+  </div>
+
+  @if (visible().length < filtered().length) {
+    <div class="more"><button type="button" class="secondary" (click)="showMore()">Afficher plus ({{ filtered().length - visible().length }} restantes)</button></div>
+  }
+</section>
