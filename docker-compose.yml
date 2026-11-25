@@ -1,3 +1,4 @@
+
 services:
   mysql:
     image: mysql:8.0
@@ -37,9 +38,11 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       TEACHER_PHOTOS_DIR: /app/data/photos
       CONVENTIONS_DIR: /app/data/conventions
+      JUSTIFICATIFS_DIR: /app/data/justificatifs
     volumes:
       - photos-data:/app/data/photos
       - conventions-data:/app/data/conventions
+      - justificatifs-data:/app/data/justificatifs
     ports:
       - "8080:8080"
     networks:
@@ -72,3 +75,4 @@ volumes:
   mysql-data:
   photos-data:
   conventions-data:
+  justificatifs-data:

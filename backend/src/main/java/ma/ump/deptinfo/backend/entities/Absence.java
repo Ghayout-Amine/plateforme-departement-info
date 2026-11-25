@@ -1,3 +1,4 @@
+
 package ma.ump.deptinfo.backend.entities;
 
 import jakarta.persistence.*;
@@ -11,7 +12,12 @@ import java.time.LocalDate;
     name = "absences",
     uniqueConstraints = @UniqueConstraint(
         name = "uq_absence_student_module_session",
-        columnNames = {"student_id", "module_id", "date", "session_time"}
+        columnNames = {
+            "student_id",
+            "module_id",
+            "date",
+            "session_time"
+        }
     )
 )
 public class Absence extends BaseEntity {
@@ -31,7 +37,11 @@ public class Absence extends BaseEntity {
     private LocalDate date;
 
     @NotBlank
-    @Column(name = "session_time", nullable = false, length = 50)
+    @Column(
+        name = "session_time",
+        nullable = false,
+        length = 50
+    )
     private String sessionTime;
 
     @NotNull
@@ -40,6 +50,17 @@ public class Absence extends BaseEntity {
 
     @Column(length = 500)
     private String motif;
+
+    // PGDI2026-91 : statut de justification.
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 30)
+    private AbsenceStatus status = AbsenceStatus.UNJUSTIFIED;
+
+    // Nom UUID du justificatif PDF stocke sur disque.
+
+    @Column(name = "justificatif_filename", length = 100)
+    private String justificatifFilename;
 
     public Absence() {
     }
@@ -81,7 +102,22 @@ public class Absence extends BaseEntity {
     }
 
     public void setJustified(Boolean justified) {
+
         this.justified = justified;
+
+        if (Boolean.TRUE.equals(justified)) {
+
+            this.status = AbsenceStatus.JUSTIFIED;
+
+        } else if (justificatifFilename != null) {
+
+            this.status =
+                    AbsenceStatus.PENDING_JUSTIFICATION;
+
+        } else {
+
+            this.status = AbsenceStatus.UNJUSTIFIED;
+        }
     }
 
     public String getMotif() {
@@ -90,5 +126,51 @@ public class Absence extends BaseEntity {
 
     public void setMotif(String motif) {
         this.motif = motif;
+    }
+
+    public AbsenceStatus getStatus() {
+
+        // Compatibilite avec les anciennes absences.
+
+        if (status == null) {
+
+            if (Boolean.TRUE.equals(justified)) {
+                return AbsenceStatus.JUSTIFIED;
+            }
+
+            if (justificatifFilename != null) {
+                return AbsenceStatus.PENDING_JUSTIFICATION;
+            }
+
+            return AbsenceStatus.UNJUSTIFIED;
+        }
+
+        return status;
+    }
+
+    public String getJustificatifFilename() {
+        return justificatifFilename;
+    }
+
+    // Transition vers le statut en attente
+    // apres stockage du justificatif PDF.
+
+    public void markPendingJustification(String filename) {
+
+        if (filename == null || filename.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Nom du justificatif obligatoire");
+        }
+
+        if (Boolean.TRUE.equals(justified)) {
+
+            throw new IllegalStateException(
+                    "Cette absence est deja justifiee");
+        }
+
+        this.justificatifFilename = filename;
+        this.justified = false;
+        this.status = AbsenceStatus.PENDING_JUSTIFICATION;
     }
 }
