@@ -12,5 +12,10 @@ public interface ModuleCoursRepository extends JpaRepository<ModuleCours, Long> 
 
     List<ModuleCours> findByFiliereId(Long filiereId);
 
-    boolean existsByFiliereId(Long filiereId);
+       boolean existsByFiliereId(Long filiereId);
+
+    List<ModuleCours> findByFiliereIdAndSemestre(
+            Long filiereId,
+            String semestre
+    );
 }
