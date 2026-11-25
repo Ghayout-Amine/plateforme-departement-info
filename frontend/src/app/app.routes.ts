@@ -76,6 +76,9 @@ export const routes: Routes = [
   // PGDI2026-80 (US66/US21) : stages et conventions PFE (chargement à la demande)
   { path: 'stages/validation', canActivate: [authGuard],
     loadComponent: () => import('./pages/stages/stages-validation/stages-validation').then(m => m.StagesValidation) },
+  // PGDI2026-93 : recherche des offres de stage externes (Jooble / JSearch, PGDI2026-86)
+  { path: 'stages/offres', canActivate: [authGuard],
+    loadComponent: () => import('./pages/stages/offres-externes/offres-externes').then(m => m.OffresExternes) },
   { path: 'stages', canActivate: [authGuard],
     loadComponent: () => import('./pages/stages/mes-stages/mes-stages').then(m => m.MesStages) },
   { path: '**', redirectTo: '' }
