@@ -1,0 +1,146 @@
+<section class="news-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">ACTUALITÉS</span>
+      <h1>La vie du département</h1>
+      <p>Annonces officielles du département informatique et veille technologique.</p>
+    </div>
+    @if (canManage() && !showForm()) {
+      <button type="button" class="primary-button" (click)="openCreate()">＋ Publier une annonce</button>
+    }
+  </div>
+
+  @if (showForm()) {
+    <form class="editor" (ngSubmit)="save()">
+      <h2>{{ editingId() === null ? 'Nouvelle annonce' : 'Modifier l’annonce' }}</h2>
+      @if (formError()) {
+        <div class="message error">{{ formError() }}</div>
+      }
+      <div class="field">
+        <label for="title">Titre *</label>
+        <input id="title" name="title" maxlength="200" [(ngModel)]="formTitle"
+               placeholder="Ex. Calendrier des soutenances PFE">
+      </div>
+      <div class="field">
+        <label for="content">Contenu *</label>
+        <textarea id="content" name="content" rows="6" maxlength="5000" [(ngModel)]="formContent"></textarea>
+      </div>
+      <div class="editor-row">
+        <div class="field">
+          <label for="priority">Priorité</label>
+          <select id="priority" name="priority" [(ngModel)]="formPriority">
+            @for (p of priorities; track p) {
+              <option [ngValue]="p">{{ priorityLabels[p] }}</option>
+            }
+          </select>
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" name="pinned" [(ngModel)]="formPinned"> Épingler en tête du fil
+        </label>
+        <div class="editor-actions">
+          <button type="button" class="ghost-button" (click)="cancelForm()">Annuler</button>
+          <button type="submit" class="primary-button" [disabled]="saving()">
+            {{ saving() ? 'Enregistrement…' : (editingId() === null ? 'Publier' : 'Enregistrer') }}
+          </button>
+        </div>
+      </div>
+    </form>
+  }
+
+  <div class="layout">
+    <!-- PGDI2026-89 : annonces officielles -->
+    <section class="column" aria-labelledby="annonces-title">
+      <h2 id="annonces-title" class="column-title">Annonces du département</h2>
+
+      @if (announcementsLoading()) {
+        <p class="state">Chargement des annonces…</p>
+      } @else if (announcementsError()) {
+        <div class="state error-state">
+          {{ announcementsError() }}
+          <button type="button" class="link-button" (click)="loadAnnouncements()">Réessayer</button>
+        </div>
+      } @else if (announcements().length === 0) {
+        <p class="state">Aucune annonce publiée pour le moment.</p>
+      } @else {
+        @for (a of announcements(); track a.id) {
+          <article class="announcement" [class.pinned]="a.pinned" [class.urgent]="a.priority === 'URGENTE'">
+            <div class="badges">
+              @if (a.pinned) {
+                <span class="badge pin">Épinglée</span>
+              }
+              @if (a.priority !== 'NORMALE') {
+                <span class="badge" [class.badge-urgent]="a.priority === 'URGENTE'"
+                      [class.badge-important]="a.priority === 'IMPORTANTE'">{{ priorityLabels[a.priority] }}</span>
+              }
+              <time class="date">{{ a.publishedAt | date: 'dd/MM/yyyy' }}</time>
+            </div>
+            <h3>{{ a.title }}</h3>
+            <p class="content" [class.clamped]="isLong(a) && !isExpanded(a)">{{ a.content }}</p>
+            @if (isLong(a)) {
+              <button type="button" class="link-button" (click)="toggleExpand(a)">
+                {{ isExpanded(a) ? 'Réduire' : 'Lire la suite' }}
+              </button>
+            }
+            <div class="announcement-footer">
+              @if (a.authorName) {
+                <span class="author">{{ a.authorName }}</span>
+              }
+              @if (canManage()) {
+                <div class="actions">
+                  <button type="button" class="action" (click)="togglePin(a)">{{ a.pinned ? 'Désépingler' : 'Épingler' }}</button>
+                  <button type="button" class="action" (click)="openEdit(a)">Modifier</button>
+                  <button type="button" class="action delete" (click)="remove(a)">Supprimer</button>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      }
+    </section>
+
+    <!-- PGDI2026-88 : veille technologique -->
+    <section class="column wide" aria-labelledby="veille-title">
+      <h2 id="veille-title" class="column-title">Veille technologique</h2>
+
+      @if (unavailableSources().length > 0 && !watchLoading()) {
+        <p class="notice">Source momentanément indisponible : {{ unavailableSources().join(', ') }}.</p>
+      }
+
+      @if (watchLoading()) {
+        <p class="state">Chargement des articles…</p>
+      } @else if (watchError()) {
+        <div class="state error-state">
+          La veille technologique est indisponible.
+          <button type="button" class="link-button" (click)="loadTechWatch()">Réessayer</button>
+        </div>
+      } @else if (articles().length === 0) {
+        <p class="state">Aucun article de veille pour le moment.</p>
+      } @else {
+        <div class="articles">
+          @for (art of articles(); track art.link) {
+            <a class="article" [href]="art.link" target="_blank" rel="noopener noreferrer">
+              <div class="thumb">
+                @if (art.imageUrl) {
+                  <img [src]="art.imageUrl" alt="" loading="lazy" (error)="hideImage($event)">
+                }
+              </div>
+              <div class="article-body">
+                <span class="meta">
+                  {{ art.source }}
+                  @if (art.publishedAt) {
+                    <span> · {{ art.publishedAt | date: 'dd/MM/yyyy' }}</span>
+                  }
+                </span>
+                <h3>{{ art.title }}</h3>
+                @if (art.summary) {
+                  <p>{{ art.summary }}</p>
+                }
+                <span class="read">Lire l’article ↗</span>
+              </div>
+            </a>
+          }
+        </div>
+      }
+    </section>
+  </div>
+</section>
