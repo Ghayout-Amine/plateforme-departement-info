@@ -106,6 +106,9 @@
             @if (item.companyCountry) { ({{ getCountryName(item.companyCountry) }}) }
             · du {{ item.startDate | date: 'dd/MM/yyyy' }} au {{ item.endDate | date: 'dd/MM/yyyy' }}
           </p>
+          @if (item.supervisorName) {
+            <p class="meta">Encadrant académique : <strong>{{ item.supervisorName }}</strong></p>
+          }
           @if (item.validationComment) {
             <p class="comment">Message du département : {{ item.validationComment }}</p>
           }

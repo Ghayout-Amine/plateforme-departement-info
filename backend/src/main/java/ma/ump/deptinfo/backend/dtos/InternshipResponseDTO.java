@@ -25,6 +25,8 @@ public class InternshipResponseDTO {
     private Long studentId;
     private String studentName;
     private String studentNumber;
+    private Long supervisorId;
+    private String supervisorName;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -62,4 +64,8 @@ public class InternshipResponseDTO {
     public void setStudentName(String studentName) { this.studentName = studentName; }
     public String getStudentNumber() { return studentNumber; }
     public void setStudentNumber(String studentNumber) { this.studentNumber = studentNumber; }
+    public Long getSupervisorId() { return supervisorId; }
+    public void setSupervisorId(Long supervisorId) { this.supervisorId = supervisorId; }
+    public String getSupervisorName() { return supervisorName; }
+    public void setSupervisorName(String supervisorName) { this.supervisorName = supervisorName; }
 }

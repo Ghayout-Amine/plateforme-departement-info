@@ -39,6 +39,11 @@ export class InternshipService {
     return this.http.put<Internship>(`${this.apiUrl}/${id}/validation`, decision);
   }
 
+  /** Département (PGDI2026-87) : affecte l'encadrant ; une convention validée passe « en cours ». */
+  assignSupervisor(id: number, teacherId: number): Observable<Internship> {
+    return this.http.put<Internship>(`${this.apiUrl}/${id}/supervisor`, { teacherId });
+  }
+
   /** Télécharge la convention (PDF). Passe par HttpClient pour envoyer le jeton JWT. */
   getAgreement(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/agreement`, { responseType: 'blob' });

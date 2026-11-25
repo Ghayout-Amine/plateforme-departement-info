@@ -28,6 +28,8 @@ export interface Internship {
   studentId: number;
   studentName: string;
   studentNumber: string;
+  supervisorId: number | null;
+  supervisorName: string | null;
 }
 
 export interface InternshipRequest {

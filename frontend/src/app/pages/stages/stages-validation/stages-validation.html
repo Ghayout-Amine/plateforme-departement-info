@@ -51,6 +51,24 @@
           <p class="comment">Commentaire : {{ item.validationComment }}</p>
         }
 
+        @if (item.supervisorName) {
+          <p class="meta">Encadrant académique : <strong>{{ item.supervisorName }}</strong></p>
+        }
+        @if (item.status === 'VALIDATED' || item.status === 'IN_PROGRESS') {
+          <div class="assign-box">
+            <label for="sup-{{ item.id }}">
+              {{ item.supervisorName ? 'Changer l\'encadrant' : 'Affecter un encadrant' }}
+            </label>
+            <select id="sup-{{ item.id }}" [(ngModel)]="selectedTeacher[item.id]">
+              <option [ngValue]="null">Choisir un enseignant…</option>
+              @for (t of teachers(); track t.id) {
+                <option [ngValue]="t.id">{{ t.firstName }} {{ t.lastName }}</option>
+              }
+            </select>
+            <button type="button" class="ok" (click)="assignSupervisor(item)">Affecter</button>
+          </div>
+        }
+
         <div class="actions">
           <button type="button" class="link" (click)="openAgreement(item)">Voir la convention (PDF)</button>
           @if (item.status === 'PENDING_VALIDATION') {

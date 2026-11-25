@@ -81,6 +81,13 @@ public class Internship extends BaseEntity {
         this.validatedAt = LocalDateTime.now();
     }
 
+    /** Affectation d'un encadrant : la convention validée passe automatiquement « en cours ». */
+    public void startSupervision() {
+        if (status == InternshipStatus.VALIDATED) {
+            this.status = InternshipStatus.IN_PROGRESS;
+        }
+    }
+
     /** Vrai tant que le dossier occupe la place « un stage actif par type et par étudiant ». */
     public boolean isActive() {
         return status == InternshipStatus.PENDING_VALIDATION
