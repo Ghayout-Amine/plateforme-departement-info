@@ -1,6 +1,11 @@
 <section class="grade-page">
-  <h1>Saisie des notes</h1>
-  <p>Enregistrez une note en brouillon, puis publiez-la.</p>
+  @if (auth.currentRole() === 'ETUDIANT') {
+    <h1>Mes notes et relevé semestriel</h1>
+    <p>Consultez vos notes détaillées et votre relevé officiel par semestre.</p>
+  } @else {
+    <h1>Saisie des notes</h1>
+    <p>Enregistrez une note en brouillon, puis publiez-la.</p>
+  }
 
     @if (auth.currentRole() === 'ENSEIGNANT') {
   <form (ngSubmit)="save()" #gradeForm="ngForm">
@@ -65,8 +70,94 @@
   }
 
   @if (auth.currentRole() === 'ETUDIANT') {
-    <section class="result">
-      <h2>Mes notes publiees</h2>
+    <section class="result releve-card">
+      <div class="releve-toolbar">
+        <div>
+          <h2>Relevé de notes officiel</h2>
+          <p class="subtitle">Calcul pondéré des modules, compensation LMD et mention.</p>
+        </div>
+        <div class="releve-actions">
+          <label for="semesterSelect" class="sr-only">Semestre</label>
+          <select id="semesterSelect" [(ngModel)]="selectedSemester" (ngModelChange)="loadMyReleve()">
+            @for (sem of semesters; track sem) {
+              <option [value]="sem">{{ sem }}</option>
+            }
+          </select>
+          <button type="button" (click)="loadMyReleve()" [disabled]="releveLoading()">
+            {{ releveLoading() ? 'Chargement...' : 'Actualiser' }}
+          </button>
+          @if (releve()) {
+            <button type="button" class="print-btn" (click)="printReleve()">
+              🖨️ Imprimer / PDF
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (releveError()) {
+        <p class="info-banner">{{ releveError() }}</p>
+      }
+
+      @if (releve(); as r) {
+        <div class="releve-sheet">
+          <div class="releve-header">
+            <div>
+              <strong>Étudiant :</strong> {{ r.studentName }} ({{ r.studentNumber }})
+            </div>
+            <div>
+              <strong>Semestre :</strong> {{ r.semester }}
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Module</th>
+                  <th>Moyenne / 20</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of r.modules; track m.code) {
+                  <tr>
+                    <td><strong>{{ m.code }}</strong></td>
+                    <td>{{ m.name }}</td>
+                    <td>{{ m.score | number:'1.2-2' }}</td>
+                    <td>
+                      <span class="status-badge" [class]="'status-' + m.status">
+                        {{ statusLabel(m.status) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="releve-summary">
+            <div class="summary-item">
+              <span>Moyenne Générale</span>
+              <strong>{{ r.semesterAverage | number:'1.2-2' }} / 20</strong>
+            </div>
+            <div class="summary-item">
+              <span>Décision</span>
+              <strong [class]="'decision-' + r.decision">{{ r.decision }}</strong>
+            </div>
+            @if (r.mention) {
+              <div class="summary-item">
+                <span>Mention</span>
+                <strong>{{ r.mention }}</strong>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <section class="result no-print">
+      <h2>Détail des évaluations publiées</h2>
       <button type="button"
               (click)="loadMyGrades()"
               [disabled]="loading()">
@@ -75,7 +166,7 @@
 
       @if (myGradesLoaded()) {
         @if (myGrades().length === 0) {
-          <p>Aucune note publiee pour le moment.</p>
+          <p>Aucune note publiée pour le moment.</p>
         } @else {
           <div class="table-wrapper">
             <table>
@@ -93,7 +184,7 @@
                   <tr>
                     <td>{{ grade.moduleId }}</td>
                     <td>{{ grade.type }}</td>
-                    <td>{{ grade.score }}</td>
+                    <td>{{ grade.score | number:'1.2-2' }}</td>
                     <td>{{ grade.coefficient }}</td>
                     <td>{{ grade.sessionDate }}</td>
                   </tr>

@@ -1,8 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AbsenceService } from '../../services/absence.service';
 import { AuthService } from '../../services/auth.service';
-import { Absence, AbsenceCreate } from '../../models/absence.model';
+import { Absence, AbsenceCreate, AbsenceStatus } from '../../models/absence.model';
 
 @Component({
   selector: 'app-absence-management',
@@ -11,16 +11,23 @@ import { Absence, AbsenceCreate } from '../../models/absence.model';
   templateUrl: './absence-management.html',
   styleUrl: './absence-management.css'
 })
-export class AbsenceManagement {
+export class AbsenceManagement implements OnInit {
   private readonly service = inject(AbsenceService);
   readonly auth = inject(AuthService);
 
   readonly loading = signal(false);
+  readonly uploadingId = signal<number | null>(null);
   readonly error = signal('');
   readonly success = signal('');
   readonly lastAbsence = signal<Absence | null>(null);
   readonly myAbsences = signal<Absence[]>([]);
   readonly myAbsencesLoaded = signal(false);
+
+  ngOnInit(): void {
+    if (this.auth.currentRole() === 'ETUDIANT') {
+      this.loadMyAbsences();
+    }
+  }
 
   form: AbsenceCreate = {
     studentId: 0,
@@ -130,6 +137,70 @@ export class AbsenceManagement {
       error: err => {
         this.showError(err.status, 'charger vos absences');
         this.loading.set(false);
+      }
+    });
+  }
+
+  getStatus(absence: Absence): AbsenceStatus {
+    if (absence.status) return absence.status;
+    return absence.justified ? 'JUSTIFIED' : 'UNJUSTIFIED';
+  }
+
+  statusLabel(absence: Absence): string {
+    switch (this.getStatus(absence)) {
+      case 'JUSTIFIED':
+        return 'Justifiée';
+      case 'PENDING_JUSTIFICATION':
+        return 'En attente de validation';
+      default:
+        return 'Non justifiée';
+    }
+  }
+
+  onUploadJustificatif(absenceId: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    this.resetMessages();
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      this.error.set('Le justificatif doit etre un fichier PDF.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.error.set('Le justificatif ne doit pas depasser 5 Mo.');
+      return;
+    }
+
+    this.uploadingId.set(absenceId);
+    this.service.uploadJustificatif(absenceId, file).subscribe({
+      next: updated => {
+        this.myAbsences.update(list =>
+          list.map(item => (item.id === updated.id ? updated : item))
+        );
+        this.success.set('Justificatif medical depose avec succes (en attente de validation).');
+        this.uploadingId.set(null);
+      },
+      error: err => {
+        this.error.set(err?.error?.message || 'Impossible de deposer ce justificatif.');
+        this.uploadingId.set(null);
+      }
+    });
+  }
+
+  openJustificatif(absenceId: number): void {
+    this.resetMessages();
+    this.service.getJustificatif(absenceId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      },
+      error: () => {
+        this.error.set('Impossible d ouvrir le justificatif.');
       }
     });
   }

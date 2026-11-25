@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import {
   Grade,
   GradeCreate,
-  GradeAverage
+  GradeAverage,
+  ReleveNotes
 } from '../models/grade.model';
 
 @Injectable({ providedIn: 'root' })
@@ -39,5 +40,13 @@ export class GradeService {
     return this.http.get<GradeAverage>(
       `${this.apiUrl}/average`, { params }
     );
+  }
+
+  getMyReleve(semester = 'S3'): Observable<ReleveNotes> {
+    return this.http.get<ReleveNotes>('/api/notes/releve/me', { params: { semester } });
+  }
+
+  getReleveByStudent(studentId: number, semester = 'S3'): Observable<ReleveNotes> {
+    return this.http.get<ReleveNotes>(`/api/notes/releve/${studentId}`, { params: { semester } });
   }
 }

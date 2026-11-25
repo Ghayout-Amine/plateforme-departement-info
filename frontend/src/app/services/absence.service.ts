@@ -28,4 +28,14 @@ export class AbsenceService {
   getMyAbsences(): Observable<Absence[]> {
     return this.http.get<Absence[]>(`${this.apiUrl}/me`);
   }
+
+  uploadJustificatif(id: number, file: File): Observable<Absence> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<Absence>(`${this.apiUrl}/${id}/justificatif`, formData);
+  }
+
+  getJustificatif(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/justificatif`, { responseType: 'blob' });
+  }
 }

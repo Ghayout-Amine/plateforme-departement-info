@@ -292,6 +292,43 @@ public class AbsenceService {
                 absenceRepository.save(absence));
     }
 
+    // Lecture du justificatif medical PDF (proprietaire, enseignant ou administration).
+
+    @Transactional(readOnly = true)
+    public byte[] getJustificatif(
+            Long absenceId,
+            String authenticatedEmail) throws IOException {
+
+        if (absenceId == null || absenceId <= 0) {
+            throw new BadRequestException("Identifiant d'absence invalide");
+        }
+        if (authenticatedEmail == null || authenticatedEmail.isBlank()) {
+            throw new AccessDeniedException("Authentification requise");
+        }
+
+        User user = userRepository.findByEmail(authenticatedEmail)
+                .orElseThrow(() -> new AccessDeniedException("Utilisateur non autorise"));
+
+        Absence absence = absenceRepository.findById(absenceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Absence introuvable"));
+
+        Role role = user.getRole();
+        boolean isOwner = role == Role.ETUDIANT
+                && absence.getStudent() != null
+                && absence.getStudent().getUser() != null
+                && user.getId().equals(absence.getStudent().getUser().getId());
+        boolean isStaff = role == Role.ENSEIGNANT
+                || role == Role.ADMIN
+                || role == Role.CHEF_DEPARTEMENT;
+
+        if (!isOwner && !isStaff) {
+            throw new AccessDeniedException("Acces refuse");
+        }
+
+        return justificatifStorageService.load(
+                absence.getJustificatifFilename());
+    }
+
     // Consultation des absences de l'etudiant.
 
     @Transactional(readOnly = true)

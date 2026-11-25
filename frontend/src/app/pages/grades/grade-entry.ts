@@ -1,17 +1,18 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GradeService } from '../../services/grade.service';
 import { AuthService } from '../../services/auth.service';
-import { Grade, GradeCreate, GradeType } from '../../models/grade.model';
+import { Grade, GradeCreate, GradeType, ReleveNotes } from '../../models/grade.model';
 
 @Component({
   selector: 'app-grade-entry',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, DecimalPipe],
   templateUrl: './grade-entry.html',
   styleUrl: './grade-entry.css'
 })
-export class GradeEntry {
+export class GradeEntry implements OnInit {
   private readonly gradeService = inject(GradeService);
   readonly auth = inject(AuthService);
 
@@ -21,6 +22,20 @@ export class GradeEntry {
   readonly createdGrade = signal<Grade | null>(null);
   readonly myGrades = signal<Grade[]>([]);
   readonly myGradesLoaded = signal(false);
+
+  // PGDI2026-90 : Relevé de notes semestriel
+  readonly releve = signal<ReleveNotes | null>(null);
+  readonly releveLoading = signal(false);
+  readonly releveError = signal('');
+  selectedSemester = 'S3';
+  readonly semesters = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
+
+  ngOnInit(): void {
+    if (this.auth.currentRole() === 'ETUDIANT') {
+      this.loadMyGrades();
+      this.loadMyReleve();
+    }
+  }
 
   readonly types: GradeType[] = [
     'CONTROLE_CONTINU',
@@ -117,5 +132,41 @@ export class GradeEntry {
         this.loading.set(false);
       }
     });
+  }
+
+  loadMyReleve(): void {
+    this.releveError.set('');
+    this.releve.set(null);
+    this.releveLoading.set(true);
+
+    this.gradeService.getMyReleve(this.selectedSemester).subscribe({
+      next: data => {
+        this.releve.set(data);
+        this.releveLoading.set(false);
+      },
+      error: err => {
+        this.releveError.set(
+          err?.error?.message || 'Releve indisponible pour ce semestre.'
+        );
+        this.releveLoading.set(false);
+      }
+    });
+  }
+
+  statusLabel(status: string): string {
+    switch (status) {
+      case 'VALIDE':
+        return 'Validé';
+      case 'VALIDE_PAR_COMPENSATION':
+        return 'Validé par compensation';
+      case 'NON_VALIDE':
+        return 'Non validé';
+      default:
+        return status;
+    }
+  }
+
+  printReleve(): void {
+    window.print();
   }
 }

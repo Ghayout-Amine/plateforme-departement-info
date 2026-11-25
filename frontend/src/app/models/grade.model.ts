@@ -32,3 +32,20 @@ export interface GradeAverage {
   academicYearId: number;
   average: number | null;
 }
+
+export interface ModuleResult {
+  code: string;
+  name: string;
+  score: number;
+  status: 'VALIDE' | 'VALIDE_PAR_COMPENSATION' | 'NON_VALIDE' | string;
+}
+
+export interface ReleveNotes {
+  studentName: string;
+  studentNumber: string;
+  semester: string;
+  modules: ModuleResult[];
+  semesterAverage: number;
+  decision: string;
+  mention: string | null;
+}

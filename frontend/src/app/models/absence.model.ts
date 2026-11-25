@@ -7,6 +7,8 @@ export interface AbsenceCreate {
   motif: string | null;
 }
 
+export type AbsenceStatus = 'UNJUSTIFIED' | 'PENDING_JUSTIFICATION' | 'JUSTIFIED';
+
 export interface Absence {
   id: number;
   studentId: number;
@@ -15,6 +17,7 @@ export interface Absence {
   sessionTime: string;
   justified: boolean;
   motif: string | null;
+  status?: AbsenceStatus;
 }
 
 export interface AbsenceJustification {

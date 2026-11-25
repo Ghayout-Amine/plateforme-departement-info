@@ -24,6 +24,16 @@ public class ReleveNotesController {
         this.releveNotesService = releveNotesService;
     }
 
+    @GetMapping("/releve/me")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    public ReleveNotesResponseDTO getMyReleveNotes(
+            @RequestParam(defaultValue = "S3") String semester,
+            Authentication authentication) {
+        return releveNotesService.getMyReleveNotes(
+                semester,
+                authentication.getName());
+    }
+
     @GetMapping("/releve/{studentId}")
     @PreAuthorize(
             "hasAnyRole('ADMIN', 'CHEF_DEPARTEMENT', 'ETUDIANT')")

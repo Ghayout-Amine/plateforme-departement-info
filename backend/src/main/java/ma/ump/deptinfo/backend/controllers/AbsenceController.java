@@ -8,13 +8,16 @@ import ma.ump.deptinfo.backend.dtos.AbsenceRequestDTO;
 import ma.ump.deptinfo.backend.dtos.AbsenceResponseDTO;
 import ma.ump.deptinfo.backend.services.AbsenceService;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -89,5 +92,22 @@ public class AbsenceController {
                 file,
                 authentication.getName()
         );
+    }
+
+    // PGDI2026-91 : consultation/telechargement du justificatif PDF.
+
+    @GetMapping("/{id}/justificatif")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHEF_DEPARTEMENT', 'ENSEIGNANT', 'ETUDIANT')")
+    public ResponseEntity<byte[]> getJustificatif(
+            @PathVariable Long id,
+            Authentication authentication) throws IOException {
+
+        byte[] pdf = absenceService.getJustificatif(id, authentication.getName());
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .cacheControl(CacheControl.noStore())
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Content-Disposition", "inline; filename=\"justificatif-" + id + ".pdf\"")
+                .body(pdf);
     }
 }

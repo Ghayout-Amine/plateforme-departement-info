@@ -104,9 +104,10 @@
               <tr>
                 <th>Date</th>
                 <th>Module</th>
-                <th>Seance</th>
-                <th>Justifiee</th>
+                <th>Séance</th>
+                <th>Statut</th>
                 <th>Motif</th>
+                <th>Justificatif (PDF)</th>
               </tr>
             </thead>
             <tbody>
@@ -115,8 +116,32 @@
                   <td>{{ absence.date }}</td>
                   <td>{{ absence.moduleId }}</td>
                   <td>{{ absence.sessionTime }}</td>
-                  <td>{{ absence.justified ? 'Oui' : 'Non' }}</td>
+                  <td>
+                    <span class="status-badge" [class]="'status-' + getStatus(absence)">
+                      {{ statusLabel(absence) }}
+                    </span>
+                  </td>
                   <td>{{ absence.motif || '—' }}</td>
+                  <td>
+                    @if (getStatus(absence) === 'UNJUSTIFIED') {
+                      <label class="upload-btn" [class.disabled]="uploadingId() === absence.id">
+                        {{ uploadingId() === absence.id ? 'Envoi...' : '📎 Déposer PDF' }}
+                        <input
+                          type="file"
+                          accept="application/pdf,.pdf"
+                          [disabled]="uploadingId() === absence.id"
+                          (change)="onUploadJustificatif(absence.id, $event)"
+                          hidden
+                        />
+                      </label>
+                    } @else if (getStatus(absence) === 'PENDING_JUSTIFICATION') {
+                      <button type="button" class="link-btn" (click)="openJustificatif(absence.id)">
+                        📄 Voir PDF
+                      </button>
+                    } @else {
+                      <span class="muted">Validée</span>
+                    }
+                  </td>
                 </tr>
               }
             </tbody>

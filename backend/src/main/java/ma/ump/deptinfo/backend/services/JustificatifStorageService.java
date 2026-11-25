@@ -2,6 +2,7 @@
 package ma.ump.deptinfo.backend.services;
 
 import ma.ump.deptinfo.backend.exceptions.BadRequestException;
+import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -128,6 +129,28 @@ public class JustificatifStorageService {
         }
 
         return true;
+    }
+
+    // Lecture securisee d'un justificatif PDF.
+
+    public byte[] load(String filename) throws IOException {
+
+        if (filename == null
+                || !filename.matches(UUID_PDF_PATTERN)) {
+
+            throw new ResourceNotFoundException(
+                    "Justificatif introuvable");
+        }
+
+        Path target = directory().resolve(filename);
+
+        if (!Files.exists(target)) {
+
+            throw new ResourceNotFoundException(
+                    "Justificatif introuvable");
+        }
+
+        return Files.readAllBytes(target);
     }
 
     // Nettoyage en cas d'echec de persistance.

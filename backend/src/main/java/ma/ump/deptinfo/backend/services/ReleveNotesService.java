@@ -262,7 +262,21 @@ public class ReleveNotesService {
         return "Passable";
     }
 
-    // 9. Generation du releve de notes semestriel
+    // 9. Generation du releve de notes semestriel de l'etudiant connecte (/me)
+    @Transactional(readOnly = true)
+    public ReleveNotesResponseDTO getMyReleveNotes(
+            String semester,
+            String authenticatedEmail) {
+        if (authenticatedEmail == null || authenticatedEmail.isBlank()) {
+            throw new AccessDeniedException("Acces refuse");
+        }
+        Student student = studentRepository.findByUserEmail(authenticatedEmail)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Etudiant introuvable pour le compte connecte"));
+        return getReleveNotes(student.getId(), semester, authenticatedEmail);
+    }
+
+    // 10. Generation du releve de notes semestriel
     @Transactional(readOnly = true)
     public ReleveNotesResponseDTO getReleveNotes(
             Long studentId,
