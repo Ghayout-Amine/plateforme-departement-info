@@ -8,6 +8,8 @@ import {
   Internship,
   InternshipStatus,
 } from '../../../models/internship.model';
+import { TeacherService } from '../../../services/teacher.service';
+import { Teacher } from '../../../models/teacher.model';
 import { getCountryName } from '../../../models/country.model';
 
 // PGDI2026-80 (US66/US21) : le département examine les conventions,
@@ -20,6 +22,7 @@ import { getCountryName } from '../../../models/country.model';
 })
 export class StagesValidation implements OnInit {
   private readonly internshipService = inject(InternshipService);
+  private readonly teacherService = inject(TeacherService);
 
   readonly statusLabels = INTERNSHIP_STATUS_LABELS;
   readonly typeLabels = INTERNSHIP_TYPE_LABELS;
@@ -31,6 +34,10 @@ export class StagesValidation implements OnInit {
   readonly error = signal('');
   readonly notice = signal('');
 
+  // PGDI2026-87 : enseignants actifs proposés comme encadrants, choix par dossier
+  readonly teachers = signal<Teacher[]>([]);
+  readonly selectedTeacher: Record<number, number | null> = {};
+
   statusFilter: InternshipStatus | '' = 'PENDING_VALIDATION';
 
   // Refus en cours de saisie : un seul dossier à la fois
@@ -40,6 +47,27 @@ export class StagesValidation implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.teacherService.getAll(true).subscribe({
+      next: (list) => this.teachers.set(list),
+      error: () => this.error.set('Liste des enseignants indisponible.'),
+    });
+  }
+
+  assignSupervisor(item: Internship): void {
+    const teacherId = this.selectedTeacher[item.id];
+    if (!teacherId) {
+      this.error.set('Choisissez un enseignant encadrant.');
+      return;
+    }
+    this.notice.set('');
+    this.error.set('');
+    this.internshipService.assignSupervisor(item.id, Number(teacherId)).subscribe({
+      next: (updated) => {
+        this.notice.set(`Encadrant affecté : ${updated.supervisorName}. Le stage est en cours.`);
+        this.load();
+      },
+      error: (err) => this.error.set(err?.error?.message ?? 'Affectation impossible pour le moment.'),
+    });
   }
 
   load(): void {

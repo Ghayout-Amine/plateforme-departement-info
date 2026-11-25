@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import ma.ump.deptinfo.backend.dtos.InternshipRequestDTO;
 import ma.ump.deptinfo.backend.dtos.InternshipResponseDTO;
 import ma.ump.deptinfo.backend.dtos.InternshipValidationDTO;
+import ma.ump.deptinfo.backend.dtos.SupervisorAssignmentDTO;
 import ma.ump.deptinfo.backend.entities.InternshipStatus;
 import ma.ump.deptinfo.backend.services.InternshipService;
 import org.springframework.http.CacheControl;
@@ -96,5 +97,15 @@ public class InternshipController {
             @Valid @RequestBody InternshipValidationDTO dto,
             Authentication authentication) {
         return ResponseEntity.ok(internshipService.validate(id, dto, authentication.getName()));
+    }
+
+    // PUT /api/internships/{id}/supervisor
+    @PutMapping("/{id}/supervisor")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CHEF_DEPARTEMENT')")
+    @Operation(summary = "Affecter l'encadrant académique (la convention validée passe en cours)")
+    public ResponseEntity<InternshipResponseDTO> assignSupervisor(
+            @PathVariable Long id,
+            @Valid @RequestBody SupervisorAssignmentDTO dto) {
+        return ResponseEntity.ok(internshipService.assignSupervisor(id, dto));
     }
 }

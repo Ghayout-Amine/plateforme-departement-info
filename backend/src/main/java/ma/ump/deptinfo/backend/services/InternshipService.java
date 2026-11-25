@@ -3,11 +3,14 @@ package ma.ump.deptinfo.backend.services;
 import ma.ump.deptinfo.backend.dtos.InternshipRequestDTO;
 import ma.ump.deptinfo.backend.dtos.InternshipResponseDTO;
 import ma.ump.deptinfo.backend.dtos.InternshipValidationDTO;
+import ma.ump.deptinfo.backend.dtos.SupervisorAssignmentDTO;
 import ma.ump.deptinfo.backend.entities.*;
 import ma.ump.deptinfo.backend.exceptions.BadRequestException;
 import ma.ump.deptinfo.backend.exceptions.ConflictException;
 import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import ma.ump.deptinfo.backend.repositories.InternshipRepository;
+import ma.ump.deptinfo.backend.repositories.InternshipSupervisorRepository;
+import ma.ump.deptinfo.backend.repositories.TeacherRepository;
 import ma.ump.deptinfo.backend.repositories.StudentRepository;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -36,15 +39,21 @@ public class InternshipService {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
     private final AgreementStorageService storage;
+    private final TeacherRepository teacherRepository;
+    private final InternshipSupervisorRepository supervisorRepository;
 
     public InternshipService(InternshipRepository internshipRepository,
                              StudentRepository studentRepository,
                              UserRepository userRepository,
-                             AgreementStorageService storage) {
+                             AgreementStorageService storage,
+                             TeacherRepository teacherRepository,
+                             InternshipSupervisorRepository supervisorRepository) {
         this.internshipRepository = internshipRepository;
         this.studentRepository = studentRepository;
         this.userRepository = userRepository;
         this.storage = storage;
+        this.teacherRepository = teacherRepository;
+        this.supervisorRepository = supervisorRepository;
     }
 
     // ---------- étudiant ----------
@@ -118,6 +127,35 @@ public class InternshipService {
         return toResponseDTO(internshipRepository.save(internship));
     }
 
+    /**
+     * PGDI2026-87 (US51) : affecte l'encadrant académique principal.
+     * Seule une convention validée (ou déjà en cours, pour changer d'encadrant) peut être encadrée ;
+     * à la première affectation elle passe de VALIDATED à IN_PROGRESS.
+     */
+    public InternshipResponseDTO assignSupervisor(Long id, SupervisorAssignmentDTO dto) {
+        Internship internship = findInternship(id);
+        if (internship.getStatus() != InternshipStatus.VALIDATED
+                && internship.getStatus() != InternshipStatus.IN_PROGRESS) {
+            throw new ConflictException("Seule une convention validée peut recevoir un encadrant (statut : "
+                    + internship.getStatus() + ")");
+        }
+        Teacher teacher = teacherRepository.findById(dto.getTeacherId())
+                .orElseThrow(() -> new ResourceNotFoundException("Enseignant introuvable avec l'id : " + dto.getTeacherId()));
+        User teacherUser = teacher.getUser();
+        if (teacherUser.getRole() != Role.ENSEIGNANT || !Boolean.TRUE.equals(teacherUser.getEnabled())) {
+            throw new BadRequestException("Cet utilisateur ne peut pas être encadrant (compte enseignant actif requis)");
+        }
+
+        // Un seul encadrant principal : l'ancien est remplacé
+        supervisorRepository.findFirstByInternshipIdAndSupervisorRole(id, SupervisorRole.MAIN)
+                .ifPresent(supervisorRepository::delete);
+        supervisorRepository.flush();
+        supervisorRepository.save(new InternshipSupervisor(internship, teacher, SupervisorRole.MAIN));
+
+        internship.startSupervision();
+        return toResponseDTO(internshipRepository.save(internship));
+    }
+
     // ---------- lecture commune ----------
 
     @Transactional(readOnly = true)
@@ -177,6 +215,12 @@ public class InternshipService {
         dto.setStudentId(s.getId());
         dto.setStudentNumber(s.getStudentNumber());
         dto.setStudentName(s.getUser().getFirstName() + " " + s.getUser().getLastName());
+        supervisorRepository.findFirstByInternshipIdAndSupervisorRole(i.getId(), SupervisorRole.MAIN)
+                .ifPresent(sv -> {
+                    dto.setSupervisorId(sv.getTeacher().getId());
+                    dto.setSupervisorName(sv.getTeacher().getUser().getFirstName()
+                            + " " + sv.getTeacher().getUser().getLastName());
+                });
         return dto;
     }
 }

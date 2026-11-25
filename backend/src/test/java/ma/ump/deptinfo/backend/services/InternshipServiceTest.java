@@ -3,11 +3,14 @@ package ma.ump.deptinfo.backend.services;
 import ma.ump.deptinfo.backend.dtos.InternshipRequestDTO;
 import ma.ump.deptinfo.backend.dtos.InternshipResponseDTO;
 import ma.ump.deptinfo.backend.dtos.InternshipValidationDTO;
+import ma.ump.deptinfo.backend.dtos.SupervisorAssignmentDTO;
 import ma.ump.deptinfo.backend.entities.*;
 import ma.ump.deptinfo.backend.exceptions.BadRequestException;
 import ma.ump.deptinfo.backend.exceptions.ConflictException;
 import ma.ump.deptinfo.backend.exceptions.ResourceNotFoundException;
 import ma.ump.deptinfo.backend.repositories.InternshipRepository;
+import ma.ump.deptinfo.backend.repositories.InternshipSupervisorRepository;
+import ma.ump.deptinfo.backend.repositories.TeacherRepository;
 import ma.ump.deptinfo.backend.repositories.StudentRepository;
 import ma.ump.deptinfo.backend.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +46,10 @@ class InternshipServiceTest {
     private UserRepository userRepository;
     @Mock
     private AgreementStorageService storage;
+    @Mock
+    private TeacherRepository teacherRepository;
+    @Mock
+    private InternshipSupervisorRepository supervisorRepository;
 
     @InjectMocks
     private InternshipService internshipService;
@@ -242,5 +249,110 @@ class InternshipServiceTest {
         when(storage.load(internship.getAgreementFilePath())).thenReturn(new byte[]{1});
 
         assertEquals(1, internshipService.getAgreement(5L, "chef@pgdi.test").length);
+    }
+
+    // ---------- PGDI2026-87 (US51) : affectation de l'encadrant académique ----------
+
+    private Teacher teacherWith(Role role, boolean enabled) {
+        User u = new User();
+        ReflectionTestUtils.setField(u, "id", 30L);
+        u.setFirstName("Karim");
+        u.setLastName("Alaoui");
+        u.setRole(role);
+        u.setEnabled(enabled);
+        Teacher t = new Teacher();
+        ReflectionTestUtils.setField(t, "id", 7L);
+        t.setUser(u);
+        return t;
+    }
+
+    private Internship internshipWithStatus(InternshipStatus status) {
+        Internship i = pendingInternship();
+        i.setStatus(status);
+        return i;
+    }
+
+    private SupervisorAssignmentDTO assignment(Long teacherId) {
+        SupervisorAssignmentDTO a = new SupervisorAssignmentDTO();
+        a.setTeacherId(teacherId);
+        return a;
+    }
+
+    @Test
+    @DisplayName("assignSupervisor : convention validée -> encadrant enregistré et statut IN_PROGRESS")
+    void assignSupervisor_ok_passesToInProgress() {
+        Internship i = internshipWithStatus(InternshipStatus.VALIDATED);
+        Teacher teacher = teacherWith(Role.ENSEIGNANT, true);
+        when(internshipRepository.findById(5L)).thenReturn(Optional.of(i));
+        when(teacherRepository.findById(7L)).thenReturn(Optional.of(teacher));
+        when(supervisorRepository.findFirstByInternshipIdAndSupervisorRole(5L, SupervisorRole.MAIN))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(new InternshipSupervisor(i, teacher, SupervisorRole.MAIN)));
+        when(internshipRepository.save(any(Internship.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InternshipResponseDTO result = internshipService.assignSupervisor(5L, assignment(7L));
+
+        assertEquals(InternshipStatus.IN_PROGRESS, result.getStatus());
+        assertEquals(7L, result.getSupervisorId());
+        assertEquals("Karim Alaoui", result.getSupervisorName());
+        verify(supervisorRepository).save(any(InternshipSupervisor.class));
+    }
+
+    @Test
+    @DisplayName("assignSupervisor : stage déjà en cours -> l'ancien encadrant est remplacé, statut inchangé")
+    void assignSupervisor_replacesPreviousSupervisor() {
+        Internship i = internshipWithStatus(InternshipStatus.IN_PROGRESS);
+        Teacher teacher = teacherWith(Role.ENSEIGNANT, true);
+        InternshipSupervisor old = new InternshipSupervisor(i, teacherWith(Role.ENSEIGNANT, true), SupervisorRole.MAIN);
+        when(internshipRepository.findById(5L)).thenReturn(Optional.of(i));
+        when(teacherRepository.findById(7L)).thenReturn(Optional.of(teacher));
+        when(supervisorRepository.findFirstByInternshipIdAndSupervisorRole(5L, SupervisorRole.MAIN))
+                .thenReturn(Optional.of(old));
+        when(internshipRepository.save(any(Internship.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InternshipResponseDTO result = internshipService.assignSupervisor(5L, assignment(7L));
+
+        assertEquals(InternshipStatus.IN_PROGRESS, result.getStatus());
+        verify(supervisorRepository).delete(old);
+        verify(supervisorRepository).save(any(InternshipSupervisor.class));
+    }
+
+    @Test
+    @DisplayName("assignSupervisor : convention non validée (en attente, refusée...) -> 409")
+    void assignSupervisor_notValidated_conflict() {
+        for (InternshipStatus status : new InternshipStatus[]{
+                InternshipStatus.PENDING_VALIDATION, InternshipStatus.REJECTED,
+                InternshipStatus.COMPLETED, InternshipStatus.CANCELLED}) {
+            when(internshipRepository.findById(5L)).thenReturn(Optional.of(internshipWithStatus(status)));
+            assertThrows(ConflictException.class, () -> internshipService.assignSupervisor(5L, assignment(7L)));
+        }
+        verify(supervisorRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("assignSupervisor : stage ou enseignant introuvable -> 404")
+    void assignSupervisor_notFound() {
+        when(internshipRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> internshipService.assignSupervisor(99L, assignment(7L)));
+
+        when(internshipRepository.findById(5L)).thenReturn(Optional.of(internshipWithStatus(InternshipStatus.VALIDATED)));
+        when(teacherRepository.findById(8L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> internshipService.assignSupervisor(5L, assignment(8L)));
+    }
+
+    @Test
+    @DisplayName("assignSupervisor : compte qui n'est pas un enseignant actif -> 400, statut inchangé")
+    void assignSupervisor_invalidTeacherAccount() {
+        Internship i = internshipWithStatus(InternshipStatus.VALIDATED);
+        when(internshipRepository.findById(5L)).thenReturn(Optional.of(i));
+
+        when(teacherRepository.findById(7L)).thenReturn(Optional.of(teacherWith(Role.ETUDIANT, true)));
+        assertThrows(BadRequestException.class, () -> internshipService.assignSupervisor(5L, assignment(7L)));
+
+        when(teacherRepository.findById(7L)).thenReturn(Optional.of(teacherWith(Role.ENSEIGNANT, false)));
+        assertThrows(BadRequestException.class, () -> internshipService.assignSupervisor(5L, assignment(7L)));
+
+        assertEquals(InternshipStatus.VALIDATED, i.getStatus());
+        verify(supervisorRepository, never()).save(any());
     }
 }
