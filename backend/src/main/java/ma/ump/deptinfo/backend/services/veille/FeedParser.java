@@ -13,6 +13,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -31,6 +32,8 @@ public final class FeedParser {
     static final int SUMMARY_MAX = 280;
     private static final Pattern IMG_SRC = Pattern.compile("<img[^>]+src=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE);
     private static final Pattern TAGS = Pattern.compile("<[^>]*>");
+    private static final DateTimeFormatter RSS_NAMED_ZONE =
+            DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss z", Locale.ENGLISH);
 
     private FeedParser() {
     }
@@ -124,14 +127,19 @@ public final class FeedParser {
                 .replaceAll("\\s+", " ").trim();
     }
 
-    /** Dates RSS (RFC 1123, ex. « Tue, 24 Nov 2026 10:00:00 GMT ») ou ISO 8601 (Atom). Null si illisible. */
+    /** Dates RSS (RFC 1123, fuseaux nommés type EST) ou ISO 8601 (Atom). Null si illisible. */
     static OffsetDateTime parseDate(String value) {
         if (value == null || value.isBlank()) return null;
         String v = value.trim();
         try {
             return OffsetDateTime.parse(v, DateTimeFormatter.RFC_1123_DATE_TIME.withLocale(Locale.ENGLISH));
         } catch (DateTimeParseException ignored) {
-            // pas au format RFC 1123 : on essaie ISO 8601
+            // pas au format RFC 1123 strict : on essaie les variantes
+        }
+        try {
+            return ZonedDateTime.parse(v, RSS_NAMED_ZONE).toOffsetDateTime();
+        } catch (DateTimeParseException ignored) {
+            // pas un fuseau nommé RSS : on essaie ISO 8601
         }
         try {
             return OffsetDateTime.parse(v);

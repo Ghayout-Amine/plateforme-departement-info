@@ -111,19 +111,36 @@ class FeedParserTest {
     }
 
     @Test
-    @DisplayName("Dev.to : JSON de l'API transformé en articles, image de couverture ou sociale")
+    @DisplayName("RSS : fuseau nommé (ex. EST de ScienceDaily) accepté")
+    void parseRssNamedTimezone() {
+        OffsetDateTime parsed = FeedParser.parseDate("Wed, 25 Nov 2026 04:30:54 EST");
+
+        assertNotNull(parsed);
+        assertEquals(2026, parsed.getYear());
+        assertEquals(11, parsed.getMonthValue());
+        assertEquals(25, parsed.getDayOfMonth());
+    }
+
+    @Test
+    @DisplayName("Dev.to : JSON de l'API transformé en articles, tags grand public exclus")
     void parseDevTo() {
         List<Map<String, Object>> json = List.of(
                 Map.<String, Object>of("title", "Spring Boot 4 en pratique",
                         "url", "https://dev.to/alice/spring-boot-4",
                         "description", "Tour des nouveautés",
                         "social_image", "https://media.dev.to/social.png",
-                        "published_at", "2026-11-22T09:15:00Z"),
+                        "published_at", "2026-11-22T09:15:00Z",
+                        "tag_list", List.of("java", "computerscience")),
+                Map.<String, Object>of("title", "Mème du vendredi",
+                        "url", "https://dev.to/bob/meme-du-vendredi",
+                        "description", "Hors sujet",
+                        "tag_list", List.of("memes", "discuss")),
                 Map.<String, Object>of("title", "Sans URL", "description", "ignoré"));
 
         List<TechArticleDto> articles = DevToSource.parse(json);
 
         assertEquals(1, articles.size());
+        assertEquals("Spring Boot 4 en pratique", articles.get(0).getTitle());
         assertEquals("Dev.to", articles.get(0).getSource());
         assertEquals("https://media.dev.to/social.png", articles.get(0).getImageUrl());
         assertNotNull(articles.get(0).getPublishedAt());

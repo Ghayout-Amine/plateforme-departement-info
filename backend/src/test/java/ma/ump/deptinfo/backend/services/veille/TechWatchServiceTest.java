@@ -156,4 +156,26 @@ class TechWatchServiceTest {
         assertEquals("Dev.to", sources.get(0).name());
         assertEquals("Le Monde Informatique", sources.get(1).name());
     }
+
+    @Test
+    @DisplayName("Recherche et filtre par source sur les articles en cache")
+    void filtersByQueryAndSource() {
+        TechArticleDto a1 = new TechArticleDto("Sécurité réseau et IA", "Détection d'intrusion",
+                "https://arxiv.org/abs/1", null, OffsetDateTime.of(2026, 11, 25, 10, 0, 0, 0, ZoneOffset.UTC),
+                "arXiv Informatique");
+        TechArticleDto a2 = new TechArticleDto("Calcul quantique IBM", "Algorithmes quantiques",
+                "https://sciencedaily.com/1", null, OffsetDateTime.of(2026, 11, 24, 10, 0, 0, 0, ZoneOffset.UTC),
+                "ScienceDaily Informatique");
+        FakeSource s1 = new FakeSource("arXiv Informatique", List.of(a1));
+        FakeSource s2 = new FakeSource("ScienceDaily Informatique", List.of(a2));
+        TechWatchService service = new TechWatchService(List.of(s1, s2), Duration.ofMinutes(30), new MutableClock());
+
+        TechWatchResponseDTO byQuery = service.getArticles(20, "securite", null);
+        assertEquals(1, byQuery.getArticles().size());
+        assertEquals("https://arxiv.org/abs/1", byQuery.getArticles().get(0).getLink());
+
+        TechWatchResponseDTO bySource = service.getArticles(20, null, "ScienceDaily Informatique");
+        assertEquals(1, bySource.getArticles().size());
+        assertEquals("https://sciencedaily.com/1", bySource.getArticles().get(0).getLink());
+    }
 }

@@ -98,9 +98,50 @@
       }
     </section>
 
-    <!-- PGDI2026-88 : veille technologique -->
+    <!-- PGDI2026-88 : veille technologique informatique & scientifique -->
     <section class="column wide" aria-labelledby="veille-title">
-      <h2 id="veille-title" class="column-title">Veille technologique</h2>
+      <div class="veille-header">
+        <div>
+          <h2 id="veille-title" class="column-title">Veille informatique &amp; scientifique</h2>
+        </div>
+        @if (!watchLoading() && !watchError() && articles().length > 0) {
+          <span class="veille-count">{{ filteredArticles().length }} article{{ filteredArticles().length > 1 ? 's' : '' }}</span>
+        }
+      </div>
+
+      @if (!watchLoading() && !watchError() && articles().length > 0) {
+        <div class="veille-toolbar">
+          <div class="search-box">
+            <input
+              type="search"
+              [value]="searchQuery()"
+              (input)="onSearchInput($event)"
+              placeholder="Rechercher un article (IA, sécurité, quantique, algorithmes…)"
+              aria-label="Rechercher un article informatique ou scientifique">
+            @if (searchQuery()) {
+              <button type="button" class="clear-search" (click)="searchQuery.set('')" aria-label="Effacer la recherche">×</button>
+            }
+          </div>
+          <div class="source-chips" role="group" aria-label="Filtrer par source">
+            <button
+              type="button"
+              class="chip"
+              [class.active]="selectedSource() === 'ALL'"
+              (click)="selectedSource.set('ALL')">
+              Toutes <span class="chip-count">{{ articles().length }}</span>
+            </button>
+            @for (src of availableSources(); track src.name) {
+              <button
+                type="button"
+                class="chip"
+                [class.active]="selectedSource() === src.name"
+                (click)="selectedSource.set(src.name)">
+                {{ src.name }} <span class="chip-count">{{ src.count }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
 
       @if (unavailableSources().length > 0 && !watchLoading()) {
         <p class="notice">Source momentanément indisponible : {{ unavailableSources().join(', ') }}.</p>
@@ -115,13 +156,20 @@
         </div>
       } @else if (articles().length === 0) {
         <p class="state">Aucun article de veille pour le moment.</p>
+      } @else if (filteredArticles().length === 0) {
+        <div class="state empty-filter">
+          Aucun article ne correspond à « {{ searchQuery() || selectedSource() }} ».
+          <button type="button" class="link-button" (click)="clearFilters()">Réinitialiser les filtres</button>
+        </div>
       } @else {
         <div class="articles">
-          @for (art of articles(); track art.link) {
+          @for (art of filteredArticles(); track art.link) {
             <a class="article" [href]="art.link" target="_blank" rel="noopener noreferrer">
-              <div class="thumb">
+              <div class="thumb" [class.thumb-academic]="!art.imageUrl">
                 @if (art.imageUrl) {
                   <img [src]="art.imageUrl" alt="" loading="lazy" (error)="hideImage($event)">
+                } @else {
+                  <span class="thumb-placeholder">{{ art.source }}</span>
                 }
               </div>
               <div class="article-body">

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.Normalizer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -16,7 +17,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * PGDI2026-88 : veille technologique agrégée depuis l'API Dev.to et des flux RSS/Atom.
@@ -85,34 +91,31 @@ public class TechWatchService {
     }
 
     public synchronized TechWatchResponseDTO getArticles(Integer limit) {
+        return getArticles(limit, null, null);
+    }
+
+    public synchronized TechWatchResponseDTO getArticles(Integer limit, String query, String sourceFilter) {
         int max = (limit == null || limit < 1) ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
 
         if (cachedAt != null && cachedAt.plus(cacheTtl).isAfter(clock.instant())) {
-            return response(cachedArticles, cachedUnavailable, cachedAt, max);
+            return response(cachedArticles, cachedUnavailable, cachedAt, max, query, sourceFilter);
         }
 
         // Sources toutes en panne il y a peu : pas de nouvelle tentative (évite d'attendre les timeouts à chaque visite)
         if (lastFailureAt != null && lastFailureAt.plus(RETRY_AFTER_FAILURE).isAfter(clock.instant())) {
             List<TechArticleDto> fallback = cachedArticles != null ? cachedArticles : List.of();
-            return response(fallback, sourceNames(), cachedAt, max);
+            return response(fallback, sourceNames(), cachedAt, max, query, sourceFilter);
         }
 
         List<TechArticleDto> merged = new ArrayList<>();
         List<String> unavailable = new ArrayList<>();
-        for (TechFeedSource source : sources) {
-            try {
-                merged.addAll(source.fetch());
-            } catch (RuntimeException e) {
-                unavailable.add(source.name());
-                log.warn("Veille : source {} indisponible : {}", source.name(), e.getMessage());
-            }
-        }
+        fetchAllSources(merged, unavailable);
 
         if (!sources.isEmpty() && unavailable.size() == sources.size()) {
             // toutes les sources ont échoué : dernier résultat connu, sinon liste vide
             lastFailureAt = clock.instant();
             List<TechArticleDto> fallback = cachedArticles != null ? cachedArticles : List.of();
-            return response(fallback, unavailable, cachedAt, max);
+            return response(fallback, unavailable, cachedAt, max, query, sourceFilter);
         }
 
         lastFailureAt = null;
@@ -120,7 +123,43 @@ public class TechWatchService {
         cachedArticles = result;
         cachedUnavailable = List.copyOf(unavailable);
         cachedAt = clock.instant();
-        return response(result, cachedUnavailable, cachedAt, max);
+        return response(result, cachedUnavailable, cachedAt, max, query, sourceFilter);
+    }
+
+    private void fetchAllSources(List<TechArticleDto> merged, List<String> unavailable) {
+        if (sources.isEmpty()) return;
+        if (sources.size() == 1) {
+            TechFeedSource single = sources.get(0);
+            try {
+                merged.addAll(single.fetch());
+            } catch (RuntimeException e) {
+                unavailable.add(single.name());
+                log.warn("Veille : source {} indisponible : {}", single.name(), e.getMessage());
+            }
+            return;
+        }
+
+        ExecutorService pool = Executors.newFixedThreadPool(sources.size());
+        try {
+            List<CompletableFuture<List<TechArticleDto>>> tasks = sources.stream()
+                    .map(source -> CompletableFuture.supplyAsync(source::fetch, pool))
+                    .toList();
+            for (int i = 0; i < sources.size(); i++) {
+                TechFeedSource source = sources.get(i);
+                try {
+                    merged.addAll(tasks.get(i).join());
+                } catch (CompletionException e) {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    unavailable.add(source.name());
+                    log.warn("Veille : source {} indisponible : {}", source.name(), cause.getMessage());
+                } catch (RuntimeException e) {
+                    unavailable.add(source.name());
+                    log.warn("Veille : source {} indisponible : {}", source.name(), e.getMessage());
+                }
+            }
+        } finally {
+            pool.shutdown();
+        }
     }
 
     /** Un même article peut venir de deux sources : on garde le premier lien, puis tri du plus récent au plus ancien. */
@@ -140,9 +179,42 @@ public class TechWatchService {
     }
 
     private TechWatchResponseDTO response(List<TechArticleDto> articles, List<String> unavailable,
-                                          Instant updatedAt, int max) {
-        List<TechArticleDto> limited = articles.size() > max ? articles.subList(0, max) : articles;
+                                          Instant updatedAt, int max, String query, String sourceFilter) {
+        List<TechArticleDto> filtered = filter(articles, query, sourceFilter);
+        List<TechArticleDto> limited = filtered.size() > max ? filtered.subList(0, max) : filtered;
         OffsetDateTime date = updatedAt == null ? null : OffsetDateTime.ofInstant(updatedAt, clock.getZone());
         return new TechWatchResponseDTO(List.copyOf(limited), List.copyOf(unavailable), date);
+    }
+
+    static List<TechArticleDto> filter(List<TechArticleDto> articles, String query, String sourceFilter) {
+        String source = sourceFilter == null ? "" : sourceFilter.trim();
+        boolean hasSource = !source.isEmpty() && !"ALL".equalsIgnoreCase(source);
+        String normalizedQuery = normalize(query);
+        String[] terms = normalizedQuery.isEmpty() ? new String[0] : normalizedQuery.split("\\s+");
+
+        if (!hasSource && terms.length == 0) {
+            return articles;
+        }
+        return articles.stream()
+                .filter(a -> !hasSource || (a.getSource() != null && a.getSource().equalsIgnoreCase(source)))
+                .filter(a -> matchesTerms(a, terms))
+                .toList();
+    }
+
+    private static boolean matchesTerms(TechArticleDto article, String[] terms) {
+        if (terms.length == 0) return true;
+        String text = normalize((article.getTitle() == null ? "" : article.getTitle()) + " "
+                + (article.getSummary() == null ? "" : article.getSummary()) + " "
+                + (article.getSource() == null ? "" : article.getSource()));
+        for (String term : terms) {
+            if (!text.contains(term)) return false;
+        }
+        return true;
+    }
+
+    private static String normalize(String value) {
+        if (value == null || value.isBlank()) return "";
+        String decomposed = Normalizer.normalize(value.trim(), Normalizer.Form.NFD);
+        return decomposed.replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT);
     }
 }

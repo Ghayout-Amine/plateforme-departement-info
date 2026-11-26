@@ -1,17 +1,17 @@
 package ma.ump.deptinfo.backend.services.veille;
 
 import ma.ump.deptinfo.backend.dtos.TechArticleDto;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
-import java.time.Duration;
 import java.util.List;
 
 /**
- * PGDI2026-88 : un flux RSS ou Atom (ex. Le Monde Informatique), lu avec un délai maximal (timeout).
+ * PGDI2026-88 : un flux RSS ou Atom (arXiv, The Hacker News...), avec timeout et retry transitoire.
  * Les flux sont déclarés dans app.veille.rss-feeds (voir {@link TechWatchService}).
  */
 public class RssFeedSource implements TechFeedSource {
+
+    private static final int MAX_ITEMS_PER_FEED = 15;
 
     private final String name;
     private final String url;
@@ -20,10 +20,7 @@ public class RssFeedSource implements TechFeedSource {
     public RssFeedSource(String name, String url, int timeoutSeconds) {
         this.name = name;
         this.url = url;
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Duration.ofSeconds(timeoutSeconds));
-        factory.setReadTimeout(Duration.ofSeconds(timeoutSeconds));
-        this.http = RestClient.builder().requestFactory(factory).build();
+        this.http = FeedHttp.createClient(timeoutSeconds);
     }
 
     @Override
@@ -33,15 +30,18 @@ public class RssFeedSource implements TechFeedSource {
 
     @Override
     public List<TechArticleDto> fetch() {
-        String xml = http.get()
+        String xml = FeedHttp.getWithRetry(() -> http.get()
                 .uri(url)
                 .header("User-Agent", "PGDI2026-Veille/1.0")
                 .header("Accept", "application/rss+xml, application/atom+xml, application/xml, text/xml")
                 .retrieve()
-                .body(String.class);
+                .body(String.class));
         if (xml == null || xml.isBlank()) {
             throw new IllegalStateException("Flux vide");
         }
-        return FeedParser.parse(xml, name);
+        List<TechArticleDto> parsed = FeedParser.parse(xml, name);
+        return TechWatchService.deduplicateAndSort(parsed).stream()
+                .limit(MAX_ITEMS_PER_FEED)
+                .toList();
     }
 }

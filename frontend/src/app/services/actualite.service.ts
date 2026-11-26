@@ -31,9 +31,14 @@ export class ActualiteService {
     return this.http.delete<void>(`${this.apiUrl}/departement/${id}`);
   }
 
-  getTechWatch(limit = 12): Observable<TechWatchResponse> {
-    return this.http.get<TechWatchResponse>(`${this.apiUrl}/veille-externe`, {
-      params: new HttpParams().set('limit', limit)
-    });
+  getTechWatch(limit = 40, q?: string, source?: string): Observable<TechWatchResponse> {
+    let params = new HttpParams().set('limit', limit);
+    if (q?.trim()) {
+      params = params.set('q', q.trim());
+    }
+    if (source && source !== 'ALL') {
+      params = params.set('source', source);
+    }
+    return this.http.get<TechWatchResponse>(`${this.apiUrl}/veille-externe`, { params });
   }
 }

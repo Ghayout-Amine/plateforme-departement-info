@@ -82,10 +82,13 @@ public class ActualiteController {
 
     // ---------- PGDI2026-88 : veille technologique ----------
 
-    // GET /api/actualites/veille-externe?limit=20
+    // GET /api/actualites/veille-externe?limit=40&q=...&source=...
     @GetMapping("/veille-externe")
-    @Operation(summary = "Veille technologique (Dev.to et flux RSS), mise en cache 30 min")
-    public ResponseEntity<TechWatchResponseDTO> getTechWatch(@RequestParam(required = false) Integer limit) {
-        return ResponseEntity.ok(techWatchService.getArticles(limit));
+    @Operation(summary = "Veille technologique informatique & scientifique, filtrable par mot-clé et source (cache 30 min)")
+    public ResponseEntity<TechWatchResponseDTO> getTechWatch(
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String source) {
+        return ResponseEntity.ok(techWatchService.getArticles(limit, q, source));
     }
 }

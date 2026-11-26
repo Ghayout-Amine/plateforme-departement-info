@@ -53,6 +53,32 @@ export class Actualites implements OnInit {
   readonly unavailableSources = signal<string[]>([]);
   readonly watchLoading = signal(true);
   readonly watchError = signal(false);
+  readonly searchQuery = signal('');
+  readonly selectedSource = signal('ALL');
+
+  readonly availableSources = computed(() => {
+    const counts = new Map<string, number>();
+    for (const art of this.articles()) {
+      counts.set(art.source, (counts.get(art.source) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).map(([name, count]) => ({ name, count }));
+  });
+
+  readonly filteredArticles = computed(() => {
+    const query = this.normalizeText(this.searchQuery().trim());
+    const source = this.selectedSource();
+    const terms = query ? query.split(/\s+/).filter(Boolean) : [];
+    return this.articles().filter(art => {
+      if (source !== 'ALL' && art.source !== source) {
+        return false;
+      }
+      if (terms.length === 0) {
+        return true;
+      }
+      const haystack = this.normalizeText(`${art.title} ${art.summary ?? ''} ${art.source}`);
+      return terms.every(term => haystack.includes(term));
+    });
+  });
 
   ngOnInit(): void {
     this.loadAnnouncements();
@@ -78,7 +104,7 @@ export class Actualites implements OnInit {
   loadTechWatch(): void {
     this.watchLoading.set(true);
     this.watchError.set(false);
-    this.actualiteService.getTechWatch(12).subscribe({
+    this.actualiteService.getTechWatch(40).subscribe({
       next: data => {
         this.articles.set(data.articles);
         this.unavailableSources.set(data.unavailableSources ?? []);
@@ -90,6 +116,22 @@ export class Actualites implements OnInit {
         this.watchLoading.set(false);
       }
     });
+  }
+
+  onSearchInput(event: Event): void {
+    this.searchQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.selectedSource.set('ALL');
+  }
+
+  private normalizeText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   // Texte long : on affiche un extrait, « Lire la suite » déplie l'annonce
