@@ -25,6 +25,9 @@ export const routes: Routes = [
   { path: '', component: Home },
   { path: 'filieres', component: Filieres },
   { path: 'contact', component: Contact },
+  // PGDI2026-88 / 89 : annonces officielles et veille technologique (page publique)
+  { path: 'actualites',
+    loadComponent: () => import('./pages/actualites/actualites').then(m => m.Actualites) },
   { path: 'login', component: Login },
 
   { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
