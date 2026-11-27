@@ -1,15 +1,34 @@
-﻿<header class="header">
+<header class="header">
   <h1 class="logo">PGDI</h1>
   <nav>
     <a routerLink="/">Accueil</a>
     <a routerLink="/filieres">Filières</a>
+    <a routerLink="/actualites">Actualités</a>
     <a routerLink="/contact">Contact</a>
     @if (auth.isLoggedIn()) {
       <a routerLink="/dashboard">Tableau de bord</a>
-      <a routerLink="/teachers">Enseignants</a>
-      <a routerLink="/students">Étudiants</a>
-      <a routerLink="/salles">Salles</a>
-      <a routerLink="/groupes">Groupes</a>
+      @if (auth.currentRole() === 'ADMIN' || auth.currentRole() === 'CHEF_DEPARTEMENT') {
+        <a routerLink="/teachers">Enseignants</a>
+        <a routerLink="/students">Étudiants</a>
+        <a routerLink="/salles">Salles</a>
+        <a routerLink="/groupes">Groupes</a>
+        <a routerLink="/inscriptions">Inscriptions</a>
+        <a routerLink="/stages/validation">Stages / PFE</a>
+        <a routerLink="/admin/users">Utilisateurs</a>
+      }
+      <a routerLink="/emploi-du-temps">Emploi du temps</a>
+      <a routerLink="/stages/offres">Offres de stage</a>
+      <a routerLink="/examens">Examens</a>
+      @if (auth.currentRole() === 'ENSEIGNANT') {
+        <a routerLink="/grades">Saisie des notes</a>
+        <a routerLink="/absences">Gestion des absences</a>
+      }
+      @if (auth.currentRole() === 'ETUDIANT') {
+        <a routerLink="/grades">Mes notes</a>
+        <a routerLink="/absences">Mes absences</a>
+        <a routerLink="/stages">Mon stage / PFE</a>
+      }
+      <a routerLink="/profile">Mon Profil</a>
       <a href="#" (click)="$event.preventDefault(); auth.logout()">Déconnexion</a>
     } @else {
       <a routerLink="/login">Connexion</a>

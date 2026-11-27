@@ -1,0 +1,38 @@
+<div class="teacher-photo">
+  <div class="photo-frame">
+    @if (previewUrl() || photoUrl()) {
+      <img [src]="previewUrl() || photoUrl()"
+           alt="Photo de profil de l'enseignant" />
+    } @else {
+      <span class="initials">{{ initials() }}</span>
+    }
+  </div>
+
+  <div class="photo-actions">
+    <label for="teacher-photo-input">Photo de profil</label>
+    <input
+      id="teacher-photo-input"
+      type="file"
+      accept="image/jpeg,image/png"
+      (change)="onFileSelected($event)"
+      [disabled]="uploading()" />
+
+    <small>JPEG ou PNG, maximum 5 Mo.</small>
+
+    @if (selectedFile()) {
+      <button type="button"
+              (click)="upload()"
+              [disabled]="uploading()">
+        {{ uploading() ? 'Envoi...' : 'Enregistrer la photo' }}
+      </button>
+    }
+
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+
+    @if (success()) {
+      <p class="success" role="status">{{ success() }}</p>
+    }
+  </div>
+</div>

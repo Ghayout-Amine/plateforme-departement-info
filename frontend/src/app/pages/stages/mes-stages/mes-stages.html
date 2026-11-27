@@ -1,0 +1,122 @@
+<section class="stages-page">
+  <h2>Mon stage / PFE</h2>
+  <p class="intro">Déclarez votre stage avec la convention signée (PDF). Le département la valide ou la refuse.</p>
+
+  @if (error()) {
+    <p class="message error">{{ error() }}</p>
+  }
+  @if (success()) {
+    <p class="message success">{{ success() }}</p>
+  }
+
+  <div class="card">
+    <h3>Déclarer un stage</h3>
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="grid">
+        <div class="field">
+          <label for="internshipType">Type *</label>
+          <select id="internshipType" formControlName="internshipType">
+            <option value="PFE">PFE (projet de fin d'études)</option>
+            <option value="INTERNSHIP">Stage</option>
+          </select>
+        </div>
+        <div class="field wide">
+          <label for="subject">Sujet *</label>
+          <input id="subject" type="text" formControlName="subject" />
+          @if (form.controls.subject.touched && form.controls.subject.invalid) {
+            <span class="field-error">Indiquez le sujet (5 caractères minimum).</span>
+          }
+        </div>
+        <div class="field">
+          <label for="companyName">Entreprise *</label>
+          <input id="companyName" type="text" formControlName="companyName" />
+          @if (form.controls.companyName.touched && form.controls.companyName.invalid) {
+            <span class="field-error">Indiquez l'entreprise d'accueil.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="companyCity">Ville</label>
+          <input id="companyCity" type="text" formControlName="companyCity" />
+        </div>
+        <div class="field">
+          <label for="companyCountry">Pays *</label>
+          <select id="companyCountry" formControlName="companyCountry">
+            @for (c of countries; track c.code) {
+              <option [value]="c.code">{{ c.name }} ({{ c.code }})</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="startDate">Début *</label>
+          <input id="startDate" type="date" formControlName="startDate" />
+          @if (form.controls.startDate.touched && form.controls.startDate.invalid) {
+            <span class="field-error">Date de début obligatoire.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="endDate">Fin *</label>
+          <input id="endDate" type="date" formControlName="endDate" />
+          @if (form.controls.endDate.touched && form.controls.endDate.invalid) {
+            <span class="field-error">Date de fin obligatoire.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="companyTutorName">Tuteur en entreprise</label>
+          <input id="companyTutorName" type="text" formControlName="companyTutorName" />
+        </div>
+        <div class="field">
+          <label for="companyTutorEmail">Email du tuteur</label>
+          <input id="companyTutorEmail" type="email" formControlName="companyTutorEmail" />
+          @if (form.controls.companyTutorEmail.touched && form.controls.companyTutorEmail.invalid) {
+            <span class="field-error">Adresse email invalide.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="companyTutorPhone">Téléphone du tuteur</label>
+          <input id="companyTutorPhone" type="text" formControlName="companyTutorPhone" />
+        </div>
+        <div class="field wide">
+          <label for="agreement">Convention de stage (PDF, 5 Mo maximum) *</label>
+          <input id="agreement" type="file" accept="application/pdf,.pdf" (change)="onFileChange($event)" />
+          @if (fileError()) {
+            <span class="field-error">{{ fileError() }}</span>
+          }
+        </div>
+      </div>
+      <button type="submit" class="primary" [disabled]="saving()">
+        {{ saving() ? 'Envoi…' : 'Déclarer mon stage' }}
+      </button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Mes déclarations</h3>
+    @if (loading()) {
+      <p>Chargement…</p>
+    } @else {
+      @for (item of internships(); track item.id) {
+        <article class="item">
+          <div class="item-head">
+            <strong>{{ item.subject }}</strong>
+            <span class="badge" [class]="'badge status-' + item.status">{{ statusLabels[item.status] }}</span>
+          </div>
+          <p class="meta">
+            {{ typeLabels[item.internshipType] }} · {{ item.companyName }}
+            @if (item.companyCity) { · {{ item.companyCity }} }
+            @if (item.companyCountry) { ({{ getCountryName(item.companyCountry) }}) }
+            · du {{ item.startDate | date: 'dd/MM/yyyy' }} au {{ item.endDate | date: 'dd/MM/yyyy' }}
+          </p>
+          @if (item.supervisorName) {
+            <p class="meta">Encadrant académique : <strong>{{ item.supervisorName }}</strong></p>
+          }
+          @if (item.validationComment) {
+            <p class="comment">Message du département : {{ item.validationComment }}</p>
+          }
+          <button type="button" class="link" (click)="openAgreement(item)">Voir la convention (PDF)</button>
+        </article>
+      } @empty {
+        <p class="empty">Aucun stage déclaré pour le moment.</p>
+      }
+    }
+  </div>
+</section>

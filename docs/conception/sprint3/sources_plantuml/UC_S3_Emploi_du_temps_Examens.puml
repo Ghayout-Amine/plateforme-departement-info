@@ -1,0 +1,58 @@
+@startuml
+title Cas d'utilisation — Emploi du temps et examens (PGDI2026-75, US36 et US49)
+skinparam dpi 140
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 13
+skinparam usecaseBackgroundColor #FAFAFA
+skinparam usecaseBorderColor #607D8B
+skinparam usecaseBackgroundColor<<w>> #FFE9D6
+skinparam usecaseBorderColor<<w>> #E07A2F
+skinparam actorBorderColor #455A64
+hide stereotype
+left to right direction
+
+actor "Chef de département" as Chef
+actor "Administrateur" as Admin
+actor "Enseignant" as Ens
+actor "Étudiant" as Etu
+Admin -|> Chef
+
+rectangle "Emploi du temps et examens" {
+  usecase "Planifier une séance\n(CM, TD, TP)" as UC1 <<w>>
+  usecase "Planifier une série\nhebdomadaire" as UC2 <<w>>
+  usecase "Modifier, annuler ou\nsupprimer une séance" as UC3 <<w>>
+  usecase "Planifier un examen\n(une ou plusieurs salles)" as UC4 <<w>>
+  usecase "Vérifier les conflits\nsalle / enseignant / groupe" as UCC <<w>>
+  usecase "Consulter l'emploi du temps\nd'un groupe, d'une salle" as UC5
+  usecase "Consulter l'emploi du temps\nd'un enseignant" as UC6
+  usecase "Consulter MON emploi\ndu temps" as UC7
+  usecase "Consulter le calendrier\ndes examens" as UC8
+  usecase "Consulter MES examens" as UC9
+}
+
+Chef --> UC1
+Chef --> UC2
+Chef --> UC3
+Chef --> UC4
+Chef --> UC6
+Chef --> UC5
+Chef --> UC8
+UC1 ..> UCC : <<include>>
+UC2 ..> UCC : <<include>>
+UC3 ..> UCC : <<include>>
+UC4 ..> UCC : <<include>>
+UC5 <-- Ens
+UC5 <-- Etu
+UC7 <-- Ens
+UC7 <-- Etu
+UC8 <-- Ens
+UC8 <-- Etu
+UC9 <-- Ens
+UC9 <-- Etu
+note right of UCC
+  409 Conflict si la salle, l'enseignant
+  ou le groupe est déjà pris par une
+  séance active ou par un examen
+end note
+@enduml

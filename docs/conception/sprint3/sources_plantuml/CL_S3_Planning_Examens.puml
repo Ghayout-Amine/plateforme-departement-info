@@ -1,0 +1,102 @@
+@startuml
+title Modèle de classes implémenté — Sprint 3, PGDI2026-75
+skinparam dpi 140
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 13
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #455A64
+skinparam classBorderColor #607D8B
+skinparam classBackgroundColor #FAFAFA
+skinparam classBackgroundColor<<new>> #FFE9D6
+skinparam classBorderColor<<new>> #E07A2F
+skinparam classBackgroundColor<<s2>> #E3EEF9
+skinparam classBorderColor<<s2>> #2F6FB0
+hide stereotype
+hide empty members
+
+abstract class BaseEntity {
+  - id : Long
+  - createdAt : LocalDateTime
+  - updatedAt : LocalDateTime
+}
+class Planning <<new>> {
+  - sessionType : SessionType
+  - status : PlanningStatus
+  - sessionDate : LocalDate
+  - startTime : LocalTime
+  - endTime : LocalTime
+  - notes : String
+  + overlaps(date, start, end) : boolean
+  + cancel() : void
+}
+class Examen <<new>> {
+  - title : String
+  - examType : ExamType
+  - examDate : LocalDate
+  - startTime : LocalTime
+  - endTime : LocalTime
+  - notes : String
+  + overlaps(date, start, end) : boolean
+  + totalCapacity() : int
+}
+enum SessionType <<new>> {
+  CM
+  TD
+  TP
+}
+enum PlanningStatus <<new>> {
+  PLANNED
+  CANCELLED
+}
+enum ExamType <<new>> {
+  CC
+  TP
+  FINAL
+  RATTRAPAGE
+}
+class Teacher <<s2>>
+class ModuleCours
+class Groupe <<s2>> {
+  - name : String
+  - capacity : Integer
+}
+class Salle <<s2>> {
+  - code : String
+  - capacity : Integer
+  - active : boolean
+}
+class AcademicYear <<s2>> {
+  - label : String
+  - startDate : LocalDate
+  - endDate : LocalDate
+  - current : boolean
+}
+class Filiere
+
+BaseEntity <|-- Planning
+BaseEntity <|-- Examen
+Teacher "1" -- "0..*" Planning : assure >
+ModuleCours "1" -- "0..*" Planning : enseigné dans >
+Groupe "1" -- "0..*" Planning : reçoit >
+Salle "1" -- "0..*" Planning : accueille >
+ModuleCours "1" -- "0..*" Examen : évalué par >
+Groupe "1" -- "0..*" Examen : passe >
+AcademicYear "1" -- "0..*" Examen : englobe >
+Examen "0..*" -- "1..*" Salle : se déroule dans >
+Planning ..> SessionType
+Planning ..> PlanningStatus
+Examen ..> ExamType
+ModuleCours "0..*" -- "1" Filiere
+Groupe "0..*" -- "1" Filiere
+
+note bottom of Planning
+  Règle : module et groupe de la même filière,
+  salle en service et assez grande,
+  aucun chevauchement (salle, enseignant, groupe)
+end note
+note bottom of Examen
+  Règle : date dans l'année universitaire,
+  places des salles ≥ effectif du groupe
+end note
+@enduml

@@ -1,0 +1,95 @@
+<div class="profile-container">
+  @if (loading()) {
+    <div class="loading">Chargement du profil...</div>
+  } @else if (profile(); as p) {
+
+    <!-- En-tête profil -->
+    <div class="profile-header">
+      <div class="avatar-wrapper" (click)="photoInput.click()" title="Cliquer pour changer la photo">
+        @if (p.avatarUrl) {
+          <img [src]="p.avatarUrl" [alt]="p.firstName" class="avatar-large avatar-img" (error)="$any($event.target).style.display='none'; fallbackEl.style.display='flex'" />
+          <div #fallbackEl class="avatar-large" style="display:none">{{ getInitials() }}</div>
+        } @else {
+          <div class="avatar-large">{{ getInitials() }}</div>
+        }
+        <div class="avatar-overlay">📷 Modifier</div>
+      </div>
+      <input #photoInput type="file" (change)="onPhotoSelected($event)" accept="image/jpeg,image/png" style="display:none" />
+      <div>
+        <h1>{{ p.firstName }} {{ p.lastName }}</h1>
+        <p class="role-label">{{ getRoleLabel(p.role) }}</p>
+        <p class="email-label">{{ p.email }}</p>
+      </div>
+    </div>
+
+    <!-- Alertes -->
+    @if (successMsg()) {
+      <div class="alert alert-success">✅ {{ successMsg() }}</div>
+    }
+    @if (errorMsg()) {
+      <div class="alert alert-error">❌ {{ errorMsg() }}</div>
+    }
+
+    <!-- Onglets -->
+    <div class="tabs">
+      <button class="tab-btn" [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+        👤 Mes informations
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'security'" (click)="activeTab = 'security'">
+        🔒 Sécurité
+      </button>
+    </div>
+
+    <!-- Onglet : Mes informations -->
+    @if (activeTab === 'profile') {
+      <div class="tab-content">
+        <form (ngSubmit)="saveProfile()" class="profile-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Prénom *</label>
+              <input type="text" [(ngModel)]="profileForm.firstName" name="firstName" required />
+            </div>
+            <div class="form-group">
+              <label>Nom *</label>
+              <input type="text" [(ngModel)]="profileForm.lastName" name="lastName" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Téléphone</label>
+            <input type="tel" [(ngModel)]="profileForm.phone" name="phone" placeholder="ex: 0612345678" />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">💾 Sauvegarder les modifications</button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Onglet : Sécurité -->
+    @if (activeTab === 'security') {
+      <div class="tab-content">
+        <form (ngSubmit)="savePassword()" class="profile-form">
+          <h3>Changer mon mot de passe</h3>
+          @if (passwordError) {
+            <div class="alert alert-error">{{ passwordError }}</div>
+          }
+          <div class="form-group">
+            <label>Ancien mot de passe *</label>
+            <input type="password" [(ngModel)]="passwordForm.oldPassword" name="oldPassword" required />
+          </div>
+          <div class="form-group">
+            <label>Nouveau mot de passe *</label>
+            <input type="password" [(ngModel)]="passwordForm.newPassword" name="newPassword" required />
+          </div>
+          <div class="form-group">
+            <label>Confirmer le nouveau mot de passe *</label>
+            <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">🔐 Modifier le mot de passe</button>
+          </div>
+        </form>
+      </div>
+    }
+  }
+</div>

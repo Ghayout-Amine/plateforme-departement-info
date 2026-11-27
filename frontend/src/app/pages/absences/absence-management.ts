@@ -1,0 +1,212 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { AbsenceService } from '../../services/absence.service';
+import { AuthService } from '../../services/auth.service';
+import { Absence, AbsenceCreate, AbsenceStatus } from '../../models/absence.model';
+
+@Component({
+  selector: 'app-absence-management',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './absence-management.html',
+  styleUrl: './absence-management.css'
+})
+export class AbsenceManagement implements OnInit {
+  private readonly service = inject(AbsenceService);
+  readonly auth = inject(AuthService);
+
+  readonly loading = signal(false);
+  readonly uploadingId = signal<number | null>(null);
+  readonly error = signal('');
+  readonly success = signal('');
+  readonly lastAbsence = signal<Absence | null>(null);
+  readonly myAbsences = signal<Absence[]>([]);
+  readonly myAbsencesLoaded = signal(false);
+
+  ngOnInit(): void {
+    if (this.auth.currentRole() === 'ETUDIANT') {
+      this.loadMyAbsences();
+    }
+  }
+
+  form: AbsenceCreate = {
+    studentId: 0,
+    moduleId: 0,
+    date: new Date().toLocaleDateString('en-CA'),
+    sessionTime: '',
+    justified: false,
+    motif: null
+  };
+
+  justificationId = 0;
+  justificationMotif = '';
+
+  private resetMessages(): void {
+    this.error.set('');
+    this.success.set('');
+  }
+
+  private showError(status: number, operation: string): void {
+    this.error.set(
+      status === 401
+        ? 'Session expiree. Veuillez vous reconnecter.'
+        : status === 403
+          ? 'Acces refuse pour cette operation.'
+          : status === 409
+            ? 'Cette absence existe deja ou est deja justifiee.'
+            : `Impossible de ${operation}.`
+    );
+  }
+
+  save(): void {
+    this.resetMessages();
+
+    if (this.loading()) return;
+
+    const data: AbsenceCreate = {
+      ...this.form,
+      sessionTime: this.form.sessionTime.trim(),
+      motif: this.form.motif?.trim() || null
+    };
+
+    if (!Number.isInteger(data.studentId) || data.studentId <= 0 ||
+        !Number.isInteger(data.moduleId) || data.moduleId <= 0 ||
+        !data.date || !data.sessionTime ||
+        data.sessionTime.length > 50 ||
+        (data.justified && !data.motif) ||
+        (data.motif?.length ?? 0) > 500) {
+      this.error.set('Veuillez verifier les informations de la seance.');
+      return;
+    }
+
+    this.loading.set(true);
+    this.service.create(data).subscribe({
+      next: absence => {
+        this.lastAbsence.set(absence);
+        this.success.set('Absence enregistree avec succes.');
+        this.loading.set(false);
+      },
+      error: err => {
+        this.showError(err.status, 'enregistrer cette absence');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  justify(): void {
+    this.resetMessages();
+
+    if (this.loading()) return;
+
+    if (!Number.isInteger(this.justificationId) ||
+        this.justificationId <= 0 ||
+        !this.justificationMotif.trim() ||
+        this.justificationMotif.length > 500) {
+      this.error.set('Identifiant ou motif de justification invalide.');
+      return;
+    }
+
+    this.loading.set(true);
+    this.service.justify(this.justificationId, {
+      motif: this.justificationMotif.trim()
+    }).subscribe({
+      next: absence => {
+        this.lastAbsence.set(absence);
+        this.success.set('Absence justifiee avec succes.');
+        this.loading.set(false);
+      },
+      error: err => {
+        this.showError(err.status, 'justifier cette absence');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  loadMyAbsences(): void {
+    this.resetMessages();
+
+    if (this.loading()) return;
+
+    this.loading.set(true);
+    this.service.getMyAbsences().subscribe({
+      next: absences => {
+        this.myAbsences.set(absences);
+        this.myAbsencesLoaded.set(true);
+        this.loading.set(false);
+      },
+      error: err => {
+        this.showError(err.status, 'charger vos absences');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  getStatus(absence: Absence): AbsenceStatus {
+    if (absence.status) return absence.status;
+    return absence.justified ? 'JUSTIFIED' : 'UNJUSTIFIED';
+  }
+
+  statusLabel(absence: Absence): string {
+    switch (this.getStatus(absence)) {
+      case 'JUSTIFIED':
+        return 'Justifiée';
+      case 'PENDING_JUSTIFICATION':
+        return 'En attente de validation';
+      default:
+        return 'Non justifiée';
+    }
+  }
+
+  onUploadJustificatif(absenceId: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    this.resetMessages();
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      this.error.set('Le justificatif doit etre un fichier PDF.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.error.set('Le justificatif ne doit pas depasser 5 Mo.');
+      return;
+    }
+
+    this.uploadingId.set(absenceId);
+    this.service.uploadJustificatif(absenceId, file).subscribe({
+      next: updated => {
+        this.myAbsences.update(list =>
+          list.map(item => (item.id === updated.id ? updated : item))
+        );
+        this.success.set('Justificatif medical depose avec succes (en attente de validation).');
+        this.uploadingId.set(null);
+      },
+      error: err => {
+        this.error.set(err?.error?.message || 'Impossible de deposer ce justificatif.');
+        this.uploadingId.set(null);
+      }
+    });
+  }
+
+  openJustificatif(absenceId: number): void {
+    this.resetMessages();
+    this.service.getJustificatif(absenceId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `justificatif-absence-${absenceId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      },
+      error: () => {
+        this.error.set('Impossible de telecharger le justificatif.');
+      }
+    });
+  }
+}

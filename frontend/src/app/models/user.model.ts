@@ -1,6 +1,6 @@
-import { UserRole } from './auth.model';
+export type UserRole = 'ADMIN' | 'CHEF_DEPARTEMENT' | 'ENSEIGNANT' | 'ETUDIANT';
 
-export interface User {
+export interface UserResponse {
   id: number;
   email: string;
   firstName: string;
@@ -8,22 +8,43 @@ export interface User {
   phone?: string;
   role: UserRole;
   enabled: boolean;
+  avatarUrl?: string;
   createdAt?: string;
+  lastLoginAt?: string;
 }
 
-export interface UserCreatePayload {
+export interface UserCreate {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
   phone?: string;
-  role?: UserRole;
+  role: UserRole;
 }
 
-export interface UserUpdatePayload {
+export interface UserUpdate {
   firstName: string;
   lastName: string;
   phone?: string;
   role?: UserRole;
   enabled?: boolean;
+}
+
+export interface UpdateProfile {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  avatarUrl?: string;
+}
+
+export interface ChangePassword {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export interface UserPage {
+  users: UserResponse[];
+  currentPage: number;
+  totalItems: number;
+  totalPages: number;
 }

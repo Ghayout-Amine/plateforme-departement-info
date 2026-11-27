@@ -20,6 +20,32 @@
     <section class="form-section">
       <h2>Informations personnelles</h2>
 
+      <div class="field full-width photo-upload-field">
+        <label>Photo de profil (Optionnelle)</label>
+        <div class="photo-upload-container">
+          <div class="photo-preview">
+            @if (photoPreviewUrl()) {
+              <img [src]="photoPreviewUrl()" alt="Prévisualisation" class="preview-img" />
+            } @else {
+              <div class="preview-placeholder">
+                {{ firstName ? (firstName[0] + (lastName ? lastName[0] : '')).toUpperCase() : '📷' }}
+              </div>
+            }
+          </div>
+          <div class="photo-controls">
+            <input type="file" #photoInput (change)="onPhotoFileChange($event)" accept="image/jpeg,image/png" style="display:none">
+            <button type="button" class="btn-choose-photo" (click)="photoInput.click()">
+              Choisir une photo
+            </button>
+            @if (selectedPhotoFile) {
+              <span class="file-name">{{ selectedPhotoFile.name }}</span>
+              <button type="button" class="btn-remove-photo" (click)="clearPhoto()">✕</button>
+            }
+            <small class="photo-hint">JPEG ou PNG, maximum 5 Mo</small>
+          </div>
+        </div>
+      </div>
+
       <div class="form-grid">
         <div class="field">
           <label for="firstName">Prénom *</label>

@@ -44,11 +44,17 @@ public class SecurityConfig {
                     "/api/auth/test",
                     "/api/stats",
                     "/api/contact",
+                    "/actuator/health",
+                    "/actuator/info",
                     "/error",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/teachers/*/photo", "/api/users/*/photo").permitAll()
+                // PGDI2026-88 / 89 : annonces et veille consultables sans connexion
+                .requestMatchers(HttpMethod.GET, "/api/actualites/**").permitAll()
+                .requestMatchers("/api/users/profile", "/api/users/profile/photo", "/api/users/change-password").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(

@@ -90,7 +90,12 @@
               <tr>
                 <td>
                   <div class="teacher-cell">
-                    <div class="avatar">{{ getInitials(teacher) }}</div>
+                    @if (teacher.avatarUrl) {
+                      <img [src]="teacher.avatarUrl" [alt]="teacher.firstName" class="avatar avatar-img" (error)="$any($event.target).style.display='none'; fallbackEl.style.display='grid'" />
+                      <div #fallbackEl class="avatar" style="display:none">{{ getInitials(teacher) }}</div>
+                    } @else {
+                      <div class="avatar">{{ getInitials(teacher) }}</div>
+                    }
                     <div class="teacher-info">
                       <strong>{{ teacher.firstName }} {{ teacher.lastName }}</strong>
                       <span>{{ teacher.userEmail }}</span>

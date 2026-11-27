@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { UserService } from '../../../services/user.service';
 import { TeacherService } from '../../../services/teacher.service';
+import { TeacherPhotoService } from '../../../services/teacher-photo.service';
 import { UserResponse } from '../../../models/user-create.model';
 import { UserCreate } from '../../../models/user-create.model';
 import { TeacherRequest } from '../../../models/teacher.model';
@@ -18,12 +19,15 @@ import { TeacherRequest } from '../../../models/teacher.model';
 export class TeacherForm {
   private readonly userService = inject(UserService);
   private readonly teacherService = inject(TeacherService);
+  private readonly teacherPhotoService = inject(TeacherPhotoService);
   private readonly router = inject(Router);
 
   readonly loading = signal(false);
   readonly error = signal('');
   readonly success = signal('');
   readonly availableUsers = signal<UserResponse[]>([]);
+  readonly photoPreviewUrl = signal<string | null>(null);
+  selectedPhotoFile: File | null = null;
 
   firstName = '';
   lastName = '';
@@ -51,6 +55,35 @@ export class TeacherForm {
     });
   }
 
+  onPhotoFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      this.error.set('Format image non supporté. Veuillez choisir un fichier JPEG ou PNG.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.error.set('La photo dépasse 5 Mo. Veuillez choisir une image plus légère (max 5 Mo).');
+      this.clearPhoto();
+      input.value = '';
+      return;
+    }
+
+    this.selectedPhotoFile = file;
+    this.photoPreviewUrl.set(URL.createObjectURL(file));
+  }
+
+  clearPhoto(): void {
+    this.selectedPhotoFile = null;
+    const url = this.photoPreviewUrl();
+    if (url) URL.revokeObjectURL(url);
+    this.photoPreviewUrl.set(null);
+  }
+
   submitForm(): void {
     this.error.set('');
     this.success.set('');
@@ -59,6 +92,11 @@ export class TeacherForm {
         !this.email.trim() || !this.password.trim() ||
         !this.employeeNumber.trim()) {
       this.error.set('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+
+    if (this.selectedPhotoFile && this.selectedPhotoFile.size > 5 * 1024 * 1024) {
+      this.error.set('La photo sélectionnée dépasse la limite de 5 Mo. Veuillez en choisir une plus légère.');
       return;
     }
 
@@ -86,10 +124,25 @@ export class TeacherForm {
         };
 
         this.teacherService.create(teacherData).subscribe({
-          next: () => {
-            this.success.set('Enseignant ajouté avec succès.');
-            this.loading.set(false);
-            this.router.navigate(['/teachers']);
+          next: (createdTeacher) => {
+            if (this.selectedPhotoFile) {
+              this.teacherPhotoService.uploadPhoto(createdTeacher.id, this.selectedPhotoFile).subscribe({
+                next: () => {
+                  this.success.set('Enseignant et photo ajoutés avec succès.');
+                  this.loading.set(false);
+                  this.router.navigate(['/teachers']);
+                },
+                error: () => {
+                  this.success.set('Enseignant créé avec succès.');
+                  this.loading.set(false);
+                  this.router.navigate(['/teachers']);
+                }
+              });
+            } else {
+              this.success.set('Enseignant ajouté avec succès.');
+              this.loading.set(false);
+              this.router.navigate(['/teachers']);
+            }
           },
           error: err => {
             console.error('Erreur de création du profil:', err);

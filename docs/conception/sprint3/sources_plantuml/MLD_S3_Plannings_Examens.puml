@@ -1,0 +1,65 @@
+@startuml
+title Tables créées par PGDI2026-75 (générées par Hibernate, MySQL)
+skinparam dpi 140
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 13
+skinparam ArrowColor #455A64
+skinparam classBorderColor #607D8B
+skinparam classBackgroundColor #FAFAFA
+skinparam classBackgroundColor<<new>> #FFE9D6
+skinparam classBorderColor<<new>> #E07A2F
+hide circle
+hide methods
+hide stereotype
+left to right direction
+
+entity "plannings" as plannings <<new>> {
+  * id : BIGINT <<PK>>
+  --
+  * session_type : VARCHAR(10)  (CM, TD, TP)
+  * status : VARCHAR(20)  (PLANNED, CANCELLED)
+  * session_date : DATE <<INDEX>>
+  * start_time : TIME
+  * end_time : TIME
+    notes : VARCHAR(255)
+  * teacher_id : BIGINT <<FK>>
+  * module_id : BIGINT <<FK>>
+  * groupe_id : BIGINT <<FK>>
+  * salle_id : BIGINT <<FK>>  <<INDEX salle_id, session_date>>
+    created_at, updated_at : DATETIME
+}
+entity "examens" as examens <<new>> {
+  * id : BIGINT <<PK>>
+  --
+  * title : VARCHAR(150)
+  * exam_type : VARCHAR(20)  (CC, TP, FINAL, RATTRAPAGE)
+  * exam_date : DATE <<INDEX>>
+  * start_time : TIME
+  * end_time : TIME
+    notes : VARCHAR(255)
+  * module_id : BIGINT <<FK>>
+  * groupe_id : BIGINT <<FK>>
+  * academic_year_id : BIGINT <<FK>>
+    created_at, updated_at : DATETIME
+}
+entity "exam_salles" as exam_salles <<new>> {
+  * examen_id : BIGINT <<PK, FK>>
+  * salle_id : BIGINT <<PK, FK>>
+}
+entity "teachers" as teachers
+entity "modules" as modules
+entity "groupes" as groupes
+entity "salles" as salles
+entity "academic_years" as years
+
+teachers ||--o{ plannings
+modules ||--o{ plannings
+groupes ||--o{ plannings
+salles ||--o{ plannings
+modules ||--o{ examens
+groupes ||--o{ examens
+years ||--o{ examens
+examens ||--|{ exam_salles
+salles ||--o{ exam_salles
+@enduml
